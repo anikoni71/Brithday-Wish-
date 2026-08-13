@@ -19,6 +19,27 @@ export interface TwilioConfig {
   whatsappNumber: string;
 }
 
+export interface EmailLogEntry {
+  id: string;
+  timestamp: string;
+  recipientName: string;
+  recipientEmail: string;
+  subject: string;
+  status: 'SUCCESS' | 'FAILED' | 'SKIPPED';
+  mode: 'AUTOMATED_CRON' | 'DIRECT_DISPATCH' | 'MANUAL';
+  messageSnippet: string;
+  details?: string;
+  executionTimeMs?: number;
+}
+
+export interface EmailTemplateOption {
+  id: string;
+  name: string;
+  tagline: string;
+  subject: string;
+  theme: 'festive' | 'corporate' | 'executive' | 'elegant';
+}
+
 export interface WishGenerationRequest {
   name: string;
   designation: string;

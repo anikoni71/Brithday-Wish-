@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { AutomationLogEntry } from '../types';
-import { Bot, CheckCircle2, XCircle, Clock, Search, Filter, RefreshCw, Play, Trash2, ShieldCheck, Terminal, AlertTriangle, Phone } from 'lucide-react';
+import { AutomationAnalyticsChart } from './AutomationAnalyticsChart';
+import { AutomationRateDonutChart } from './AutomationRateDonutChart';
+import { Bot, CheckCircle2, XCircle, Clock, Search, Filter, RefreshCw, Play, Trash2, ShieldCheck, Terminal, AlertTriangle, Phone, Activity } from 'lucide-react';
 
 interface AutomationHistoryProps {
   logs: AutomationLogEntry[];
@@ -101,6 +103,24 @@ export const AutomationHistory: React.FC<AutomationHistoryProps> = ({
               <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-emerald-400' : ''}`} />
             </button>
           </div>
+        </div>
+      </div>
+
+      {/* D3 Automation Analytics & Donut Reliability Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
+        <div className="lg:col-span-7 xl:col-span-8">
+          <AutomationAnalyticsChart
+            logs={logs}
+            activeStatusFilter={statusFilter}
+            onSelectStatusFilter={(status) => setStatusFilter(status)}
+          />
+        </div>
+        <div className="lg:col-span-5 xl:col-span-4">
+          <AutomationRateDonutChart
+            logs={logs}
+            activeStatusFilter={statusFilter}
+            onSelectStatusFilter={(status) => setStatusFilter(status)}
+          />
         </div>
       </div>
 

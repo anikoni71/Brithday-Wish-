@@ -1,9 +1,9 @@
 import React from 'react';
-import { RefreshCw, ExternalLink, Cake, Sparkles, Code2, Send, PhoneCall, Radio, CheckCircle2, Bot } from 'lucide-react';
+import { RefreshCw, ExternalLink, Cake, Sparkles, Code2, Send, PhoneCall, Radio, CheckCircle2, Bot, Mail } from 'lucide-react';
 
 interface HeaderProps {
-  activeTab: 'roster' | 'generator' | 'script' | 'tester' | 'automation';
-  setActiveTab: (tab: 'roster' | 'generator' | 'script' | 'tester' | 'automation') => void;
+  activeTab: 'roster' | 'email' | 'generator' | 'script' | 'tester' | 'automation';
+  setActiveTab: (tab: 'roster' | 'email' | 'generator' | 'script' | 'tester' | 'automation') => void;
   onSync: () => void;
   isSyncing: boolean;
   lastSynced: string | null;
@@ -122,6 +122,21 @@ export const Header: React.FC<HeaderProps> = ({
                 {todayCount}
               </span>
             )}
+          </button>
+
+          <button
+            onClick={() => setActiveTab('email')}
+            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-t-lg border-b-2 transition whitespace-nowrap cursor-pointer ${
+              activeTab === 'email'
+                ? 'border-indigo-600 text-indigo-700 bg-indigo-50/50'
+                : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+            }`}
+          >
+            <Mail className="w-4 h-4 text-indigo-600" />
+            Mail Address & Auto-Wish
+            <span className="ml-1 px-1.5 py-0.2 rounded-full text-[9px] bg-indigo-100 text-indigo-700 border border-indigo-200 font-bold">
+              Automated
+            </span>
           </button>
 
           <button

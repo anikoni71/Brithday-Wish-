@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { TeamMember } from '../types';
-import { parseBirthMonth } from './BirthdayDistributionChart';
+import { parseBirthMonth, checkIsTodayBirthday, MONTH_NAMES } from '../utils/dateUtils';
 import { Search, Filter, Phone, MessageSquare, Send, Sparkles, Check, Copy, User, CheckCircle2, Clock, CheckSquare, Square, ShieldCheck, Radio, X, Calendar } from 'lucide-react';
 
 interface RosterTableProps {
@@ -51,7 +51,7 @@ export const RosterTable: React.FC<RosterTableProps> = ({
 
     const isSentThisYear = m.lastSentYear ? m.lastSentYear.toString() === currentYear : false;
 
-    if (filterType === 'today') return m.isBirthdayToday;
+    if (filterType === 'today') return m.isBirthdayToday || checkIsTodayBirthday(m.birthday);
     if (filterType === 'sent_2026') return isSentThisYear;
     if (filterType === 'pending') return !isSentThisYear;
     if (filterType === 'has_wa') return Boolean(m.whatsapp && m.whatsapp.trim().length > 0);
@@ -59,7 +59,7 @@ export const RosterTable: React.FC<RosterTableProps> = ({
     return true;
   });
 
-  const todayCount = members.filter((m) => m.isBirthdayToday).length;
+  const todayCount = members.filter((m) => m.isBirthdayToday || checkIsTodayBirthday(m.birthday)).length;
   const sentCount = members.filter((m) => m.lastSentYear ? m.lastSentYear.toString() === currentYear : false).length;
 
   const handleStartEdit = (m: TeamMember) => {

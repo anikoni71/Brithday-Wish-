@@ -8,8 +8,10 @@ import { AppsScriptStudio } from './components/AppsScriptStudio';
 import { TwilioTester } from './components/TwilioTester';
 import { AutomationHistory } from './components/AutomationHistory';
 import { BirthdayDistributionChart } from './components/BirthdayDistributionChart';
+import { MailWorkstation } from './components/MailWorkstation';
+import { checkIsTodayBirthday } from './utils/dateUtils';
 import { triggerBirthdayConfetti } from './utils/confetti';
-import { Sparkles, Calendar, Users, PhoneCall, Code2, CheckCircle2, X, Bot } from 'lucide-react';
+import { Sparkles, Calendar, Users, PhoneCall, Code2, CheckCircle2, X, Bot, Mail } from 'lucide-react';
 
 interface ToastNotification {
   type: 'success' | 'info' | 'error';
@@ -20,7 +22,7 @@ interface ToastNotification {
 
 export default function App() {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
-  const [activeTab, setActiveTab] = useState<'roster' | 'generator' | 'script' | 'automation' | 'tester'>('roster');
+  const [activeTab, setActiveTab] = useState<'roster' | 'email' | 'generator' | 'script' | 'automation' | 'tester'>('roster');
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [autoSyncEnabled, setAutoSyncEnabled] = useState<boolean>(true);
   const [toastNotification, setToastNotification] = useState<ToastNotification | null>(null);
@@ -139,7 +141,7 @@ export default function App() {
     return () => clearInterval(intervalId);
   }, [autoSyncEnabled, sentYearMap]);
 
-  const todayBirthdays = teamMembers.filter((m) => m.isBirthdayToday);
+  const todayBirthdays = teamMembers.filter((m) => m.isBirthdayToday || checkIsTodayBirthday(m.birthday));
 
   // Toggle wish sent status for current year
   const handleToggleWishSent = (idOrSl: string) => {
@@ -351,6 +353,18 @@ export default function App() {
     );
   };
 
+  // Local update of member's email address
+  const handleUpdateMemberEmail = (idOrSl: string, newEmail: string) => {
+    setTeamMembers((prev) =>
+      prev.map((m) => {
+        if ((m.id && m.id === idOrSl) || m.sl === idOrSl) {
+          return { ...m, email: newEmail };
+        }
+        return m;
+      })
+    );
+  };
+
   return (
     <div className="min-h-screen bg-slate-100/70 font-sans text-slate-800 antialiased flex flex-col relative">
       
@@ -404,49 +418,62 @@ export default function App() {
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
         {/* Top Summary Metrics Bar */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5 mb-8">
           
-          <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-2xs flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
-              <Users className="w-5 h-5" />
+          <div className="bg-white rounded-2xl p-3.5 border border-slate-200 shadow-2xs flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+              <Users className="w-4.5 h-4.5" />
             </div>
             <div>
-              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Team</p>
-              <p className="text-xl font-bold text-slate-900">{teamMembers.length}</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Team</p>
+              <p className="text-lg font-bold text-slate-900">{teamMembers.length}</p>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl p-4 border border-amber-200 shadow-2xs flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
-              <Calendar className="w-5 h-5" />
+          <div className="bg-white rounded-2xl p-3.5 border border-amber-200 shadow-2xs flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+              <Calendar className="w-4.5 h-4.5" />
             </div>
             <div>
-              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Birthdays Today</p>
-              <p className="text-xl font-bold text-amber-600">{todayBirthdays.length}</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Birthdays Today</p>
+              <p className="text-lg font-bold text-amber-600">{todayBirthdays.length}</p>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-2xs flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
-              <PhoneCall className="w-5 h-5" />
+          <div className="bg-white rounded-2xl p-3.5 border border-slate-200 shadow-2xs flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+              <PhoneCall className="w-4.5 h-4.5" />
             </div>
             <div>
-              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Connected Sender</p>
-              <p className="text-xs font-mono font-bold text-slate-900 mt-1 truncate max-w-[130px]">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">WhatsApp Sender</p>
+              <p className="text-xs font-mono font-bold text-slate-900 mt-0.5 truncate max-w-[110px]">
                 {twilioConfig.whatsappNumber.replace('whatsapp:', '')}
               </p>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-2xs flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold">
-              <Code2 className="w-5 h-5" />
+          <div className="bg-white rounded-2xl p-3.5 border border-indigo-200 shadow-2xs flex items-center gap-3 cursor-pointer hover:border-indigo-300 transition" onClick={() => setActiveTab('email')}>
+            <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
+              <Mail className="w-4.5 h-4.5" />
             </div>
             <div>
-              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Apps Script Trigger</p>
-              <p className="text-xs font-bold text-emerald-600 flex items-center gap-1 mt-1">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse inline-block"></span>
-                Daily 8 AM Auto-Wish
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Mail Station</p>
+              <p className="text-xs font-bold text-indigo-700 mt-0.5 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                Auto-Wish Ready
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl p-3.5 border border-slate-200 shadow-2xs flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold">
+              <Code2 className="w-4.5 h-4.5" />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Cloud Trigger</p>
+              <p className="text-xs font-bold text-emerald-600 flex items-center gap-1 mt-0.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block"></span>
+                8:00 AM Cron
               </p>
             </div>
           </div>
@@ -482,6 +509,16 @@ export default function App() {
               onToggleWishSent={handleToggleWishSent}
             />
           </div>
+        )}
+
+        {/* Mail Workstation - Every Person's Mail & Automated Wishing Mails */}
+        {activeTab === 'email' && (
+          <MailWorkstation
+            members={teamMembers}
+            onUpdateMemberEmail={handleUpdateMemberEmail}
+            onUpdateMemberWish={handleUpdateMemberMessage}
+            onSendWhatsApp={handleSendWhatsApp}
+          />
         )}
 
         {activeTab === 'generator' && (
