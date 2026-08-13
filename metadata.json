@@ -1,0 +1,6 @@
+{
+  "name": "IE Central Team Birthday Wisher",
+  "description": "Automated WhatsApp birthday wishing system and Google Apps Script hub for the IE Central Team with Twilio integration and live Google Sheets sync.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
