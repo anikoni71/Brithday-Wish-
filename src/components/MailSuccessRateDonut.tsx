@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useLayoutEffect, useRef, useState, useMemo } from 'react';
 import * as d3 from 'd3';
 import { EmailLogEntry, TeamMember } from '../types';
 import { MONTH_NAMES, getBirthMonth } from '../utils/dateUtils';
@@ -19,16 +19,6 @@ import {
   Mail
 } from 'lucide-react';
 
-interface MailSuccessRateDonutProps {
-  logs: EmailLogEntry[];
-  members?: TeamMember[];
-  sentEmailMap?: Record<string, boolean>;
-  selectedMonthIndex?: number | null;
-  onSelectMonth?: (monthIndex: number | null) => void;
-  activeStatusFilter?: 'ALL' | 'SUCCESS' | 'FAILED' | 'SKIPPED';
-  onSelectStatusFilter?: (status: 'ALL' | 'SUCCESS' | 'FAILED' | 'SKIPPED') => void;
-}
-
 interface DonutSliceData {
   key: 'SUCCESS' | 'FAILED' | 'SKIPPED';
   label: string;
@@ -40,14 +30,33 @@ interface DonutSliceData {
   description: string;
 }
 
+interface MailSuccessRateDonutProps {
+  logs?: EmailLogEntry[];
+  members?: TeamMember[];
+  sentEmailMap?: Record<string, boolean>;
+  selectedMonthIndex?: number | null;
+  onSelectMonth?: (monthIndex: number | null) => void;
+  activeStatusFilter?: 'ALL' | 'SUCCESS' | 'FAILED' | 'SKIPPED';
+  onSelectStatusFilter?: (status: 'ALL' | 'SUCCESS' | 'FAILED' | 'SKIPPED') => void;
+  // Pre-calculated metrics passed as pure props
+  deliverySuccessCount?: number;
+  deliveryFailedCount?: number;
+  deliverySkippedCount?: number;
+  deliveryHealthPercent?: string;
+}
+
 export const MailSuccessRateDonut: React.FC<MailSuccessRateDonutProps> = ({
-  logs,
+  logs = [],
   members = [],
   sentEmailMap = {},
   selectedMonthIndex = null,
   onSelectMonth,
   activeStatusFilter = 'ALL',
   onSelectStatusFilter,
+  deliverySuccessCount: precomputedSuccessCount,
+  deliveryFailedCount: precomputedFailedCount,
+  deliverySkippedCount: precomputedSkippedCount,
+  deliveryHealthPercent: precomputedHealthPercent,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -57,7 +66,7 @@ export const MailSuccessRateDonut: React.FC<MailSuccessRateDonutProps> = ({
     selectedMonthIndex !== null ? selectedMonthIndex : 'ALL'
   );
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (selectedMonthIndex !== null) {
       setMonthScope(selectedMonthIndex);
     }
@@ -71,7 +80,6 @@ export const MailSuccessRateDonut: React.FC<MailSuccessRateDonutProps> = ({
     if (monthScope === 'ALL') {
       return logs;
     }
-    // Filter logs timestamp/recipient matching this month's celebrants
     const celebrantNames = new Set(
       members
         .filter((m) => getBirthMonth(m.birthday) === monthScope)
@@ -81,17 +89,27 @@ export const MailSuccessRateDonut: React.FC<MailSuccessRateDonutProps> = ({
     return logs.filter((l) => celebrantNames.has(l.recipientName.toLowerCase().trim()));
   }, [logs, members, monthScope]);
 
-  // Calculations
+  // Calculations: use scoped count if month filtered, or use precomputed values
   const totalLogs = scopedLogs.length;
-  const successCount = scopedLogs.filter((l) => l.status === 'SUCCESS').length;
-  const failedCount = scopedLogs.filter((l) => l.status === 'FAILED').length;
-  const skippedCount = scopedLogs.filter((l) => l.status === 'SKIPPED').length;
+  const successCount = monthScope === 'ALL' && precomputedSuccessCount !== undefined
+    ? precomputedSuccessCount
+    : scopedLogs.filter((l) => l.status === 'SUCCESS').length;
+
+  const failedCount = monthScope === 'ALL' && precomputedFailedCount !== undefined
+    ? precomputedFailedCount
+    : scopedLogs.filter((l) => l.status === 'FAILED').length;
+
+  const skippedCount = monthScope === 'ALL' && precomputedSkippedCount !== undefined
+    ? precomputedSkippedCount
+    : scopedLogs.filter((l) => l.status === 'SKIPPED').length;
 
   const totalAttempts = successCount + failedCount;
   const deliveryHealthRate = totalAttempts > 0 
     ? ((successCount / totalAttempts) * 100) 
     : 100.0;
-  const deliveryHealthPercent = deliveryHealthRate.toFixed(1);
+  const deliveryHealthPercent = precomputedHealthPercent && monthScope === 'ALL'
+    ? precomputedHealthPercent
+    : deliveryHealthRate.toFixed(1);
 
   // Health state description
   const healthStatus = useMemo(() => {
@@ -103,7 +121,7 @@ export const MailSuccessRateDonut: React.FC<MailSuccessRateDonutProps> = ({
 
   // Donut slices dataset
   const chartData: DonutSliceData[] = useMemo(() => {
-    if (totalLogs === 0) {
+    if (totalLogs === 0 && successCount === 0 && failedCount === 0 && skippedCount === 0) {
       return [
         {
           key: 'SUCCESS',
@@ -120,12 +138,11 @@ export const MailSuccessRateDonut: React.FC<MailSuccessRateDonutProps> = ({
 
     const slices: DonutSliceData[] = [];
 
-    // Success slice
     if (successCount > 0 || (failedCount === 0 && skippedCount === 0)) {
       slices.push({
         key: 'SUCCESS',
         label: 'Successful Deliveries',
-        count: successCount,
+        count: successCount > 0 ? successCount : 1,
         color: '#10b981',
         gradientId: 'mail-donut-success',
         hoverColor: '#059669',
@@ -134,7 +151,6 @@ export const MailSuccessRateDonut: React.FC<MailSuccessRateDonutProps> = ({
       });
     }
 
-    // Failures slice
     if (failedCount > 0) {
       slices.push({
         key: 'FAILED',
@@ -148,7 +164,6 @@ export const MailSuccessRateDonut: React.FC<MailSuccessRateDonutProps> = ({
       });
     }
 
-    // Skipped slice
     if (skippedCount > 0) {
       slices.push({
         key: 'SKIPPED',
@@ -165,13 +180,15 @@ export const MailSuccessRateDonut: React.FC<MailSuccessRateDonutProps> = ({
     return slices;
   }, [totalLogs, successCount, failedCount, skippedCount]);
 
-  // D3 Donut Chart Rendering
-  useEffect(() => {
+  const dataSignature = useMemo(() => {
+    return chartData.map((s) => `${s.key}:${s.count}`).join('|') + `_health:${deliveryHealthPercent}`;
+  }, [chartData, deliveryHealthPercent]);
+
+  // D3 Donut Chart Rendering with useLayoutEffect
+  useLayoutEffect(() => {
     if (!svgRef.current || !containerRef.current) return;
 
     const svg = d3.select(svgRef.current);
-    svg.selectAll('*').remove();
-
     const containerWidth = containerRef.current.clientWidth || 300;
     const width = Math.min(containerWidth, 320);
     const height = 220;
@@ -185,43 +202,55 @@ export const MailSuccessRateDonut: React.FC<MailSuccessRateDonutProps> = ({
       .attr('width', '100%')
       .attr('height', height);
 
-    const defs = svg.append('defs');
+    let mainG = svg.select<SVGGElement>('g.main-donut-group');
+    if (mainG.empty()) {
+      svg.selectAll('*').remove();
 
-    // Gradients for slices
-    const successGrad = defs
-      .append('linearGradient')
-      .attr('id', 'mail-donut-success')
-      .attr('x1', '0%')
-      .attr('y1', '0%')
-      .attr('x2', '100%')
-      .attr('y2', '100%');
-    successGrad.append('stop').attr('offset', '0%').attr('stop-color', '#34d399');
-    successGrad.append('stop').attr('offset', '100%').attr('stop-color', '#059669');
+      const defs = svg.append('defs');
 
-    const failGrad = defs
-      .append('linearGradient')
-      .attr('id', 'mail-donut-failed')
-      .attr('x1', '0%')
-      .attr('y1', '0%')
-      .attr('x2', '100%')
-      .attr('y2', '100%');
-    failGrad.append('stop').attr('offset', '0%').attr('stop-color', '#fb7185');
-    failGrad.append('stop').attr('offset', '100%').attr('stop-color', '#e11d48');
+      // Gradients for slices
+      const successGrad = defs
+        .append('linearGradient')
+        .attr('id', 'mail-donut-success')
+        .attr('x1', '0%')
+        .attr('y1', '0%')
+        .attr('x2', '100%')
+        .attr('y2', '100%');
+      successGrad.append('stop').attr('offset', '0%').attr('stop-color', '#34d399');
+      successGrad.append('stop').attr('offset', '100%').attr('stop-color', '#059669');
 
-    const skipGrad = defs
-      .append('linearGradient')
-      .attr('id', 'mail-donut-skipped')
-      .attr('x1', '0%')
-      .attr('y1', '0%')
-      .attr('x2', '100%')
-      .attr('y2', '100%');
-    skipGrad.append('stop').attr('offset', '0%').attr('stop-color', '#fcd34d');
-    skipGrad.append('stop').attr('offset', '100%').attr('stop-color', '#d97706');
+      const failGrad = defs
+        .append('linearGradient')
+        .attr('id', 'mail-donut-failed')
+        .attr('x1', '0%')
+        .attr('y1', '0%')
+        .attr('x2', '100%')
+        .attr('y2', '100%');
+      failGrad.append('stop').attr('offset', '0%').attr('stop-color', '#fb7185');
+      failGrad.append('stop').attr('offset', '100%').attr('stop-color', '#e11d48');
 
-    // Main donut group
-    const mainG = svg
-      .append('g')
-      .attr('transform', `translate(${width / 2}, ${height / 2})`);
+      const skipGrad = defs
+        .append('linearGradient')
+        .attr('id', 'mail-donut-skipped')
+        .attr('x1', '0%')
+        .attr('y1', '0%')
+        .attr('x2', '100%')
+        .attr('y2', '100%');
+      skipGrad.append('stop').attr('offset', '0%').attr('stop-color', '#fcd34d');
+      skipGrad.append('stop').attr('offset', '100%').attr('stop-color', '#d97706');
+
+      mainG = svg
+        .append('g')
+        .attr('class', 'main-donut-group')
+        .attr('transform', `translate(${width / 2}, ${height / 2})`);
+
+      mainG.append('g').attr('class', 'slices-layer');
+      const centerG = mainG.append('g').attr('class', 'center-display').attr('text-anchor', 'middle');
+      centerG.append('text').attr('class', 'health-percent');
+      centerG.append('text').attr('class', 'health-label');
+    }
+
+    mainG.attr('transform', `translate(${width / 2}, ${height / 2})`);
 
     const pie = d3
       .pie<DonutSliceData>()
@@ -241,22 +270,29 @@ export const MailSuccessRateDonut: React.FC<MailSuccessRateDonutProps> = ({
       .outerRadius(radius + 5)
       .cornerRadius(6);
 
-    const arcs = mainG
-      .selectAll('.donut-slice')
-      .data(pie(chartData))
+    const slicesLayer = mainG.select('.slices-layer');
+    const arcs = slicesLayer
+      .selectAll<SVGGElement, d3.PieArcDatum<DonutSliceData>>('g.donut-slice')
+      .data(pie(chartData), (d) => d.data.key);
+
+    arcs.exit().remove();
+
+    const arcsEnter = arcs
       .enter()
       .append('g')
       .attr('class', 'donut-slice')
       .style('cursor', 'pointer');
 
-    // Slice Paths
-    arcs
+    arcsEnter
       .append('path')
-      .attr('d', arc)
-      .attr('fill', (d) => `url(#${d.data.gradientId})`)
       .attr('stroke', '#ffffff')
-      .attr('stroke-width', 2)
-      .style('transition', 'all 0.25s ease')
+      .attr('stroke-width', 2);
+
+    const mergedArcs = arcsEnter.merge(arcs);
+
+    mergedArcs
+      .select('path')
+      .attr('fill', (d) => `url(#${d.data.gradientId})`)
       .on('mouseenter', function (event, d) {
         d3.select(this)
           .transition()
@@ -265,10 +301,10 @@ export const MailSuccessRateDonut: React.FC<MailSuccessRateDonutProps> = ({
           .attr('stroke-width', 3);
 
         setHoveredSlice(d.data);
-        const rect = event.currentTarget.getBoundingClientRect();
+        const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
         setTooltipPos({ x: rect.x + rect.width / 2, y: rect.y });
       })
-      .on('mouseleave', function (_event, _d) {
+      .on('mouseleave', function () {
         d3.select(this)
           .transition()
           .duration(150)
@@ -281,13 +317,20 @@ export const MailSuccessRateDonut: React.FC<MailSuccessRateDonutProps> = ({
         if (onSelectStatusFilter) {
           onSelectStatusFilter(activeStatusFilter === d.data.key ? 'ALL' : d.data.key);
         }
+      })
+      .transition()
+      .duration(450)
+      .ease(d3.easeCubicOut)
+      .attrTween('d', function (d) {
+        const interpolate = d3.interpolate({ startAngle: 0, endAngle: 0 }, d);
+        return function (t) {
+          return arc(interpolate(t)) || '';
+        };
       });
 
-    // Center Display - Delivery Health % & Label
-    const centerG = mainG.append('g').attr('text-anchor', 'middle');
-
-    centerG
-      .append('text')
+    // Center Display Updates
+    mainG
+      .select('.health-percent')
       .attr('dy', '-5px')
       .attr('font-size', '22px')
       .attr('font-weight', '900')
@@ -295,8 +338,8 @@ export const MailSuccessRateDonut: React.FC<MailSuccessRateDonutProps> = ({
       .attr('fill', '#0f172a')
       .text(`${deliveryHealthPercent}%`);
 
-    centerG
-      .append('text')
+    mainG
+      .select('.health-label')
       .attr('dy', '14px')
       .attr('font-size', '10px')
       .attr('font-weight', '700')
@@ -304,159 +347,100 @@ export const MailSuccessRateDonut: React.FC<MailSuccessRateDonutProps> = ({
       .attr('letter-spacing', '0.5px')
       .attr('fill', '#64748b')
       .text('Delivery Health');
-
-    centerG
-      .append('text')
-      .attr('dy', '27px')
-      .attr('font-size', '9px')
-      .attr('font-weight', '600')
-      .attr('fill', '#10b981')
-      .text(`${successCount}/${totalAttempts || totalLogs} Delivered`);
-  }, [chartData, deliveryHealthPercent, successCount, totalAttempts, totalLogs, activeStatusFilter, onSelectStatusFilter]);
+  }, [dataSignature, activeStatusFilter, onSelectStatusFilter]);
 
   return (
-    <div
-      ref={containerRef}
-      className="bg-white rounded-2xl border border-slate-200 shadow-2xs p-5 flex flex-col justify-between relative overflow-hidden"
-    >
-      {/* Header with Title and Month Filter Scope */}
-      <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-3">
+    <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs p-5 space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-slate-100 pb-3">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
             <HeartPulse className="w-4 h-4" />
           </div>
           <div>
-            <h4 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-              Monthly Auto-Wish Success Rate
-            </h4>
-            <p className="text-[10px] text-slate-400">
-              D3 Donut Reliability & Delivery Health ratio
-            </p>
+            <h3 className="text-sm font-bold text-slate-900">Email Delivery Health</h3>
+            <p className="text-xs text-slate-500">Transmission success and dispatch reliability</p>
           </div>
         </div>
 
-        {/* Scope Dropdown */}
+        {/* Scope Indicator */}
         <div className="flex items-center gap-1.5">
-          <select
-            value={monthScope}
-            onChange={(e) => {
-              const val = e.target.value === 'ALL' ? 'ALL' : parseInt(e.target.value, 10);
-              setMonthScope(val);
-              if (onSelectMonth) {
-                onSelectMonth(val === 'ALL' ? null : val);
-              }
-            }}
-            className="text-[11px] font-bold text-slate-700 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 outline-none cursor-pointer hover:border-slate-300"
-          >
-            <option value="ALL">All Time Logs</option>
-            {MONTH_NAMES.map((m, idx) => (
-              <option key={m.short} value={idx}>
-                {m.full} {idx === currentMonthIndex ? '(Current)' : ''}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {/* Donut Chart Canvas */}
-      <div className="my-2 flex items-center justify-center relative">
-        <svg ref={svgRef} className="max-w-[280px] h-auto" />
-
-        {/* Floating Health Status Badge */}
-        <div className="absolute top-0 right-1">
-          <span
-            className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${healthStatus.color} flex items-center gap-1`}
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span className={`px-2 py-0.5 rounded-full text-xs font-semibold border ${healthStatus.color}`}>
             {healthStatus.label}
           </span>
         </div>
       </div>
 
-      {/* Legend & Breakdown Strip */}
-      <div className="space-y-2 pt-2 border-t border-slate-100">
-        <div className="grid grid-cols-3 gap-2 text-center">
-          {/* Success */}
-          <div
-            onClick={() => onSelectStatusFilter && onSelectStatusFilter('SUCCESS')}
-            className={`p-2 rounded-xl border transition cursor-pointer ${
-              activeStatusFilter === 'SUCCESS'
-                ? 'bg-emerald-50 border-emerald-300 ring-2 ring-emerald-400/20'
-                : 'bg-slate-50/70 border-slate-100 hover:bg-emerald-50/40'
-            }`}
-          >
-            <div className="flex items-center justify-center gap-1 text-[10px] font-bold text-emerald-700">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
-              Success
-            </div>
-            <p className="text-sm font-black font-mono text-emerald-950 mt-0.5">
-              {successCount}
-            </p>
-          </div>
-
-          {/* Failed */}
-          <div
-            onClick={() => onSelectStatusFilter && onSelectStatusFilter('FAILED')}
-            className={`p-2 rounded-xl border transition cursor-pointer ${
-              activeStatusFilter === 'FAILED'
-                ? 'bg-rose-50 border-rose-300 ring-2 ring-rose-400/20'
-                : 'bg-slate-50/70 border-slate-100 hover:bg-rose-50/40'
-            }`}
-          >
-            <div className="flex items-center justify-center gap-1 text-[10px] font-bold text-rose-700">
-              <span className="w-2 h-2 rounded-full bg-rose-500 inline-block"></span>
-              Failed
-            </div>
-            <p className="text-sm font-black font-mono text-rose-950 mt-0.5">
-              {failedCount}
-            </p>
-          </div>
-
-          {/* Skipped */}
-          <div
-            onClick={() => onSelectStatusFilter && onSelectStatusFilter('SKIPPED')}
-            className={`p-2 rounded-xl border transition cursor-pointer ${
-              activeStatusFilter === 'SKIPPED'
-                ? 'bg-amber-50 border-amber-300 ring-2 ring-amber-400/20'
-                : 'bg-slate-50/70 border-slate-100 hover:bg-amber-50/40'
-            }`}
-          >
-            <div className="flex items-center justify-center gap-1 text-[10px] font-bold text-amber-700">
-              <span className="w-2 h-2 rounded-full bg-amber-500 inline-block"></span>
-              Skipped
-            </div>
-            <p className="text-sm font-black font-mono text-amber-950 mt-0.5">
-              {skippedCount}
-            </p>
-          </div>
+      {/* Donut Canvas and Metrics */}
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+        {/* SVG Container */}
+        <div ref={containerRef} className="w-[180px] h-[180px] shrink-0 relative flex items-center justify-center">
+          <svg ref={svgRef} className="w-full h-full overflow-visible" />
         </div>
 
-        {activeStatusFilter !== 'ALL' && (
-          <div className="flex items-center justify-between text-[11px] bg-slate-100 px-2.5 py-1 rounded-lg text-slate-700">
-            <span>Filtering logs by: <strong>{activeStatusFilter}</strong></span>
-            <button
-              onClick={() => onSelectStatusFilter && onSelectStatusFilter('ALL')}
-              className="text-indigo-600 font-bold hover:text-indigo-800 cursor-pointer"
-            >
-              Reset (✕)
-            </button>
+        {/* Legend / Metrics List */}
+        <div className="flex-1 w-full space-y-2">
+          <div
+            onClick={() => onSelectStatusFilter && onSelectStatusFilter(activeStatusFilter === 'SUCCESS' ? 'ALL' : 'SUCCESS')}
+            className={`flex items-center justify-between p-2 rounded-xl border transition-all cursor-pointer ${
+              activeStatusFilter === 'SUCCESS'
+                ? 'bg-emerald-50 border-emerald-300 shadow-2xs'
+                : 'bg-slate-50/70 border-slate-100 hover:bg-slate-50'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+              <span className="text-xs font-semibold text-slate-700">Delivered</span>
+            </div>
+            <span className="text-xs font-extrabold text-slate-900 font-mono">{successCount}</span>
           </div>
-        )}
+
+          <div
+            onClick={() => onSelectStatusFilter && onSelectStatusFilter(activeStatusFilter === 'FAILED' ? 'ALL' : 'FAILED')}
+            className={`flex items-center justify-between p-2 rounded-xl border transition-all cursor-pointer ${
+              activeStatusFilter === 'FAILED'
+                ? 'bg-rose-50 border-rose-300 shadow-2xs'
+                : 'bg-slate-50/70 border-slate-100 hover:bg-slate-50'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+              <span className="text-xs font-semibold text-slate-700">Failed</span>
+            </div>
+            <span className="text-xs font-extrabold text-slate-900 font-mono">{failedCount}</span>
+          </div>
+
+          <div
+            onClick={() => onSelectStatusFilter && onSelectStatusFilter(activeStatusFilter === 'SKIPPED' ? 'ALL' : 'SKIPPED')}
+            className={`flex items-center justify-between p-2 rounded-xl border transition-all cursor-pointer ${
+              activeStatusFilter === 'SKIPPED'
+                ? 'bg-amber-50 border-amber-300 shadow-2xs'
+                : 'bg-slate-50/70 border-slate-100 hover:bg-slate-50'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+              <span className="text-xs font-semibold text-slate-700">Skipped / Pending</span>
+            </div>
+            <span className="text-xs font-extrabold text-slate-900 font-mono">{skippedCount}</span>
+          </div>
+        </div>
       </div>
 
-      {/* Dynamic Hover Tooltip */}
+      {/* Floating Tooltip */}
       {hoveredSlice && tooltipPos && (
         <div
-          className="fixed z-50 bg-slate-900 text-white rounded-xl px-3.5 py-2 text-xs shadow-xl pointer-events-none transform -translate-x-1/2 -translate-y-full mb-2 font-sans border border-slate-700 max-w-xs"
-          style={{ left: `${tooltipPos.x}px`, top: `${tooltipPos.y}px` }}
+          className="fixed z-50 pointer-events-none transform -translate-x-1/2 -translate-y-full bg-slate-900 text-white text-xs rounded-xl p-3 shadow-xl border border-slate-700 min-w-[200px]"
+          style={{
+            left: `${tooltipPos.x}px`,
+            top: `${tooltipPos.y - 10}px`,
+          }}
         >
-          <div className="flex items-center gap-1.5 font-bold text-amber-300 text-xs">
+          <div className="font-bold text-slate-100 border-b border-slate-700 pb-1.5 mb-1.5 flex items-center justify-between">
             <span>{hoveredSlice.label}</span>
-            <span className="text-slate-300 font-mono">({hoveredSlice.count} logs)</span>
+            <span className="font-mono text-emerald-400 font-bold">{hoveredSlice.count}</span>
           </div>
-          <p className="text-[11px] text-slate-300 mt-1 leading-snug">
-            {hoveredSlice.description}
-          </p>
+          <p className="text-[11px] text-slate-300 leading-relaxed">{hoveredSlice.description}</p>
         </div>
       )}
     </div>

@@ -230,57 +230,105 @@ app.get("/api/sheet-data", async (req, res) => {
       });
     }
 
-    // User Requirement: Parse rows starting from Row 5 downwards (skip header rows 1–4, so row index >= 4)
-    // Accurate Column Mapping:
-    // Column D (index 3): Name
-    // Column E (index 4): Designation
-    // Column G (index 6): Birthday
-    // Column J (index 9): WhatsApp Number
-    // Column K (index 10): Wishing Message
-    // In addition:
-    // Column A (index 0): SL
-    // Column B (index 1): ID
-    // Column F (index 5): Mobile
-    // Column I (index 8) / Column H (index 7): Email
-    // Column L (index 11): Last Sent Year
+    // Dynamic header discovery and parsing
+    let headerRowIdx = -1;
+    for (let i = 0; i < rows.length; i++) {
+      const rowStr = rows[i].join(' ').toLowerCase();
+      if (
+        rowStr.includes('name') &&
+        (rowStr.includes('birthday') ||
+          rowStr.includes('designation') ||
+          rowStr.includes('sl') ||
+          rowStr.includes('id'))
+      ) {
+        headerRowIdx = i;
+        break;
+      }
+    }
+
+    if (headerRowIdx === -1) {
+      headerRowIdx = rows.length > 3 ? 3 : 0;
+    }
+
+    const headers = rows[headerRowIdx].map((h) => h.toLowerCase().trim());
+    const slIdx = headers.findIndex((h) => h === 'sl' || h.includes('sl'));
+    const idIdx = headers.findIndex((h) => h === 'id' || h.includes('id'));
+    const nameIdx = headers.findIndex((h) => h === 'name' || h.includes('name'));
+    const desigIdx = headers.findIndex((h) => h.includes('designation') || h.includes('desig'));
+    const bdayIdx = headers.findIndex(
+      (h) => h.includes('birthday') || h.includes('birth') || h.includes('dob')
+    );
+    const mobileIdx = headers.findIndex(
+      (h) => h.includes('mobile') || h.includes('phone') || h.includes('contact')
+    );
+    const emailIdx = headers.findIndex((h) => h.includes('mail'));
+    const waIdx = headers.findIndex((h) => h.includes('whatapp') || h.includes('whatsapp'));
+    const wishIdx = headers.findIndex(
+      (h) => h.includes('wishing') || h.includes('massage') || h.includes('message')
+    );
+    const sentYearIdx = headers.findIndex(
+      (h) => h.includes('last') || h.includes('sent') || h.includes('year')
+    );
 
     const parsedMembers = [];
-    const startIndex = 4; // Row 5 is index 4 (0-indexed)
 
-    for (let i = startIndex; i < rows.length; i++) {
+    for (let i = headerRowIdx + 1; i < rows.length; i++) {
       const row = rows[i];
       if (!row || row.length === 0) continue;
 
-      // Extract by exact column specifications
-      const rawName = row[3] !== undefined ? row[3].trim() : '';
-      
-      // Skip empty name or header repetitions
-      if (!rawName || rawName.toLowerCase() === 'name' || rawName.toLowerCase() === 'colleague name') {
+      let name = nameIdx !== -1 && row[nameIdx] !== undefined ? row[nameIdx].trim() : '';
+      if (!name && nameIdx === -1 && row[2]) name = row[2].trim();
+      if (!name && nameIdx === -1 && row[3]) name = row[3].trim();
+
+      if (
+        !name ||
+        name.toLowerCase() === 'name' ||
+        name.toLowerCase().includes('central team') ||
+        name.toLowerCase() === 'colleague name'
+      ) {
         continue;
       }
 
-      const sl = (row[0] && row[0].trim()) ? row[0].trim() : `${parsedMembers.length + 1}`;
-      const id = (row[1] && row[1].trim()) ? row[1].trim() : '';
-      const designation = (row[4] && row[4].trim()) ? row[4].trim() : (row[2] && row[2].trim() ? row[2].trim() : 'Team Member');
-      const mobile = (row[5] && row[5].trim()) ? row[5].trim() : '';
-      const birthday = (row[6] && row[6].trim()) ? row[6].trim() : '';
-      // Email from Col I (8) or Col H (7)
-      const email = (row[8] && row[8].trim()) ? row[8].trim() : (row[7] && row[7].trim() ? row[7].trim() : '');
-      // WhatsApp from Col J (9) or fallback to mobile
-      const whatsapp = (row[9] && row[9].trim()) ? row[9].trim() : mobile;
-      // Wishing message from Col K (10)
-      let wishingMessage = (row[10] && row[10].trim()) ? row[10].trim() : '';
-      // Last Sent Year from Col L (11)
-      const lastSentYear = (row[11] && row[11].trim()) ? row[11].trim() : '';
+      const sl = slIdx !== -1 && row[slIdx] !== undefined ? row[slIdx].trim() : `${parsedMembers.length + 1}`;
+      const id = idIdx !== -1 && row[idIdx] !== undefined ? row[idIdx].trim() : '';
+      const designation =
+        desigIdx !== -1 && row[desigIdx] !== undefined
+          ? row[desigIdx].trim()
+          : 'Team Member';
+      const birthday =
+        bdayIdx !== -1 && row[bdayIdx] !== undefined
+          ? row[bdayIdx].trim()
+          : '';
+      const mobile =
+        mobileIdx !== -1 && row[mobileIdx] !== undefined
+          ? row[mobileIdx].trim()
+          : '';
+      const email =
+        emailIdx !== -1 && row[emailIdx] !== undefined
+          ? row[emailIdx].trim()
+          : '';
+      const whatsapp =
+        waIdx !== -1 && row[waIdx] !== undefined && row[waIdx].trim().length > 0
+          ? row[waIdx].trim()
+          : mobile;
+      let wishingMessage =
+        wishIdx !== -1 && row[wishIdx] !== undefined
+          ? row[wishIdx].trim()
+          : '';
+
+      const lastSentYear =
+        sentYearIdx !== -1 && row[sentYearIdx] !== undefined
+          ? row[sentYearIdx].trim()
+          : '';
 
       if (!wishingMessage) {
-        wishingMessage = `Happy Birthday, ${rawName}! Wishing you a great day from the IE Central Team. 🎉`;
+        wishingMessage = `Happy Birthday, ${name}! Wishing you a great day from the IE Central Team. 🎉`;
       }
 
       parsedMembers.push({
         sl,
         id,
-        name: rawName,
+        name,
         designation,
         birthday,
         mobile,

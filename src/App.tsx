@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { TeamMember, TwilioConfig, LogEntry, AutomationLogEntry } from './types';
 import { Header } from './components/Header';
 import { TodayBirthdayBanner } from './components/TodayBirthdayBanner';
@@ -11,8 +11,9 @@ import { BirthdayDistributionChart } from './components/BirthdayDistributionChar
 import { MailWorkstation } from './components/MailWorkstation';
 import { checkIsTodayBirthday } from './utils/dateUtils';
 import { triggerBirthdayConfetti } from './utils/confetti';
-import { getDemoTeamMembers } from './data/fallbackData';
-import { Sparkles, Calendar, Users, PhoneCall, Code2, CheckCircle2, X, Bot, Mail } from 'lucide-react';
+import { useTeamData } from './hooks/useTeamData';
+import { computeDerivedAnalytics } from './utils/analyticsCalculations';
+import { Sparkles, Calendar, Users, PhoneCall, Code2, CheckCircle2, X, Bot, Mail, RefreshCw } from 'lucide-react';
 
 interface ToastNotification {
   type: 'success' | 'info' | 'error';
@@ -22,17 +23,13 @@ interface ToastNotification {
 }
 
 export default function App() {
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(() => getDemoTeamMembers());
   const [activeTab, setActiveTab] = useState<'roster' | 'email' | 'generator' | 'script' | 'automation' | 'tester'>('roster');
-  const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [autoSyncEnabled, setAutoSyncEnabled] = useState<boolean>(true);
   const [toastNotification, setToastNotification] = useState<ToastNotification | null>(null);
-  const [lastSynced, setLastSynced] = useState<string | null>(null);
   const [isWishModalOpen, setIsWishModalOpen] = useState<boolean>(false);
   const [selectedMemberForWish, setSelectedMemberForWish] = useState<TeamMember | null>(null);
   const [isSendingWhatsApp, setIsSendingWhatsApp] = useState<boolean>(false);
   const [manualLogs, setManualLogs] = useState<LogEntry[]>([]);
-  const [automationLogs, setAutomationLogs] = useState<AutomationLogEntry[]>([]);
   const [selectedMonthFilter, setSelectedMonthFilter] = useState<number | null>(null);
 
   // Persistent Twilio & Connected WhatsApp Number configuration (Default: +8801625299521)
@@ -65,54 +62,29 @@ export default function App() {
     return {};
   });
 
-  // Sync Google Sheet Data from /api/sheet-data
-  const fetchSheetData = async (isSilent: boolean = false) => {
-    if (!isSilent) setIsSyncing(true);
-    try {
-      const res = await fetch('/api/sheet-data');
-      const data = await res.json();
-      if (data.data && Array.isArray(data.data) && data.data.length > 0) {
-        const currentYear = new Date().getFullYear().toString();
-        // Merge with local sentYearMap override
-        const mergedMembers = data.data.map((m: TeamMember) => {
-          const key = m.id || m.sl;
-          const localSentYear = sentYearMap[key];
-          return {
-            ...m,
-            lastSentYear: localSentYear !== undefined && localSentYear !== '' ? localSentYear : (m.lastSentYear || '')
-          };
-        });
-        setTeamMembers(mergedMembers);
-        setLastSynced(new Date().toLocaleTimeString());
-      } else {
-        // Fallback to rich demo roster
-        setTeamMembers((prev) => prev.length > 0 ? prev : getDemoTeamMembers());
-        setLastSynced(new Date().toLocaleTimeString());
-      }
-    } catch (err) {
-      console.error('Error fetching sheet data:', err);
-      setTeamMembers((prev) => prev.length > 0 ? prev : getDemoTeamMembers());
-    } finally {
-      if (!isSilent) setIsSyncing(false);
-    }
-  };
+  // Centralized State & Single Source of Truth via Dedicated Hook with AbortController
+  const {
+    teamMembers,
+    automationLogs,
+    emailLogs,
+    isLoading,
+    isSyncing,
+    lastSynced,
+    refetch,
+    refetchAutomationLogs,
+    refetchEmailLogs,
+    setTeamMembers,
+    setAutomationLogs,
+  } = useTeamData(autoSyncEnabled, sentYearMap);
 
-  // Fetch Automation logs returned from Google Apps Script trigger
-  const fetchAutomationLogs = async () => {
-    try {
-      const res = await fetch('/api/automation-logs');
-      const data = await res.json();
-      if (data.logs && Array.isArray(data.logs)) {
-        setAutomationLogs(data.logs);
-      }
-    } catch (err) {
-      console.error('Error fetching automation logs:', err);
-    }
-  };
+  // Pre-calculated memoized derived analytics passed as pure presentation props to visualization components
+  const derivedAnalytics = useMemo(() => {
+    return computeDerivedAnalytics(teamMembers, emailLogs);
+  }, [teamMembers, emailLogs]);
 
   // Simulate Google Apps Script 8:00 AM Cloud Trigger run
   const handleSimulateTriggerRun = async () => {
-    const todayMember = todayBirthdays[0] || teamMembers.find(m => m.whatsapp) || teamMembers[0];
+    const todayMember = derivedAnalytics.todayCelebrants[0] || teamMembers.find(m => m.whatsapp) || teamMembers[0];
     try {
       await fetch('/api/automation-logs', {
         method: 'POST',
@@ -126,28 +98,15 @@ export default function App() {
           triggerSource: "Google Apps Script (Time-Driven 8:00 AM)"
         })
       });
-      await fetchAutomationLogs();
+      await refetchAutomationLogs();
     } catch (e) {
       console.error('Simulation trigger error:', e);
     }
   };
 
-  // Real-time automatic background polling every 15 seconds
-  useEffect(() => {
-    fetchSheetData(false);
-    fetchAutomationLogs();
-
-    const intervalId = setInterval(() => {
-      if (autoSyncEnabled) {
-        fetchSheetData(true);
-        fetchAutomationLogs();
-      }
-    }, 15000);
-
-    return () => clearInterval(intervalId);
-  }, [autoSyncEnabled, sentYearMap]);
-
-  const todayBirthdays = teamMembers.filter((m) => m.isBirthdayToday || checkIsTodayBirthday(m.birthday));
+  const todayBirthdays = useMemo(() => {
+    return teamMembers.filter((m) => m.isBirthdayToday || checkIsTodayBirthday(m.birthday));
+  }, [teamMembers]);
 
   // Toggle wish sent status for current year
   const handleToggleWishSent = (idOrSl: string) => {
@@ -226,8 +185,6 @@ export default function App() {
       });
 
       const data = await res.json();
-
-      // Automatically flip serverDispatched toggle in local state upon API success
       const isDispatched = data.serverDispatched || data.success;
 
       setTeamMembers((prev) =>
@@ -255,11 +212,10 @@ export default function App() {
           details: `Headless Server Dispatch executed via +8801625299521.`,
           triggerSource: 'Server Headless Dispatch'
         })
-      }).then(() => fetchAutomationLogs()).catch(() => {});
+      }).then(() => refetchAutomationLogs()).catch(() => {});
 
       triggerBirthdayConfetti();
 
-      // Display clean 100% zero-touch notification toast
       setToastNotification({
         type: 'success',
         title: 'Wish Dispatched Automatically via +8801625299521 (Background Automation)',
@@ -325,7 +281,6 @@ export default function App() {
       };
 
       setManualLogs((prev) => [newManualLog, ...prev]);
-
       triggerBirthdayConfetti();
 
       setToastNotification({
@@ -411,7 +366,7 @@ export default function App() {
       <Header
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        onSync={() => fetchSheetData(false)}
+        onSync={() => refetch(false)}
         isSyncing={isSyncing}
         lastSynced={lastSynced}
         todayCount={todayBirthdays.length}
@@ -496,9 +451,10 @@ export default function App() {
         {/* Tab Views */}
         {activeTab === 'roster' && (
           <div className="space-y-6">
-            {/* D3 Birthday Distribution Chart Section */}
+            {/* D3 Birthday Distribution Chart Section with Pre-Calculated Props */}
             <BirthdayDistributionChart
               members={teamMembers}
+              monthData={derivedAnalytics.monthlyBirthdayData}
               selectedMonth={selectedMonthFilter}
               onSelectMonth={setSelectedMonthFilter}
             />
@@ -562,7 +518,7 @@ export default function App() {
         {activeTab === 'automation' && (
           <AutomationHistory
             logs={automationLogs}
-            onRefresh={fetchAutomationLogs}
+            onRefresh={refetchAutomationLogs}
             onSimulateTriggerRun={handleSimulateTriggerRun}
             onClearLogs={() => setAutomationLogs([])}
           />

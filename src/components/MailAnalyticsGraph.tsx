@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useLayoutEffect, useRef, useState, useMemo } from 'react';
 import * as d3 from 'd3';
 import { TeamMember, EmailLogEntry } from '../types';
 import { MONTH_NAMES, getBirthMonth } from '../utils/dateUtils';
@@ -20,14 +20,6 @@ import {
   ArrowUpRight,
   Filter
 } from 'lucide-react';
-
-interface MailAnalyticsGraphProps {
-  members: TeamMember[];
-  emailLogs?: EmailLogEntry[];
-  sentEmailMap?: Record<string, boolean>;
-  onSelectMonthFilter?: (monthIndex: number | null) => void;
-  selectedMonthFilter?: number | null;
-}
 
 export interface MonthlyEmailStats {
   monthIndex: number;
@@ -55,10 +47,28 @@ export interface DesignationStats {
   coveragePercent: number;
 }
 
+interface MailAnalyticsGraphProps {
+  members?: TeamMember[];
+  emailLogs?: EmailLogEntry[];
+  sentEmailMap?: Record<string, boolean>;
+  monthlyStats?: MonthlyEmailStats[];
+  domainStats?: DomainStats[];
+  designationStats?: DesignationStats[];
+  totalWithEmail?: number;
+  overallCoverage?: number;
+  onSelectMonthFilter?: (monthIndex: number | null) => void;
+  selectedMonthFilter?: number | null;
+}
+
 export const MailAnalyticsGraph: React.FC<MailAnalyticsGraphProps> = ({
-  members,
+  members = [],
   emailLogs = [],
   sentEmailMap = {},
+  monthlyStats: precomputedMonthlyStats,
+  domainStats: precomputedDomainStats,
+  designationStats: precomputedDesignationStats,
+  totalWithEmail: precomputedTotalWithEmail,
+  overallCoverage: precomputedOverallCoverage,
   onSelectMonthFilter,
   selectedMonthFilter = null,
 }) => {
@@ -73,8 +83,12 @@ export const MailAnalyticsGraph: React.FC<MailAnalyticsGraphProps> = ({
 
   const currentMonthIndex = new Date().getMonth();
 
-  // Compute monthly email readiness statistics
+  // Compute or consume monthly email readiness statistics
   const monthlyStats: MonthlyEmailStats[] = useMemo(() => {
+    if (precomputedMonthlyStats && precomputedMonthlyStats.length === 12) {
+      return precomputedMonthlyStats;
+    }
+
     const list: MonthlyEmailStats[] = MONTH_NAMES.map((m, idx) => ({
       monthIndex: idx,
       shortName: m.short,
@@ -107,17 +121,25 @@ export const MailAnalyticsGraph: React.FC<MailAnalyticsGraphProps> = ({
     });
 
     return list;
-  }, [members, currentMonthIndex]);
+  }, [precomputedMonthlyStats, members, currentMonthIndex]);
 
   // Overall calculations
   const totalMembers = members.length;
-  const totalWithEmail = members.filter((m) => m.email && m.email.trim().length > 0).length;
+  const totalWithEmail = precomputedTotalWithEmail !== undefined 
+    ? precomputedTotalWithEmail 
+    : members.filter((m) => m.email && m.email.trim().length > 0).length;
   const totalMissingEmail = totalMembers - totalWithEmail;
-  const overallCoverage = totalMembers > 0 ? Math.round((totalWithEmail / totalMembers) * 100) : 0;
+  const overallCoverage = precomputedOverallCoverage !== undefined
+    ? precomputedOverallCoverage
+    : totalMembers > 0 ? Math.round((totalWithEmail / totalMembers) * 100) : 0;
   const sentCount = Object.keys(sentEmailMap).length;
 
   // Domain breakdown
   const domainStats: DomainStats[] = useMemo(() => {
+    if (precomputedDomainStats) {
+      return precomputedDomainStats;
+    }
+
     const domainCounts: Record<string, number> = {};
     let noEmailCount = 0;
 
@@ -156,10 +178,14 @@ export const MailAnalyticsGraph: React.FC<MailAnalyticsGraphProps> = ({
     }
 
     return list.sort((a, b) => b.count - a.count);
-  }, [members, totalMembers]);
+  }, [precomputedDomainStats, members, totalMembers]);
 
   // Designation breakdown
   const designationStats: DesignationStats[] = useMemo(() => {
+    if (precomputedDesignationStats) {
+      return precomputedDesignationStats;
+    }
+
     const desMap: Record<string, { total: number; withEmail: number }> = {};
     members.forEach((m) => {
       const des = m.designation?.trim() || 'General Team';
@@ -180,26 +206,52 @@ export const MailAnalyticsGraph: React.FC<MailAnalyticsGraphProps> = ({
         coveragePercent: Math.round((data.withEmail / data.total) * 100),
       }))
       .sort((a, b) => b.total - a.total)
-      .slice(0, 7); // top 7 designations
-  }, [members]);
+      .slice(0, 7);
+  }, [precomputedDesignationStats, members]);
 
-  // Render Monthly D3 Grouped Bar Chart
-  useEffect(() => {
+  // Memoized signature for monthly bar chart to prevent re-render flicker
+  const monthlyDataSignature = useMemo(() => {
+    return monthlyStats.map((s) => `${s.shortName}:${s.withEmail}/${s.totalBirthdays}`).join('|') + `_filter:${selectedMonthFilter}`;
+  }, [monthlyStats, selectedMonthFilter]);
+
+  // Render Monthly D3 Grouped Bar Chart using useLayoutEffect and morph animations
+  useLayoutEffect(() => {
     if (activeGraphTab !== 'monthly' || !barSvgRef.current) return;
 
     const svg = d3.select(barSvgRef.current);
-    svg.selectAll('*').remove();
-
     const width = 640;
     const height = 240;
     const margin = { top: 25, right: 20, bottom: 35, left: 35 };
     const innerWidth = width - margin.left - margin.right;
     const innerHeight = height - margin.top - margin.bottom;
 
-    const g = svg
-      .attr('viewBox', `0 0 ${width} ${height}`)
-      .append('g')
-      .attr('transform', `translate(${margin.left},${margin.top})`);
+    svg.attr('viewBox', `0 0 ${width} ${height}`);
+
+    let g = svg.select<SVGGElement>('g.chart-group');
+    if (g.empty()) {
+      svg.selectAll('*').remove();
+
+      const defs = svg.append('defs');
+      const grad = defs
+        .append('linearGradient')
+        .attr('id', 'currentMonthGrad')
+        .attr('x1', '0%')
+        .attr('y1', '0%')
+        .attr('x2', '0%')
+        .attr('y2', '100%');
+      grad.append('stop').attr('offset', '0%').attr('stop-color', '#ec4899');
+      grad.append('stop').attr('offset', '100%').attr('stop-color', '#8b5cf6');
+
+      g = svg
+        .append('g')
+        .attr('class', 'chart-group')
+        .attr('transform', `translate(${margin.left},${margin.top})`);
+
+      g.append('g').attr('class', 'grid');
+      g.append('g').attr('class', 'x-axis');
+      g.append('g').attr('class', 'y-axis');
+      g.append('g').attr('class', 'bars-group');
+    }
 
     const maxCount = Math.max(d3.max(monthlyStats, (d) => d.totalBirthdays) || 4, 4);
 
@@ -214,9 +266,8 @@ export const MailAnalyticsGraph: React.FC<MailAnalyticsGraphProps> = ({
       .domain([0, maxCount + 1])
       .range([innerHeight, 0]);
 
-    // Grid lines
-    g.append('g')
-      .attr('class', 'grid')
+    // Grid lines update
+    g.select<SVGGElement>('.grid')
       .call(
         d3
           .axisLeft(yScale)
@@ -229,8 +280,8 @@ export const MailAnalyticsGraph: React.FC<MailAnalyticsGraphProps> = ({
         grid.selectAll('line').attr('stroke', '#f1f5f9').attr('stroke-dasharray', '3,3')
       );
 
-    // X Axis
-    g.append('g')
+    // X Axis update
+    g.select<SVGGElement>('.x-axis')
       .attr('transform', `translate(0,${innerHeight})`)
       .call(d3.axisBottom(xScale).tickSize(0))
       .call((axis) => axis.select('.domain').attr('stroke', '#e2e8f0'))
@@ -242,69 +293,87 @@ export const MailAnalyticsGraph: React.FC<MailAnalyticsGraphProps> = ({
         i === currentMonthIndex ? '#4f46e5' : selectedMonthFilter === i ? '#0f172a' : '#64748b'
       );
 
-    // Y Axis
-    g.append('g')
+    // Y Axis update
+    g.select<SVGGElement>('.y-axis')
       .call(d3.axisLeft(yScale).ticks(4).tickFormat(d3.format('d')))
       .call((axis) => axis.select('.domain').remove())
       .selectAll('text')
       .attr('font-size', '10px')
       .attr('fill', '#94a3b8');
 
-    // Draw stacked or grouped bars
+    // Data-bound monthly bar groups
     const barWidth = xScale.bandwidth();
+    const barsContainer = g.select('.bars-group');
+    const monthGroups = barsContainer
+      .selectAll<SVGGElement, MonthlyEmailStats>('.month-bar-group')
+      .data(monthlyStats, (d) => d.shortName);
 
-    monthlyStats.forEach((d) => {
-      const x = xScale(d.shortName) || 0;
+    monthGroups.exit().remove();
+
+    const monthGroupsEnter = monthGroups
+      .enter()
+      .append('g')
+      .attr('class', 'month-bar-group');
+
+    monthGroupsEnter
+      .append('rect')
+      .attr('class', 'col-hover-bg')
+      .attr('y', 0)
+      .attr('rx', 6)
+      .attr('opacity', 0.8)
+      .style('cursor', 'pointer');
+
+    monthGroupsEnter
+      .append('rect')
+      .attr('class', 'total-bar')
+      .attr('rx', 4)
+      .attr('fill', '#e2e8f0')
+      .style('cursor', 'pointer');
+
+    monthGroupsEnter
+      .append('rect')
+      .attr('class', 'email-bar')
+      .attr('rx', 4)
+      .style('cursor', 'pointer');
+
+    monthGroupsEnter
+      .append('text')
+      .attr('class', 'count-label')
+      .attr('text-anchor', 'middle')
+      .attr('font-size', '10px')
+      .attr('font-weight', 'bold');
+
+    const mergedGroups = monthGroupsEnter.merge(monthGroups);
+
+    // Interactive event handlers
+    mergedGroups.each(function (d) {
+      const groupEl = d3.select(this);
       const isSelected = selectedMonthFilter === d.monthIndex;
       const isCurrent = d.isCurrentMonth;
+      const x = xScale(d.shortName) || 0;
 
-      // Base highlight background on hover or selection
-      g.append('rect')
+      groupEl
+        .select('.col-hover-bg')
         .attr('x', x - 2)
-        .attr('y', 0)
         .attr('width', barWidth + 4)
         .attr('height', innerHeight)
         .attr('fill', isSelected ? '#eef2ff' : isCurrent ? '#fdf4ff' : 'transparent')
-        .attr('rx', 6)
-        .attr('opacity', 0.8)
-        .style('cursor', 'pointer')
         .on('click', () => {
           if (onSelectMonthFilter) {
             onSelectMonthFilter(isSelected ? null : d.monthIndex);
           }
         });
 
-      if (d.totalBirthdays === 0) {
-        // Dot for zero count
-        g.append('circle')
-          .attr('cx', x + barWidth / 2)
-          .attr('cy', innerHeight - 4)
-          .attr('r', 2.5)
-          .attr('fill', '#cbd5e1');
-        return;
-      }
+      const totalHeight = d.totalBirthdays > 0 ? innerHeight - yScale(d.totalBirthdays) : 0;
+      const totalY = d.totalBirthdays > 0 ? yScale(d.totalBirthdays) : innerHeight;
 
-      // Bar with Email (Emerald / Indigo)
-      const emailHeight = innerHeight - yScale(d.withEmail);
-      const emailY = yScale(d.withEmail);
-
-      // Missing Email portion
-      const missingHeight = innerHeight - yScale(d.missingEmail);
-      const totalHeight = innerHeight - yScale(d.totalBirthdays);
-      const totalY = yScale(d.totalBirthdays);
-
-      // Render Total Bar (Backdrop)
-      g.append('rect')
+      groupEl
+        .select('.total-bar')
         .attr('x', x)
-        .attr('y', totalY)
         .attr('width', barWidth)
-        .attr('height', totalHeight)
-        .attr('rx', 4)
-        .attr('fill', '#e2e8f0')
-        .style('cursor', 'pointer')
         .on('mouseenter', (event) => {
           setHoveredMonth(d);
-          const rect = event.currentTarget.getBoundingClientRect();
+          const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
           setTooltipPos({ x: rect.x + rect.width / 2, y: rect.y });
         })
         .on('mouseleave', () => setHoveredMonth(null))
@@ -312,77 +381,75 @@ export const MailAnalyticsGraph: React.FC<MailAnalyticsGraphProps> = ({
           if (onSelectMonthFilter) {
             onSelectMonthFilter(isSelected ? null : d.monthIndex);
           }
-        });
+        })
+        .transition()
+        .duration(400)
+        .ease(d3.easeCubicOut)
+        .attr('y', totalY)
+        .attr('height', totalHeight)
+        .attr('opacity', d.totalBirthdays > 0 ? 1 : 0);
 
-      // Render With Email Bar (Active fill)
-      if (d.withEmail > 0) {
-        g.append('rect')
-          .attr('x', x)
-          .attr('y', innerHeight - emailHeight)
-          .attr('width', barWidth)
-          .attr('height', emailHeight)
-          .attr('rx', 4)
-          .attr(
-            'fill',
-            isCurrent
-              ? 'url(#currentMonthGrad)'
-              : isSelected
-              ? '#4f46e5'
-              : '#10b981'
-          )
-          .style('cursor', 'pointer')
-          .on('mouseenter', (event) => {
-            setHoveredMonth(d);
-            const rect = event.currentTarget.getBoundingClientRect();
-            setTooltipPos({ x: rect.x + rect.width / 2, y: rect.y });
-          })
-          .on('mouseleave', () => setHoveredMonth(null))
-          .on('click', () => {
-            if (onSelectMonthFilter) {
-              onSelectMonthFilter(isSelected ? null : d.monthIndex);
-            }
-          });
-      }
+      const emailHeight = d.withEmail > 0 ? innerHeight - yScale(d.withEmail) : 0;
+      const emailY = d.withEmail > 0 ? innerHeight - emailHeight : innerHeight;
 
-      // Bar top label (count)
-      g.append('text')
+      groupEl
+        .select('.email-bar')
+        .attr('x', x)
+        .attr('width', barWidth)
+        .attr('fill', isCurrent ? 'url(#currentMonthGrad)' : isSelected ? '#4f46e5' : '#10b981')
+        .on('mouseenter', (event) => {
+          setHoveredMonth(d);
+          const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+          setTooltipPos({ x: rect.x + rect.width / 2, y: rect.y });
+        })
+        .on('mouseleave', () => setHoveredMonth(null))
+        .on('click', () => {
+          if (onSelectMonthFilter) {
+            onSelectMonthFilter(isSelected ? null : d.monthIndex);
+          }
+        })
+        .transition()
+        .duration(400)
+        .ease(d3.easeCubicOut)
+        .attr('y', emailY)
+        .attr('height', emailHeight)
+        .attr('opacity', d.withEmail > 0 ? 1 : 0);
+
+      groupEl
+        .select('.count-label')
         .attr('x', x + barWidth / 2)
-        .attr('y', totalY - 5)
-        .attr('text-anchor', 'middle')
-        .attr('font-size', '10px')
-        .attr('font-weight', 'bold')
         .attr('fill', isCurrent ? '#9333ea' : isSelected ? '#4f46e5' : '#334155')
-        .text(d.totalBirthdays);
+        .text(d.totalBirthdays > 0 ? d.totalBirthdays : '')
+        .transition()
+        .duration(400)
+        .ease(d3.easeCubicOut)
+        .attr('y', totalY - 5);
     });
+  }, [monthlyDataSignature, activeGraphTab, selectedMonthFilter, currentMonthIndex, onSelectMonthFilter]);
 
-    // Gradient definitions
-    const defs = svg.append('defs');
-    const grad = defs
-      .append('linearGradient')
-      .attr('id', 'currentMonthGrad')
-      .attr('x1', '0%')
-      .attr('y1', '0%')
-      .attr('x2', '0%')
-      .attr('y2', '100%');
-    grad.append('stop').attr('offset', '0%').attr('stop-color', '#ec4899');
-    grad.append('stop').attr('offset', '100%').attr('stop-color', '#8b5cf6');
-  }, [monthlyStats, activeGraphTab, selectedMonthFilter, currentMonthIndex, onSelectMonthFilter]);
-
-  // Render Domain D3 Donut Chart
-  useEffect(() => {
+  // Render Domain D3 Donut Chart with useLayoutEffect
+  useLayoutEffect(() => {
     if (activeGraphTab !== 'donut' || !donutSvgRef.current) return;
 
     const svg = d3.select(donutSvgRef.current);
-    svg.selectAll('*').remove();
-
     const size = 220;
     const radius = size / 2 - 10;
     const innerRadius = radius * 0.62;
 
-    const g = svg
-      .attr('viewBox', `0 0 ${size} ${size}`)
-      .append('g')
-      .attr('transform', `translate(${size / 2},${size / 2})`);
+    svg.attr('viewBox', `0 0 ${size} ${size}`);
+
+    let g = svg.select<SVGGElement>('g.donut-group');
+    if (g.empty()) {
+      svg.selectAll('*').remove();
+      g = svg
+        .append('g')
+        .attr('class', 'donut-group')
+        .attr('transform', `translate(${size / 2},${size / 2})`);
+
+      g.append('g').attr('class', 'slices');
+      g.append('text').attr('class', 'center-percent');
+      g.append('text').attr('class', 'center-label');
+    }
 
     const pie = d3
       .pie<DomainStats>()
@@ -396,27 +463,33 @@ export const MailAnalyticsGraph: React.FC<MailAnalyticsGraphProps> = ({
       .cornerRadius(4)
       .padAngle(0.03);
 
-    const arcs = g
-      .selectAll('.arc')
-      .data(pie(domainStats))
-      .enter()
-      .append('g')
-      .attr('class', 'arc');
+    const slicesContainer = g.select('.slices');
+    const arcs = slicesContainer.selectAll<SVGPathElement, d3.PieArcDatum<DomainStats>>('path').data(pie(domainStats));
+
+    arcs.exit().remove();
 
     arcs
+      .enter()
       .append('path')
-      .attr('d', arc)
+      .merge(arcs)
       .attr('fill', (d) => d.data.color)
       .style('cursor', 'pointer')
       .on('mouseenter', (event, d) => {
         setHoveredDomain(d.data);
-        const rect = event.currentTarget.getBoundingClientRect();
+        const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
         setTooltipPos({ x: rect.x + rect.width / 2, y: rect.y });
       })
-      .on('mouseleave', () => setHoveredDomain(null));
+      .on('mouseleave', () => setHoveredDomain(null))
+      .transition()
+      .duration(400)
+      .attrTween('d', function (d) {
+        const interpolate = d3.interpolate({ startAngle: 0, endAngle: 0 }, d);
+        return function (t) {
+          return arc(interpolate(t)) || '';
+        };
+      });
 
-    // Center Text
-    g.append('text')
+    g.select('.center-percent')
       .attr('text-anchor', 'middle')
       .attr('dy', '-4px')
       .attr('font-size', '20px')
@@ -424,7 +497,7 @@ export const MailAnalyticsGraph: React.FC<MailAnalyticsGraphProps> = ({
       .attr('fill', '#0f172a')
       .text(`${overallCoverage}%`);
 
-    g.append('text')
+    g.select('.center-label')
       .attr('text-anchor', 'middle')
       .attr('dy', '14px')
       .attr('font-size', '9px')
@@ -448,180 +521,154 @@ export const MailAnalyticsGraph: React.FC<MailAnalyticsGraphProps> = ({
               <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                 Mail Address & Auto-Wish Analytics Visualizer
               </h3>
-              <p className="text-[11px] text-slate-500">
-                Visual breakdown of email readiness, month-wise celebrant distribution & automated coverage
+              <p className="text-xs text-slate-500">
+                Email database readiness, domain distribution, and monthly birthday email coverage
               </p>
             </div>
           </div>
         </div>
 
-        {/* View Switcher Tabs */}
-        <div className="flex items-center bg-slate-100 p-1 rounded-xl gap-1">
+        {/* View Selection Tabs */}
+        <div className="flex items-center p-1 bg-slate-100/80 rounded-xl text-xs font-semibold text-slate-600">
           <button
             onClick={() => setActiveGraphTab('monthly')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
               activeGraphTab === 'monthly'
-                ? 'bg-white text-indigo-700 shadow-2xs'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-white text-indigo-600 shadow-xs font-bold'
+                : 'hover:text-slate-900'
             }`}
           >
             <BarChart3 className="w-3.5 h-3.5" />
-            Monthly Readiness
+            <span>Monthly Coverage</span>
           </button>
-
           <button
             onClick={() => setActiveGraphTab('donut')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
               activeGraphTab === 'donut'
-                ? 'bg-white text-indigo-700 shadow-2xs'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-white text-indigo-600 shadow-xs font-bold'
+                : 'hover:text-slate-900'
             }`}
           >
             <PieChartIcon className="w-3.5 h-3.5" />
-            Domain & Splits
+            <span>Domains</span>
           </button>
-
           <button
             onClick={() => setActiveGraphTab('designation')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
               activeGraphTab === 'designation'
-                ? 'bg-white text-indigo-700 shadow-2xs'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-white text-indigo-600 shadow-xs font-bold'
+                : 'hover:text-slate-900'
             }`}
           >
             <Layers className="w-3.5 h-3.5" />
-            Role Coverage
+            <span>Designations</span>
           </button>
         </div>
       </div>
 
-      {/* KPI Highlight Strip */}
+      {/* Main KPI Badges */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="bg-slate-50 rounded-xl p-3 border border-slate-200/70">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase text-slate-500">Email Coverage</span>
-            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.2 rounded">
-              {overallCoverage}%
-            </span>
+        <div className="p-3 bg-indigo-50/60 border border-indigo-100 rounded-xl">
+          <div className="flex items-center justify-between text-indigo-700 text-xs font-medium mb-1">
+            <span>Overall Coverage</span>
+            <ShieldCheck className="w-3.5 h-3.5 text-indigo-600" />
           </div>
-          <p className="text-lg font-black text-slate-900 mt-1 font-mono">
-            {totalWithEmail} <span className="text-xs font-normal text-slate-400">/ {totalMembers} members</span>
-          </p>
+          <div className="text-xl font-extrabold text-indigo-950">{overallCoverage}%</div>
+          <div className="text-[11px] text-indigo-600 font-medium mt-0.5">
+            {totalWithEmail} of {totalMembers} members registered
+          </div>
         </div>
 
-        <div className="bg-slate-50 rounded-xl p-3 border border-slate-200/70">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase text-slate-500">Missing Email</span>
-            {totalMissingEmail > 0 ? (
-              <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.2 rounded flex items-center gap-1">
-                <AlertCircle className="w-2.5 h-2.5" />
-                Action Needed
-              </span>
-            ) : (
-              <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.2 rounded">
-                All Set
-              </span>
-            )}
+        <div className="p-3 bg-emerald-50/60 border border-emerald-100 rounded-xl">
+          <div className="flex items-center justify-between text-emerald-700 text-xs font-medium mb-1">
+            <span>Ready for Auto-Wish</span>
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
           </div>
-          <p className="text-lg font-black text-slate-900 mt-1 font-mono">
-            {totalMissingEmail} <span className="text-xs font-normal text-slate-400">pending info</span>
-          </p>
+          <div className="text-xl font-extrabold text-emerald-950">{totalWithEmail}</div>
+          <div className="text-[11px] text-emerald-600 font-medium mt-0.5">
+            Valid email address on file
+          </div>
         </div>
 
-        <div className="bg-slate-50 rounded-xl p-3 border border-slate-200/70">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase text-slate-500">Primary Domain</span>
-            <span className="text-[10px] font-mono font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.2 rounded">
-              Corporate
-            </span>
+        <div className="p-3 bg-amber-50/60 border border-amber-100 rounded-xl">
+          <div className="flex items-center justify-between text-amber-700 text-xs font-medium mb-1">
+            <span>Missing Email</span>
+            <AlertCircle className="w-3.5 h-3.5 text-amber-600" />
           </div>
-          <p className="text-sm font-bold text-slate-900 mt-1.5 truncate">
-            {domainStats[0]?.domain || '@kdsgroup.net'}
-          </p>
+          <div className="text-xl font-extrabold text-amber-950">{totalMissingEmail}</div>
+          <div className="text-[11px] text-amber-600 font-medium mt-0.5">
+            Manual input or WhatsApp only
+          </div>
         </div>
 
-        <div className="bg-slate-50 rounded-xl p-3 border border-slate-200/70">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase text-slate-500">Auto Dispatches</span>
-            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.2 rounded flex items-center gap-0.5">
-              <Zap className="w-2.5 h-2.5 text-emerald-500" />
-              Active
-            </span>
+        <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl">
+          <div className="flex items-center justify-between text-slate-700 text-xs font-medium mb-1">
+            <span>Dispatched Wishes</span>
+            <Send className="w-3.5 h-3.5 text-slate-600" />
           </div>
-          <p className="text-lg font-black text-emerald-600 mt-1 font-mono">
-            {sentCount} <span className="text-xs font-normal text-slate-400">recorded</span>
-          </p>
+          <div className="text-xl font-extrabold text-slate-900">{sentCount}</div>
+          <div className="text-[11px] text-slate-500 font-medium mt-0.5">
+            Sent in current cycle
+          </div>
         </div>
       </div>
 
-      {/* GRAPH CONTENT SECTION */}
-      <div ref={containerRef} className="relative">
-        {/* VIEW 1: MONTHLY GROUPED BAR CHART */}
+      {/* Main View Area */}
+      <div ref={containerRef} className="relative min-h-[240px] flex items-center justify-center">
+        {/* Tab 1: Monthly Bar Chart */}
         {activeGraphTab === 'monthly' && (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between text-xs text-slate-500 px-1">
+          <div className="w-full">
+            <div className="flex items-center justify-between text-xs text-slate-500 mb-2 px-1">
               <div className="flex items-center gap-3">
                 <span className="flex items-center gap-1.5">
                   <span className="w-3 h-3 rounded-xs bg-emerald-500 inline-block"></span>
-                  <span className="font-semibold text-slate-700">Configured Email Ready</span>
+                  <span>Email Present</span>
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="w-3 h-3 rounded-xs bg-slate-300 inline-block"></span>
-                  <span className="font-semibold text-slate-700">Missing Email</span>
+                  <span className="w-3 h-3 rounded-xs bg-slate-200 inline-block"></span>
+                  <span>Missing Email</span>
                 </span>
                 <span className="flex items-center gap-1.5">
                   <span className="w-3 h-3 rounded-xs bg-gradient-to-r from-pink-500 to-purple-500 inline-block"></span>
-                  <span className="font-semibold text-purple-700">Current Month (Aug)</span>
+                  <span>Current Month ({MONTH_NAMES[currentMonthIndex]?.short})</span>
                 </span>
               </div>
-
-              {selectedMonthFilter !== null && (
-                <button
-                  onClick={() => onSelectMonthFilter && onSelectMonthFilter(null)}
-                  className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-2 py-0.5 rounded-md cursor-pointer transition"
-                >
-                  Clear Month Filter (✕)
-                </button>
-              )}
+              <span className="text-[11px] text-slate-400">Click a bar to filter</span>
             </div>
 
-            {/* D3 SVG Bar Chart */}
-            <div className="w-full bg-slate-50/50 rounded-xl p-3 border border-slate-100 flex items-center justify-center">
-              <svg ref={barSvgRef} className="w-full max-w-2xl h-auto" />
-            </div>
-
-            <p className="text-[11px] text-center text-slate-400">
-              💡 Tip: Click any month bar on the graph to filter the list of teammates below!
-            </p>
+            <svg ref={barSvgRef} className="w-full h-[240px] overflow-visible" />
           </div>
         )}
 
-        {/* VIEW 2: DOMAIN & SPLIT DONUT CHART */}
+        {/* Tab 2: Domain Donut Chart */}
         {activeGraphTab === 'donut' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center bg-slate-50/50 rounded-xl p-4 border border-slate-100">
-            <div className="flex items-center justify-center">
-              <svg ref={donutSvgRef} className="w-52 h-52" />
+          <div className="w-full flex flex-col md:flex-row items-center justify-center gap-6 py-2">
+            <div className="w-[220px] h-[220px] shrink-0">
+              <svg ref={donutSvgRef} className="w-full h-full" />
             </div>
 
-            <div className="space-y-3">
-              <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                Corporate Email Domain Distribution
-              </h4>
-              <div className="space-y-2">
-                {domainStats.map((item) => (
-                  <div key={item.domain} className="flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2 min-w-0">
+            <div className="flex-1 max-w-md space-y-2">
+              <div className="text-xs font-bold text-slate-700 mb-2">
+                Top Recipient Domain Distribution
+              </div>
+              <div className="space-y-1.5 max-h-[170px] overflow-y-auto pr-1">
+                {domainStats.map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between text-xs p-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 transition-all border border-slate-100"
+                  >
+                    <div className="flex items-center gap-2 truncate">
                       <span
-                        className="w-3 h-3 rounded-xs shrink-0"
+                        className="w-2.5 h-2.5 rounded-full shrink-0"
                         style={{ backgroundColor: item.color }}
                       ></span>
-                      <span className="font-mono font-bold text-slate-700 truncate">
+                      <span className="font-medium text-slate-700 truncate font-mono text-[11px]">
                         {item.domain}
                       </span>
                     </div>
-                    <div className="flex items-center gap-3 font-mono">
-                      <span className="text-slate-500">{item.count} members</span>
-                      <span className="font-bold text-slate-900 w-10 text-right">
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="font-bold text-slate-900">{item.count}</span>
+                      <span className="text-[11px] text-slate-400 font-mono w-8 text-right">
                         {item.percentage}%
                       </span>
                     </div>
@@ -632,43 +679,55 @@ export const MailAnalyticsGraph: React.FC<MailAnalyticsGraphProps> = ({
           </div>
         )}
 
-        {/* VIEW 3: DESIGNATION ROLE READINESS */}
+        {/* Tab 3: Designation Coverage Breakdown */}
         {activeGraphTab === 'designation' && (
-          <div className="space-y-3 bg-slate-50/50 rounded-xl p-4 border border-slate-100">
-            <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2">
-              Email Auto-Wish Readiness by Team Designation
-            </h4>
-            <div className="space-y-3">
-              {designationStats.map((item) => (
-                <div key={item.designation} className="space-y-1">
+          <div className="w-full space-y-2.5 py-1">
+            <div className="text-xs font-bold text-slate-700 mb-1 flex items-center justify-between">
+              <span>Email Coverage by Team Designation</span>
+              <span className="text-[11px] text-slate-400 font-normal">Top Job Roles</span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {designationStats.map((item, idx) => (
+                <div
+                  key={idx}
+                  className="p-2.5 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 space-y-1.5 transition-all"
+                >
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold text-slate-800 truncate max-w-[280px]">
+                    <span className="font-semibold text-slate-800 truncate pr-2">
                       {item.designation}
                     </span>
-                    <div className="flex items-center gap-2 font-mono text-[11px]">
-                      <span className="text-slate-500">
-                        {item.withEmail} / {item.total} ready
-                      </span>
-                      <span
-                        className={`font-bold px-1.5 py-0.2 rounded ${
-                          item.coveragePercent === 100
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : item.coveragePercent >= 50
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-amber-100 text-amber-800'
-                        }`}
-                      >
-                        {item.coveragePercent}%
-                      </span>
-                    </div>
+                    <span
+                      className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                        item.coveragePercent === 100
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : item.coveragePercent >= 50
+                          ? 'bg-blue-100 text-blue-800'
+                          : 'bg-amber-100 text-amber-800'
+                      }`}
+                    >
+                      {item.coveragePercent}%
+                    </span>
                   </div>
 
-                  {/* Visual Progress Bar */}
-                  <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden flex">
+                  <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-emerald-500 transition-all duration-500 rounded-full"
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        item.coveragePercent === 100
+                          ? 'bg-emerald-500'
+                          : item.coveragePercent >= 50
+                          ? 'bg-indigo-500'
+                          : 'bg-amber-500'
+                      }`}
                       style={{ width: `${item.coveragePercent}%` }}
                     ></div>
+                  </div>
+
+                  <div className="flex items-center justify-between text-[10px] text-slate-500">
+                    <span>
+                      {item.withEmail} of {item.total} with registered email
+                    </span>
+                    <span>{item.total - item.withEmail} missing</span>
                   </div>
                 </div>
               ))}
@@ -676,20 +735,32 @@ export const MailAnalyticsGraph: React.FC<MailAnalyticsGraphProps> = ({
           </div>
         )}
 
-        {/* Hover Tooltip for Month */}
+        {/* Dynamic Tooltip */}
         {hoveredMonth && tooltipPos && (
           <div
-            className="fixed z-50 bg-slate-900 text-white rounded-xl px-3.5 py-2 text-xs shadow-xl pointer-events-none transform -translate-x-1/2 -translate-y-full mb-2 font-sans border border-slate-700"
-            style={{ left: `${tooltipPos.x}px`, top: `${tooltipPos.y}px` }}
+            className="fixed z-50 pointer-events-none transform -translate-x-1/2 -translate-y-full bg-slate-900 text-white text-xs rounded-xl p-3 shadow-xl border border-slate-700 min-w-[180px]"
+            style={{
+              left: `${tooltipPos.x}px`,
+              top: `${tooltipPos.y - 10}px`,
+            }}
           >
-            <p className="font-bold text-amber-300 text-sm">
-              {hoveredMonth.fullName}
-            </p>
-            <div className="space-y-0.5 mt-1 text-[11px] text-slate-300">
-              <p>🎂 Total Birthdays: <strong className="text-white">{hoveredMonth.totalBirthdays}</strong></p>
-              <p>✉️ Configured Email: <strong className="text-emerald-400">{hoveredMonth.withEmail}</strong></p>
-              <p>⚠️ Missing Email: <strong className="text-rose-300">{hoveredMonth.missingEmail}</strong></p>
-              <p>📊 Auto-Wish Readiness: <strong className="text-indigo-300">{hoveredMonth.coveragePercent}%</strong></p>
+            <div className="font-bold text-slate-100 border-b border-slate-700 pb-1.5 mb-1.5 flex items-center justify-between">
+              <span>{hoveredMonth.fullName}</span>
+              <span className="text-emerald-400 font-mono">{hoveredMonth.coveragePercent}%</span>
+            </div>
+            <div className="space-y-1 text-slate-300 text-[11px]">
+              <div className="flex justify-between">
+                <span>Total Birthdays:</span>
+                <span className="font-bold text-white">{hoveredMonth.totalBirthdays}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>With Email:</span>
+                <span className="font-bold text-emerald-400">{hoveredMonth.withEmail}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Missing Email:</span>
+                <span className="font-bold text-amber-400">{hoveredMonth.missingEmail}</span>
+              </div>
             </div>
           </div>
         )}
