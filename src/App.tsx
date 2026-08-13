@@ -11,6 +11,7 @@ import { BirthdayDistributionChart } from './components/BirthdayDistributionChar
 import { MailWorkstation } from './components/MailWorkstation';
 import { checkIsTodayBirthday } from './utils/dateUtils';
 import { triggerBirthdayConfetti } from './utils/confetti';
+import { getDemoTeamMembers } from './data/fallbackData';
 import { Sparkles, Calendar, Users, PhoneCall, Code2, CheckCircle2, X, Bot, Mail } from 'lucide-react';
 
 interface ToastNotification {
@@ -21,7 +22,7 @@ interface ToastNotification {
 }
 
 export default function App() {
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(() => getDemoTeamMembers());
   const [activeTab, setActiveTab] = useState<'roster' | 'email' | 'generator' | 'script' | 'automation' | 'tester'>('roster');
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [autoSyncEnabled, setAutoSyncEnabled] = useState<boolean>(true);
@@ -70,7 +71,7 @@ export default function App() {
     try {
       const res = await fetch('/api/sheet-data');
       const data = await res.json();
-      if (data.data && Array.isArray(data.data)) {
+      if (data.data && Array.isArray(data.data) && data.data.length > 0) {
         const currentYear = new Date().getFullYear().toString();
         // Merge with local sentYearMap override
         const mergedMembers = data.data.map((m: TeamMember) => {
@@ -83,9 +84,14 @@ export default function App() {
         });
         setTeamMembers(mergedMembers);
         setLastSynced(new Date().toLocaleTimeString());
+      } else {
+        // Fallback to rich demo roster
+        setTeamMembers((prev) => prev.length > 0 ? prev : getDemoTeamMembers());
+        setLastSynced(new Date().toLocaleTimeString());
       }
     } catch (err) {
       console.error('Error fetching sheet data:', err);
+      setTeamMembers((prev) => prev.length > 0 ? prev : getDemoTeamMembers());
     } finally {
       if (!isSilent) setIsSyncing(false);
     }

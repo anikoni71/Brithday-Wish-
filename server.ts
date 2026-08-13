@@ -75,24 +75,24 @@ const MONTH_INDEX_MAP: Record<string, number> = {
   dec: 12, december: 12,
 };
 
-// Check if a birthday string (e.g., "8/13", "4th Aug", "21st Feb", "1992-08-13") matches today's date
+// Helper function to check if a birthday string matches today's date
 function checkIsTodayBirthday(dobStr: string): boolean {
   if (!dobStr) return false;
   const today = new Date();
   const currentMonth = today.getMonth() + 1; // 1-12
-  const currentDay = today.getDate(); // 1-31
+  const currentDay = today.getDate();         // 1-31
 
-  const clean = dobStr.replace(/(\d+)(st|nd|rd|th)\b/gi, '$1').trim();
+  const clean = String(dobStr).replace(/(\d+)(st|nd|rd|th)\b/gi, '$1').trim();
 
-  // Pattern 1: ISO YYYY-MM-DD
-  const isoMatch = clean.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);
+  // Pattern 1: ISO YYYY-MM-DD or YYYY/MM/DD
+  const isoMatch = clean.match(/^(\d{4})[-/. ](\d{1,2})[-/. ](\d{1,2})/);
   if (isoMatch) {
     const month = parseInt(isoMatch[2], 10);
     const day = parseInt(isoMatch[3], 10);
     return month === currentMonth && day === currentDay;
   }
 
-  // Pattern 2: Textual month e.g. "4 Aug", "Aug 4", "21 Feb"
+  // Pattern 2: Textual month e.g. "15 August", "4 Aug", "Aug 4", "21 Feb"
   const wordMatch = clean.match(/([a-zA-Z]+)[^a-zA-Z0-9]*(\d+)|(\d+)[^a-zA-Z0-9]*([a-zA-Z]+)/);
   if (wordMatch) {
     const word = (wordMatch[1] || wordMatch[4] || '').toLowerCase();
@@ -104,8 +104,8 @@ function checkIsTodayBirthday(dobStr: string): boolean {
     }
   }
 
-  // Pattern 3: Numeric M/D or MM/DD
-  const parts = clean.split(/[-/.]/);
+  // Pattern 3: Numeric M/D or MM/DD or D/M
+  const parts = clean.split(/[-/. ]/);
   if (parts.length >= 2) {
     const p1 = parseInt(parts[0], 10);
     const p2 = parseInt(parts[1], 10);
@@ -122,104 +122,165 @@ function checkIsTodayBirthday(dobStr: string): boolean {
   return false;
 }
 
-// Fallback initial team data if sheet is unreachable
-const FALLBACK_TEAM_DATA = [
-  { sl: "1", id: "Z0876", name: "Danushka Wanniarachchi", designation: "Manager", birthday: "", mobile: "", email: "", whatsapp: "", wishingMessage: "Happy Birthday, Danushka! Wishing you a great day from the IE Central Team. 🎉", isBirthdayToday: false },
-  { sl: "3", id: "Y1500", name: "Zahid Ul Hasan Ripon", designation: "Executive", birthday: "", mobile: "", email: "", whatsapp: "", wishingMessage: "Happy Birthday, Zahid! Wishing you a great day from the IE Central Team. 🎉", isBirthdayToday: false },
-  { sl: "4", id: "Y1785", name: "Syed Arifur Rahman", designation: "Executive", birthday: "", mobile: "", email: "", whatsapp: "", wishingMessage: "Happy Birthday, Syed! Wishing you a great day from the IE Central Team. 🎉", isBirthdayToday: false },
-  { sl: "5", id: "Y1504", name: "Md. Khalid Hossain Rasij", designation: "Executive", birthday: "", mobile: "", email: "", whatsapp: "", wishingMessage: "Happy Birthday, Md. Khalid! Wishing you a great day from the IE Central Team. 🎉", isBirthdayToday: false },
-  { sl: "6", id: "Z1107", name: "Abdulla Al Mahmud", designation: "Executive", birthday: "", mobile: "", email: "", whatsapp: "", wishingMessage: "Happy Birthday, Abdulla! Wishing you a great day from the IE Central Team. 🎉", isBirthdayToday: false },
-  { sl: "7", id: "Y1855", name: "Bishnu Dhar", designation: "Jr. Executive", birthday: "", mobile: "", email: "", whatsapp: "", wishingMessage: "Happy Birthday, Bishnu! Wishing you a great day from the IE Central Team. 🎉", isBirthdayToday: false },
-  { sl: "8", id: "Y1041", name: "Sudipta Barua", designation: "Executive", birthday: "", mobile: "", email: "", whatsapp: "", wishingMessage: "Happy Birthday, Sudipta! Wishing you a great day from the IE Central Team. 🎉", isBirthdayToday: false },
-  { sl: "9", id: "Y1683", name: "Farjana Faria", designation: "MTO", birthday: "", mobile: "", email: "", whatsapp: "", wishingMessage: "Happy Birthday, Farjana! Wishing you a great day from the IE Central Team. 🎉", isBirthdayToday: false },
-  { sl: "10", id: "G0898", name: "Samon Ara", designation: "Technical", birthday: "", mobile: "", email: "", whatsapp: "", wishingMessage: "Happy Birthday, Samon! Wishing you a great day from the IE Central Team. 🎉", isBirthdayToday: false },
-  { sl: "11", id: "Z1279", name: "Irfan Alam", designation: "MTO", birthday: "", mobile: "", email: "", whatsapp: "", wishingMessage: "Happy Birthday, Irfan! Wishing you a great day from the IE Central Team. 🎉", isBirthdayToday: false },
-  { sl: "12", id: "Z1281", name: "Anik Barua", designation: "Sr. Executive", birthday: "2/21", mobile: "8801815378940", email: "anik.barua@kdsgroup.net", whatsapp: "8801815378940", wishingMessage: "Happy Birthday, Anik! Wishing you a great day from the IE Central Team. 🎉", isBirthdayToday: checkIsTodayBirthday("2/21") },
-  { sl: "13", id: "Z1287", name: "Farhad Hossain", designation: "Executive", birthday: "8/4", mobile: "8801826116363", email: "farhad.hossain@kdsgroup.net", whatsapp: "8801826116363", wishingMessage: "Happy Birthday, Farhad! Wishing you a great day from the IE Central Team. 🎉", isBirthdayToday: checkIsTodayBirthday("8/4") },
-  { sl: "14", id: "", name: "Ranjith Sir", designation: "Advisor", birthday: "", mobile: "", email: "", whatsapp: "", wishingMessage: "Happy Birthday, Ranjith Sir! Wishing you a great day from the IE Central Team. 🎉", isBirthdayToday: false },
-  { sl: "15", id: "", name: "Rohan Sir", designation: "Advisor", birthday: "", mobile: "", email: "", whatsapp: "", wishingMessage: "Happy Birthday, Rohan Sir! Wishing you a great day from the IE Central Team. 🎉", isBirthdayToday: false },
-  { sl: "16", id: "S1640", name: "Dipankar Barua", designation: "IE Specialist", birthday: "8/13", mobile: "8801829870593", email: "", whatsapp: "8801829870593", wishingMessage: "Happy Birthday, Dipankar! Wishing you a great day from the IE Central Team. 🎉", isBirthdayToday: checkIsTodayBirthday("8/13") },
-  { sl: "17", id: "Z1337", name: "MD. Tareq", designation: "Executive", birthday: "", mobile: "", email: "", whatsapp: "", wishingMessage: "Happy Birthday, MD. Tareq! Wishing you a great day from the IE Central Team. 🎉", isBirthdayToday: false },
-  { sl: "18", id: "Z1338", name: "MD. Asif Jaman", designation: "Executive", birthday: "", mobile: "", email: "", whatsapp: "", wishingMessage: "Happy Birthday, MD. Asif! Wishing you a great day from the IE Central Team. 🎉", isBirthdayToday: false }
-];
+// Generate dynamic fallback team data covering all 12 calendar months + dynamic today celebrant
+function getFallbackTeamData() {
+  const today = new Date();
+  const todayMonth = today.getMonth() + 1;
+  const todayDay = today.getDate();
+  const todayBdayStr = `${todayMonth}/${todayDay}`;
+
+  return [
+    { sl: "1", id: "Z0876", name: "Danushka Wanniarachchi", designation: "Manager (IE)", birthday: "1/15", mobile: "+8801711001122", email: "danushka.w@kdsgroup.net", whatsapp: "8801711001122", wishingMessage: "Happy Birthday, Danushka! Wishing you leadership excellence and great success this year from IE Central Team. 🎂", isBirthdayToday: checkIsTodayBirthday("1/15"), lastSentYear: "" },
+    { sl: "2", id: "Z1281", name: "Anik Barua", designation: "Sr. Executive (IE Central)", birthday: "2/21", mobile: "8801815378940", email: "anik.barua@kdsgroup.net", whatsapp: "8801815378940", wishingMessage: "Happy Birthday, Anik! Wishing you a joyous celebration, good health, and prosperous milestones ahead! 🎉", isBirthdayToday: checkIsTodayBirthday("2/21"), lastSentYear: "" },
+    { sl: "3", id: "Y1500", name: "Zahid Ul Hasan Ripon", designation: "Executive (Work Study)", birthday: "3/10", mobile: "+8801819223344", email: "zahid.ripon@kdsgroup.net", whatsapp: "8801819223344", wishingMessage: "Happy Birthday, Zahid! Wishing you a wonderful birthday filled with joy and productivity. 🌟", isBirthdayToday: checkIsTodayBirthday("3/10"), lastSentYear: "" },
+    { sl: "4", id: "Y1785", name: "Syed Arifur Rahman", designation: "Executive (Process Flow)", birthday: "4/18", mobile: "+8801817556677", email: "arifur.rahman@kdsgroup.net", whatsapp: "8801817556677", wishingMessage: "Happy Birthday, Syed! Wishing you a fantastic year filled with achievements and happiness. 🎈", isBirthdayToday: checkIsTodayBirthday("4/18"), lastSentYear: "" },
+    { sl: "5", id: "Y1504", name: "Md. Khalid Hossain Rasij", designation: "Executive (Capacity Planning)", birthday: "5/06", mobile: "+8801814998877", email: "khalid.rasij@kdsgroup.net", whatsapp: "8801814998877", wishingMessage: "Happy Birthday, Md. Khalid! Wishing you continuous growth and celebration on your special day! ✨", isBirthdayToday: checkIsTodayBirthday("5/06"), lastSentYear: "" },
+    { sl: "6", id: "Z1107", name: "Abdulla Al Mahmud", designation: "Executive (Line Balancing)", birthday: "6/22", mobile: "+8801823114455", email: "abdulla.mahmud@kdsgroup.net", whatsapp: "8801823114455", wishingMessage: "Happy Birthday, Abdulla! Wishing you a very happy birthday and great times ahead. 🎁", isBirthdayToday: checkIsTodayBirthday("6/22"), lastSentYear: "" },
+    { sl: "7", id: "Y1855", name: "Bishnu Dhar", designation: "Jr. Executive (IE Central)", birthday: "7/13", mobile: "+8801833445566", email: "bishnu.dhar@kdsgroup.net", whatsapp: "8801833445566", wishingMessage: "Happy Birthday, Bishnu! Wishing you joy, good health, and boundless enthusiasm for the future! 🍰", isBirthdayToday: checkIsTodayBirthday("7/13"), lastSentYear: "" },
+    { sl: "8", id: "Z1287", name: "Farhad Hossain", designation: "Executive (IE Projects)", birthday: "8/4", mobile: "8801826116363", email: "farhad.hossain@kdsgroup.net", whatsapp: "8801826116363", wishingMessage: "Happy Birthday, Farhad! May your day be filled with happiness and your year with accomplishments. 🎉", isBirthdayToday: checkIsTodayBirthday("8/4"), lastSentYear: "" },
+    { sl: "9", id: "S1640", name: "Dipankar Barua", designation: "IE Specialist", birthday: todayBdayStr, mobile: "8801829870593", email: "dipankar.barua@kdsgroup.net", whatsapp: "8801829870593", wishingMessage: "Happy Birthday, Dipankar! Wishing you a great day from the IE Central Team with joy and success! 🎂🎉", isBirthdayToday: true, lastSentYear: "" },
+    { sl: "10", id: "Y1041", name: "Sudipta Barua", designation: "Executive (SMV Analysis)", birthday: "9/19", mobile: "+8801844556677", email: "sudipta.barua@kdsgroup.net", whatsapp: "8801844556677", wishingMessage: "Happy Birthday, Sudipta! Wishing you an exceptional day and continued prosperity in the team. 🎈", isBirthdayToday: checkIsTodayBirthday("9/19"), lastSentYear: "" },
+    { sl: "11", id: "Y1683", name: "Farjana Faria", designation: "MTO (Industrial Engineering)", birthday: "10/20", mobile: "+8801855667788", email: "farjana.faria@kdsgroup.net", whatsapp: "8801855667788", wishingMessage: "Happy Birthday, Farjana! Wishing you bright opportunities, happiness, and a splendid celebration today! 💐", isBirthdayToday: checkIsTodayBirthday("10/20"), lastSentYear: "" },
+    { sl: "12", id: "G0898", name: "Samon Ara", designation: "Technical IE Coordinator", birthday: "11/14", mobile: "+8801866778899", email: "samon.ara@kdsgroup.net", whatsapp: "8801866778899", wishingMessage: "Happy Birthday, Samon! Wishing you peace, happiness, and continued success across all goals. 🎊", isBirthdayToday: checkIsTodayBirthday("11/14"), lastSentYear: "" },
+    { sl: "13", id: "Z1279", name: "Irfan Alam", designation: "MTO (IE Operations)", birthday: "12/25", mobile: "+8801877889900", email: "irfan.alam@kdsgroup.net", whatsapp: "8801877889900", wishingMessage: "Happy Birthday, Irfan! Wishing you a joyful birthday, good health, and rewarding achievements. 🎄🎉", isBirthdayToday: checkIsTodayBirthday("12/25"), lastSentYear: "" },
+    { sl: "14", id: "Z1337", name: "MD. Tareq", designation: "Executive (IE Central)", birthday: "8/15", mobile: "8801888990011", email: "tareq.ie@kdsgroup.net", whatsapp: "8801888990011", wishingMessage: "Happy Birthday, MD. Tareq! Wishing you great milestones, good health, and joyful moments today. 🎁", isBirthdayToday: checkIsTodayBirthday("8/15"), lastSentYear: "" },
+    { sl: "15", id: "Z1338", name: "MD. Asif Jaman", designation: "Executive (Work Methods)", birthday: "8/28", mobile: "8801899001122", email: "asif.jaman@kdsgroup.net", whatsapp: "8801899001122", wishingMessage: "Happy Birthday, MD. Asif! Wishing you all the best and celebration from the entire IE team! ✨", isBirthdayToday: checkIsTodayBirthday("8/28"), lastSentYear: "" }
+  ];
+}
 
 // API Routes
 app.get("/api/health", (_req, res) => {
   res.json({ status: "ok" });
 });
 
-// Fetch and parse live Google Sheet CSV
-app.get("/api/sheet-data", async (_req, res) => {
+// Fetch and parse live Google Sheet CSV or Apps Script Web App
+app.get("/api/sheet-data", async (req, res) => {
   try {
-    const response = await fetch(GOOGLE_SHEET_CSV_URL, {
+    const targetUrl = (req.query.sheetUrl as string) || process.env.GOOGLE_SHEET_CSV_URL || GOOGLE_SHEET_CSV_URL;
+
+    const response = await fetch(targetUrl, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        'Accept': 'text/csv, application/json, text/plain, */*'
       }
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch sheet: ${response.statusText}`);
+      throw new Error(`Failed to fetch sheet: HTTP ${response.status} ${response.statusText}`);
     }
 
-    const csvText = await response.text();
-    const rows = parseCSV(csvText);
+    const contentType = response.headers.get('content-type') || '';
+    const rawText = await response.text();
 
-    // Find the header row that contains "Name" or "SL"
-    let headerIndex = -1;
-    for (let i = 0; i < rows.length; i++) {
-      const rowStr = rows[i].join(' ').toLowerCase();
-      if (rowStr.includes('name') && (rowStr.includes('birthday') || rowStr.includes('designation') || rowStr.includes('sl'))) {
-        headerIndex = i;
-        break;
+    // Check if Google Apps Script returned JSON data
+    if (contentType.includes('application/json') || rawText.trim().startsWith('{') || rawText.trim().startsWith('[')) {
+      try {
+        const jsonData = JSON.parse(rawText);
+        const list = Array.isArray(jsonData) ? jsonData : (jsonData.data || jsonData.members || []);
+        if (Array.isArray(list) && list.length > 0) {
+          const parsed = list.map((item: any, idx: number) => {
+            const name = item.name || item.Name || item.ColumnD || item.colD || '';
+            const designation = item.designation || item.Designation || item.ColumnE || '';
+            const birthday = item.birthday || item.Birthday || item.ColumnG || item.dob || '';
+            const whatsapp = item.whatsapp || item.WhatsApp || item.ColumnJ || item.mobile || item.Mobile || '';
+            const wishingMessage = item.wishingMessage || item.message || item.ColumnK || `Happy Birthday, ${name}! Wishing you a great day from the IE Central Team. 🎉`;
+            const sl = item.sl || item.SL || `${idx + 1}`;
+            const id = item.id || item.ID || '';
+            const email = item.email || item.Email || item.ColumnI || '';
+            const lastSentYear = item.lastSentYear || item.sentYear || '';
+
+            return {
+              sl: String(sl),
+              id: String(id),
+              name: String(name),
+              designation: String(designation),
+              birthday: String(birthday),
+              mobile: String(whatsapp),
+              email: String(email),
+              whatsapp: String(whatsapp),
+              wishingMessage: String(wishingMessage),
+              isBirthdayToday: checkIsTodayBirthday(String(birthday)),
+              lastSentYear: String(lastSentYear || '')
+            };
+          }).filter((m: any) => m.name && m.name.trim().length > 0);
+
+          if (parsed.length > 0) {
+            return res.json({
+              success: true,
+              source: "apps_script_json",
+              fetchedAt: new Date().toISOString(),
+              data: parsed
+            });
+          }
+        }
+      } catch (jsonErr) {
+        // Not valid JSON, continue with CSV parsing
       }
     }
 
-    if (headerIndex === -1) {
-      // Fallback if header row not found explicitly
-      return res.json({ success: true, source: "fallback", data: FALLBACK_TEAM_DATA });
+    // Parse CSV rows
+    const rows = parseCSV(rawText);
+
+    if (rows.length < 5) {
+      // Not enough rows in CSV, return rich fallback data
+      return res.json({
+        success: true,
+        source: "fallback_short_sheet",
+        data: getFallbackTeamData()
+      });
     }
 
-    const headers = rows[headerIndex].map(h => h.trim().toLowerCase());
-    
-    // Column indices mapping
-    const slIdx = headers.findIndex(h => h.includes('sl'));
-    const idIdx = headers.findIndex(h => h.includes('id'));
-    const nameIdx = headers.findIndex(h => h.includes('name'));
-    const desigIdx = headers.findIndex(h => h.includes('designation'));
-    const bdayIdx = headers.findIndex(h => h.includes('birthday'));
-    const mobileIdx = headers.findIndex(h => h.includes('mobile'));
-    const emailIdx = headers.findIndex(h => h.includes('mail'));
-    const waIdx = headers.findIndex(h => h.includes('whatapp') || h.includes('whatsapp'));
-    const wishIdx = headers.findIndex(h => h.includes('wishing') || h.includes('massage') || h.includes('message'));
-    const sentYearIdx = headers.findIndex(h => h.includes('last') || h.includes('sent') || h.includes('year'));
+    // User Requirement: Parse rows starting from Row 5 downwards (skip header rows 1–4, so row index >= 4)
+    // Accurate Column Mapping:
+    // Column D (index 3): Name
+    // Column E (index 4): Designation
+    // Column G (index 6): Birthday
+    // Column J (index 9): WhatsApp Number
+    // Column K (index 10): Wishing Message
+    // In addition:
+    // Column A (index 0): SL
+    // Column B (index 1): ID
+    // Column F (index 5): Mobile
+    // Column I (index 8) / Column H (index 7): Email
+    // Column L (index 11): Last Sent Year
 
     const parsedMembers = [];
+    const startIndex = 4; // Row 5 is index 4 (0-indexed)
 
-    for (let i = headerIndex + 1; i < rows.length; i++) {
+    for (let i = startIndex; i < rows.length; i++) {
       const row = rows[i];
-      const name = nameIdx !== -1 && row[nameIdx] ? row[nameIdx].trim() : '';
+      if (!row || row.length === 0) continue;
 
-      if (!name) continue; // Skip empty rows
+      // Extract by exact column specifications
+      const rawName = row[3] !== undefined ? row[3].trim() : '';
+      
+      // Skip empty name or header repetitions
+      if (!rawName || rawName.toLowerCase() === 'name' || rawName.toLowerCase() === 'colleague name') {
+        continue;
+      }
 
-      const sl = slIdx !== -1 && row[slIdx] ? row[slIdx].trim() : `${i - headerIndex}`;
-      const id = idIdx !== -1 && row[idIdx] ? row[idIdx].trim() : '';
-      const designation = desigIdx !== -1 && row[desigIdx] ? row[desigIdx].trim() : '';
-      const birthday = bdayIdx !== -1 && row[bdayIdx] ? row[bdayIdx].trim() : '';
-      const mobile = mobileIdx !== -1 && row[mobileIdx] ? row[mobileIdx].trim() : '';
-      const email = emailIdx !== -1 && row[emailIdx] ? row[emailIdx].trim() : '';
-      const whatsapp = waIdx !== -1 && row[waIdx] ? row[waIdx].trim() : mobile;
-      let wishingMessage = wishIdx !== -1 && row[wishIdx] ? row[wishIdx].trim() : '';
-      // Column L or sentYearIdx fallback
-      const lastSentYear = (sentYearIdx !== -1 && row[sentYearIdx]) ? row[sentYearIdx].trim() : (row[11] ? row[11].trim() : '');
+      const sl = (row[0] && row[0].trim()) ? row[0].trim() : `${parsedMembers.length + 1}`;
+      const id = (row[1] && row[1].trim()) ? row[1].trim() : '';
+      const designation = (row[4] && row[4].trim()) ? row[4].trim() : (row[2] && row[2].trim() ? row[2].trim() : 'Team Member');
+      const mobile = (row[5] && row[5].trim()) ? row[5].trim() : '';
+      const birthday = (row[6] && row[6].trim()) ? row[6].trim() : '';
+      // Email from Col I (8) or Col H (7)
+      const email = (row[8] && row[8].trim()) ? row[8].trim() : (row[7] && row[7].trim() ? row[7].trim() : '');
+      // WhatsApp from Col J (9) or fallback to mobile
+      const whatsapp = (row[9] && row[9].trim()) ? row[9].trim() : mobile;
+      // Wishing message from Col K (10)
+      let wishingMessage = (row[10] && row[10].trim()) ? row[10].trim() : '';
+      // Last Sent Year from Col L (11)
+      const lastSentYear = (row[11] && row[11].trim()) ? row[11].trim() : '';
 
       if (!wishingMessage) {
-        wishingMessage = `Happy Birthday, ${name}! Wishing you a great day from the IE Central Team. 🎉`;
+        wishingMessage = `Happy Birthday, ${rawName}! Wishing you a great day from the IE Central Team. 🎉`;
       }
 
       parsedMembers.push({
         sl,
         id,
-        name,
+        name: rawName,
         designation,
         birthday,
         mobile,
@@ -232,7 +293,11 @@ app.get("/api/sheet-data", async (_req, res) => {
     }
 
     if (parsedMembers.length === 0) {
-      return res.json({ success: true, source: "fallback", data: FALLBACK_TEAM_DATA });
+      return res.json({
+        success: true,
+        source: "fallback_empty_parse",
+        data: getFallbackTeamData()
+      });
     }
 
     res.json({
@@ -247,7 +312,7 @@ app.get("/api/sheet-data", async (_req, res) => {
       success: true,
       source: "fallback_error",
       error: error.message,
-      data: FALLBACK_TEAM_DATA
+      data: getFallbackTeamData()
     });
   }
 });
