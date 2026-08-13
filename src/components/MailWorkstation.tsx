@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { TeamMember, EmailLogEntry, EmailTemplateOption } from '../types';
-import { checkIsTodayBirthday, parseBirthMonth, MONTH_NAMES } from '../utils/dateUtils';
+import { checkIsTodayBirthday, getBirthMonth, MONTH_NAMES } from '../utils/dateUtils';
 import { triggerBirthdayConfetti } from '../utils/confetti';
 import { MailAnalyticsGraph } from './MailAnalyticsGraph';
 import { MailSuccessRateDonut } from './MailSuccessRateDonut';
@@ -140,7 +140,7 @@ export const MailWorkstation: React.FC<MailWorkstationProps> = ({
 
   // All celebrants in current month
   const thisMonthCelebrants = useMemo(() => {
-    return members.filter((m) => parseBirthMonth(m.birthday) === currentMonthIndex);
+    return members.filter((m) => getBirthMonth(m.birthday) === currentMonthIndex);
   }, [members, currentMonthIndex]);
 
   // Successfully sent automated emails this month
@@ -206,7 +206,7 @@ export const MailWorkstation: React.FC<MailWorkstationProps> = ({
 
       // Check month filter from graph selection
       if (selectedMonthFilter !== null) {
-        const mIdx = parseBirthMonth(m.birthday);
+        const mIdx = getBirthMonth(m.birthday);
         if (mIdx !== selectedMonthFilter) return false;
       }
 

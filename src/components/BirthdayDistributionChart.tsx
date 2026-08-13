@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import * as d3 from 'd3';
 import { TeamMember } from '../types';
-import { MONTH_NAMES, parseBirthMonth, parseBirthdayDate } from '../utils/dateUtils';
+import { MONTH_NAMES, getBirthMonth, parseBirthdayDate } from '../utils/dateUtils';
 import { 
   BarChart3, 
   Calendar, 
@@ -32,7 +32,7 @@ export interface MonthData {
   isCurrentMonth: boolean;
 }
 
-export { parseBirthMonth, parseBirthdayDate };
+export { getBirthMonth, parseBirthdayDate };
 
 // Helper to generate SVG path for a bar with rounded top corners only
 function topRoundedRectPath(
@@ -91,7 +91,7 @@ export const BirthdayDistributionChart: React.FC<BirthdayDistributionChartProps>
     }));
 
     members.forEach((member) => {
-      const monthIdx = parseBirthMonth(member.birthday);
+      const monthIdx = getBirthMonth(member.birthday);
       if (monthIdx !== null && monthIdx >= 0 && monthIdx <= 11) {
         groups[monthIdx].count += 1;
         groups[monthIdx].members.push(member);

@@ -156,11 +156,19 @@ export function parseBirthdayDate(birthdayStr?: string | number): ParsedBirthday
 }
 
 /**
- * Returns 0-based month index (0-11) or null
+ * Returns 0-based month index (0-11) or null.
+ * Standardized across all chart visualizers, tables, and summary cards.
+ */
+export function getBirthMonth(birthdayStr?: string | number): number | null {
+  const res = parseBirthdayDate(birthdayStr);
+  return res !== null ? res.month : null;
+}
+
+/**
+ * Alias for getBirthMonth (0-11)
  */
 export function parseBirthMonth(birthdayStr?: string | number): number | null {
-  const res = parseBirthdayDate(birthdayStr);
-  return res ? res.month : null;
+  return getBirthMonth(birthdayStr);
 }
 
 /**

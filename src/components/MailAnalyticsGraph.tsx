@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import * as d3 from 'd3';
 import { TeamMember, EmailLogEntry } from '../types';
-import { MONTH_NAMES, parseBirthMonth } from '../utils/dateUtils';
+import { MONTH_NAMES, getBirthMonth } from '../utils/dateUtils';
 import { 
   BarChart3, 
   PieChart as PieChartIcon, 
@@ -88,7 +88,7 @@ export const MailAnalyticsGraph: React.FC<MailAnalyticsGraphProps> = ({
     }));
 
     members.forEach((member) => {
-      const monthIdx = parseBirthMonth(member.birthday);
+      const monthIdx = getBirthMonth(member.birthday);
       if (monthIdx !== null && monthIdx >= 0 && monthIdx <= 11) {
         list[monthIdx].totalBirthdays += 1;
         list[monthIdx].members.push(member);

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import * as d3 from 'd3';
 import { EmailLogEntry, TeamMember } from '../types';
-import { MONTH_NAMES, parseBirthMonth } from '../utils/dateUtils';
+import { MONTH_NAMES, getBirthMonth } from '../utils/dateUtils';
 import { 
   CheckCircle2, 
   XCircle, 
@@ -74,7 +74,7 @@ export const MailSuccessRateDonut: React.FC<MailSuccessRateDonutProps> = ({
     // Filter logs timestamp/recipient matching this month's celebrants
     const celebrantNames = new Set(
       members
-        .filter((m) => parseBirthMonth(m.birthday) === monthScope)
+        .filter((m) => getBirthMonth(m.birthday) === monthScope)
         .map((m) => m.name.toLowerCase().trim())
     );
 
