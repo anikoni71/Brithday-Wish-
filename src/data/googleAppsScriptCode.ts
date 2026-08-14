@@ -5,7 +5,7 @@ export function getAppsScriptCode(
   adminWhatsApp: string = 'whatsapp:+880163529951'
 ): string {
   return `/**
- * IE Central Team - ZERO-TOUCH 100% AUTOMATED DUAL-CHANNEL BIRTHDAY WISHING SYSTEM
+ * IE Central Team - ZERO-TOUCH 100% AUTOMATED DUAL-CHANNEL BIRTHDAY & FESTIVE WISHING SYSTEM
  * Google Apps Script for Google Sheet: "Central IE List"
  * 
  * SENDER HOSTING NUMBER: +8801625299521
@@ -13,18 +13,23 @@ export function getAppsScriptCode(
  * 
  * CORE CAPABILITIES & UPGRADES:
  * 1. ZERO-TOUCH 8:00 AM MORNING DISPATCH: Scans Column G for today's celebrants, resolves placeholders,
- *    and delivers birthday wishes via WhatsApp (+8801625299521) with automatic Email fallback.
- * 2. ADMIN ADVANCE BIRTHDAY PLANNING ALERTS (1 TO 3 DAYS AHEAD):
+ *    and delivers birthday wishes via WhatsApp (+8801625299521) and automated Email (Column H/I).
+ * 2. GLOBAL SPECIAL DAYS & FESTIVE CALENDAR AUTOMATED EMAIL ENGINE:
+ *    Whenever a team member's birthday coincides with or falls in the festive window of a major global/national
+ *    special day (Eid-ul-Fitr, Eid-ul-Adha, Pohela Boishakh, Christmas, Victory Day, Independence Day, New Year,
+ *    Valentine's Day, etc.), the system automatically composes and delivers a warm, beautifully styled HTML Festive Email
+ *    merging the special occasion's theme and personal blessings to their registered email (Column H/I).
+ * 3. ADMIN ADVANCE BIRTHDAY PLANNING ALERTS (1 TO 3 DAYS AHEAD):
  *    Automated trigger (5:00 PM evening or 7:30 AM morning) scans for upcoming celebrants in the next
  *    1 to 3 days and sends a multi-channel briefing directly to Admin WhatsApp (+880163529951) and Admin Email.
- * 3. ADVANCE PLANNING VERIFICATION CHECKLIST:
+ * 4. ADVANCE PLANNING VERIFICATION CHECKLIST:
  *    • Celebrant Name, Designation, & Department
  *    • Exact Birthday Date & Days Remaining ("Tomorrow", "In 2 days")
- *    • Verification Check: Confirms presence of WhatsApp in Col J and custom wish in Col K
- *    • Actionable Plan Instructions: Prompts team leader to review/update wishes before morning dispatch.
- * 4. SMART DATE NORMALIZER: Seamlessly handles "6th May", "21st Feb", "4th Aug", "8/13", "08/04", "13-Aug", Excel serials.
- * 5. DYNAMIC MESSAGE PERSONALIZATION: Resolves {Name}, {Designation}, {Department}, {ID}, {Birthday}.
- * 6. DUPLICATE PREVENTION: Records current year in Column L ("Last Sent Year") to prevent duplicate sends.
+ *    • Festive Coincidence Indicator (e.g., "Coincides with Pohela Boishakh")
+ *    • Verification Check: Confirms presence of WhatsApp in Col J, Email in Col H, and custom wish in Col K
+ * 5. SMART DATE NORMALIZER: Seamlessly handles "6th May", "21st Feb", "4th Aug", "8/13", "08/04", "13-Aug", Excel serials.
+ * 6. DYNAMIC MESSAGE PERSONALIZATION: Resolves {Name}, {Designation}, {Department}, {ID}, {Birthday}.
+ * 7. DUPLICATE PREVENTION: Records current year in Column L ("Last Sent Year") to prevent duplicate sends.
  * 
  * QUICK SETUP:
  * 1. Open Google Sheet ("Central IE List") -> Extensions -> Apps Script.
@@ -44,9 +49,103 @@ var API_AUTH_TOKEN = "${authToken || ''}";
 // --- 3. SPREADSHEET SETTINGS ---
 var SHEET_NAME = "Central IE List";
 
+// --- 4. GLOBAL SPECIAL DAYS & FESTIVE CALENDAR REGISTRY ---
+var GLOBAL_SPECIAL_DAYS_MAP = [
+  { id: 'new-year-day', name: "New Year's Day", month: 0, day: 1, icon: "🎉", theme: "New Year joy, fresh beginnings, and ambitious annual resolutions." },
+  { id: 'world-logic-day', name: "World Logic Day", month: 0, day: 14, icon: "🧠", theme: "Analytical clarity, problem-solving, and rational thinking." },
+  { id: 'int-education-day', name: "International Day of Education", month: 0, day: 24, icon: "🎓", theme: "Lifelong learning, skill mastery, and empowering through knowledge." },
+  { id: 'data-privacy-day', name: "Data Privacy Day", month: 0, day: 28, icon: "🔒", theme: "Data integrity, cybersecurity, and information protection excellence." },
+  { id: 'world-cancer-day', name: "World Cancer Day", month: 1, day: 4, icon: "🎗️", theme: "Health awareness, compassionate care, and solidarity." },
+  { id: 'valentine-day', name: "Valentine's Day", month: 1, day: 14, icon: "💖", theme: "Warmth, kindness, appreciation, and spreading happiness." },
+  { id: 'int-mother-language-day', name: "Language Martyrs' Day (Ekushey February)", month: 1, day: 21, icon: "🌺", theme: "Tribute to 1952 Language Martyrs, linguistic heritage, and pride." },
+  { id: 'int-womens-day', name: "International Women's Day", month: 2, day: 8, icon: "👩‍💼", theme: "Celebrating leadership, innovation, and women's achievements." },
+  { id: 'pi-day', name: "International Day of Mathematics (Pi Day)", month: 2, day: 14, icon: "📐", theme: "Precision engineering, numerical optimization, and industrial analytics." },
+  { id: 'bangladesh-independence-day', name: "Independence & National Day of Bangladesh", month: 2, day: 26, icon: "🇧🇩", theme: "National independence, patriotic valor, and nation-building." },
+  { id: 'world-health-day', name: "World Health Day", month: 3, day: 7, icon: "🩺", theme: "Physical wellness, ergonomic safety, and workplace vitality." },
+  { id: 'pohela-boishakh', name: "Pohela Boishakh (Bengali New Year 1433)", month: 3, day: 14, icon: "🌺", theme: "Shuvo Noboborsho! New cultural beginnings, harmony, and joy." },
+  { id: 'earth-day', name: "World Earth Day", month: 3, day: 22, icon: "🌍", theme: "Environmental sustainability, green manufacturing, and eco-responsibility." },
+  { id: 'world-book-day', name: "World Book & Copyright Day", month: 3, day: 23, icon: "📚", theme: "Intellectual discovery, continuous self-improvement, and reading." },
+  { id: 'world-safety-day', name: "World Day for Safety and Health at Work", month: 3, day: 28, icon: "🦺", theme: "Industrial ergonomics, workplace safety standards, and team well-being." },
+  { id: 'may-day', name: "International Workers' Day (May Day)", month: 4, day: 1, icon: "✊", theme: "Honoring labor rights, industrial workforce diligence, and dignity of work." },
+  { id: 'press-freedom-day', name: "World Press Freedom Day", month: 4, day: 3, icon: "📰", theme: "Transparency, authentic communication, and professional honesty." },
+  { id: 'world-environment-day', name: "World Environment Day", month: 5, day: 5, icon: "🌱", theme: "Clean environment, carbon footprint reduction, and energy efficiency." },
+  { id: 'world-blood-donor-day', name: "World Blood Donor Day", month: 5, day: 14, icon: "🩸", theme: "Life-saving generosity, humanitarian spirit, and community solidarity." },
+  { id: 'world-productivity-day', name: "World Productivity Day", month: 5, day: 20, icon: "⚡", theme: "Industrial Engineering excellence, lean operations, and process speed." },
+  { id: 'world-youth-skills-day', name: "World Youth Skills Day", month: 6, day: 15, icon: "🛠️", theme: "Technical upskilling, operational empowerment, and youth mastery." },
+  { id: 'world-chess-day', name: "World Chess Day", month: 6, day: 20, icon: "♟️", theme: "Strategic planning, foresight, and systematic operational execution." },
+  { id: 'sysadmin-day', name: "System Administrator Appreciation Day", month: 6, day: 25, icon: "💻", theme: "Digital infrastructure uptime, cloud architecture, and IT resilience." },
+  { id: 'bangladesh-mourning-day', name: "National Mourning Day", month: 7, day: 15, icon: "🕊️", theme: "Solemn remembrance, national dignity, and historical respect." },
+  { id: 'world-humanitarian-day', name: "World Humanitarian Day", month: 7, day: 19, icon: "🤝", theme: "Selfless service, compassionate teamwork, and helping others." },
+  { id: 'int-literacy-day', name: "International Literacy Day", month: 8, day: 8, icon: "📖", theme: "Knowledge transfer, SOP literacy, and educational growth." },
+  { id: 'int-day-peace', name: "International Day of Peace", month: 8, day: 21, icon: "🕊️", theme: "Workplace harmony, collaboration, and mutual respect." },
+  { id: 'world-teachers-day', name: "World Teachers' Day", month: 9, day: 5, icon: "🧑‍🏫", theme: "Mentorship, guiding junior engineers, and knowledge coaching." },
+  { id: 'world-mental-health-day', name: "World Mental Health Day", month: 9, day: 10, icon: "💚", theme: "Mindfulness, emotional well-being, and work-life balance." },
+  { id: 'world-standards-day', name: "World Standards Day", month: 9, day: 14, icon: "📏", theme: "ISO standards, Six Sigma consistency, and quality compliance." },
+  { id: 'world-statistics-day', name: "World Statistics Day", month: 9, day: 20, icon: "📊", theme: "Data integrity, statistical process control (SPC), and metrics." },
+  { id: 'world-science-day', name: "World Science Day for Peace & Development", month: 10, day: 10, icon: "🔬", theme: "Scientific methodology, empirical data, and innovation." },
+  { id: 'world-quality-day', name: "World Quality Day", month: 10, day: 13, icon: "🏅", theme: "Zero-defect mindset, kaizen continuous improvement, and total quality." },
+  { id: 'int-mens-day', name: "International Men's Day", month: 10, day: 19, icon: "👨‍💼", theme: "Positive male role models, mental health, and team camaraderie." },
+  { id: 'world-aids-day', name: "World AIDS Day", month: 11, day: 1, icon: "🎗️", theme: "Health awareness, empathy, and social solidarity." },
+  { id: 'world-computer-literacy-day', name: "World Computer Literacy Day", month: 11, day: 2, icon: "🖥️", theme: "Digital transformation, automation, and technological advancement." },
+  { id: 'human-rights-day', name: "Human Rights Day", month: 11, day: 10, icon: "⚖️", theme: "Fundamental dignity, equity, and ethical fairness in workplace." },
+  { id: 'martyred-intellectuals-day', name: "Martyred Intellectuals Day", month: 11, day: 14, icon: "🕯️", theme: "Solemn tribute to Bangladesh's brightest thinkers and professors." },
+  { id: 'bangladesh-victory-day', name: "Victory Day of Bangladesh (Bijoy Dibosh)", month: 11, day: 16, icon: "🇧🇩", theme: "Victory of 1971, sovereign pride, and resilient national spirit." },
+  { id: 'christmas-day', name: "Christmas Day (Boro Din)", month: 11, day: 25, icon: "🎄", theme: "Peace, goodwill, festive family gatherings, and joy." },
+  { id: 'new-year-eve', name: "New Year's Eve", month: 11, day: 31, icon: "✨", theme: "Year-end reflection, milestones celebration, and counting blessings." }
+];
+
+// Floating Lunar Holidays map by year
+var FLOATING_SCHEDULES = {
+  2025: {
+    'eid-ul-fitr': { month: 2, day: 31, name: "Eid-ul-Fitr (Eid Mubarak)", icon: "🌙", theme: "Eid blessings, joy, charity, and heartfelt gratitude." },
+    'eid-ul-adha': { month: 5, day: 7, name: "Eid-ul-Adha (Qurbani Eid)", icon: "🐑", theme: "Sacrifice, devotion, brotherhood, and generosity." },
+    'mother-day': { month: 4, day: 11, name: "Mother's Day", icon: "💐", theme: "Honoring motherly love, sacrifices, and maternal warmth." },
+    'father-day': { month: 5, day: 21, name: "Father's Day", icon: "👔", theme: "Celebrating paternal guidance, mentorship, and strength." },
+    'friendship-day': { month: 7, day: 3, name: "International Friendship Day", icon: "🤝", theme: "Bonds of genuine friendship, mutual trust, and camaraderie." }
+  },
+  2026: {
+    'eid-ul-fitr': { month: 2, day: 20, name: "Eid-ul-Fitr (Eid Mubarak)", icon: "🌙", theme: "Eid blessings, joy, charity, and heartfelt gratitude." },
+    'eid-ul-adha': { month: 4, day: 27, name: "Eid-ul-Adha (Qurbani Eid)", icon: "🐑", theme: "Sacrifice, devotion, brotherhood, and generosity." },
+    'mother-day': { month: 4, day: 10, name: "Mother's Day", icon: "💐", theme: "Honoring motherly love, sacrifices, and maternal warmth." },
+    'father-day': { month: 5, day: 21, name: "Father's Day", icon: "👔", theme: "Celebrating paternal guidance, mentorship, and strength." },
+    'friendship-day': { month: 7, day: 2, name: "International Friendship Day", icon: "🤝", theme: "Bonds of genuine friendship, mutual trust, and camaraderie." }
+  },
+  2027: {
+    'eid-ul-fitr': { month: 2, day: 10, name: "Eid-ul-Fitr (Eid Mubarak)", icon: "🌙", theme: "Eid blessings, joy, charity, and heartfelt gratitude." },
+    'eid-ul-adha': { month: 4, day: 16, name: "Eid-ul-Adha (Qurbani Eid)", icon: "🐑", theme: "Sacrifice, devotion, brotherhood, and generosity." },
+    'mother-day': { month: 4, day: 9, name: "Mother's Day", icon: "💐", theme: "Honoring motherly love, sacrifices, and maternal warmth." },
+    'father-day': { month: 5, day: 20, name: "Father's Day", icon: "👔", theme: "Celebrating paternal guidance, mentorship, and strength." },
+    'friendship-day': { month: 7, day: 1, name: "International Friendship Day", icon: "🤝", theme: "Bonds of genuine friendship, mutual trust, and camaraderie." }
+  }
+};
+
+/**
+ * Checks if a specific date (0-indexed month, 1-indexed day) matches a global special day.
+ */
+function getSpecialDayForDate(monthIndex, day, year) {
+  var y = year || new Date().getFullYear();
+  // Check floating schedules first
+  if (FLOATING_SCHEDULES[y]) {
+    for (var key in FLOATING_SCHEDULES[y]) {
+      var item = FLOATING_SCHEDULES[y][key];
+      if (item.month === monthIndex && item.day === day) {
+        return { name: item.name, icon: item.icon, theme: item.theme, id: key };
+      }
+    }
+  }
+  // Check fixed calendar
+  for (var i = 0; i < GLOBAL_SPECIAL_DAYS_MAP.length; i++) {
+    var sd = GLOBAL_SPECIAL_DAYS_MAP[i];
+    if (sd.month === monthIndex && sd.day === day) {
+      return { name: sd.name, icon: sd.icon, theme: sd.theme, id: sd.id };
+    }
+  }
+  return null;
+}
+
 /**
  * 8:00 AM Daily Morning Trigger: Checks today's birthdays, resolves placeholders,
- * dispatches WhatsApp wish, and falls back to Email if WhatsApp is unavailable.
+ * dispatches WhatsApp wish, and automatically delivers warm Festive HTML Email!
  */
 function checkBirthdaysAndSendWishes() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -56,12 +155,13 @@ function checkBirthdaysAndSendWishes() {
   var today = new Date();
   var todayDay = today.getDate();
   var todayMonth = today.getMonth() + 1; // 1-indexed (Jan = 1)
+  var monthIndex = today.getMonth();    // 0-indexed
   var currentYear = today.getFullYear();
 
-  Logger.log("=== Starting Zero-Touch Birthday Dispatch for " + todayMonth + "/" + todayDay + "/" + currentYear + " ===");
+  Logger.log("=== Starting Zero-Touch Birthday & Festive Dispatch for " + todayMonth + "/" + todayDay + "/" + currentYear + " ===");
 
   var dispatchedWhatsAppCount = 0;
-  var dispatchedEmailFallbackCount = 0;
+  var dispatchedEmailCount = 0;
 
   // Header row detection
   var headerRow = 4; // Row 5 (index 4) by default
@@ -71,6 +171,12 @@ function checkBirthdaysAndSendWishes() {
       headerRow = r;
       break;
     }
+  }
+
+  // Check if today is a Global Special Day or Festive Holiday
+  var specialDayToday = getSpecialDayForDate(monthIndex, todayDay, currentYear);
+  if (specialDayToday) {
+    Logger.log("✨ Today coincides with Global Special Day: " + specialDayToday.name + " " + specialDayToday.icon);
   }
 
   for (var i = headerRow + 1; i < data.length; i++) {
@@ -99,6 +205,9 @@ function checkBirthdaysAndSendWishes() {
         continue;
       }
 
+      // Check if this celebrant's birthday coincides with a special day
+      var celebrantSpecialDay = getSpecialDayForDate(dob.monthIndex, dob.day, currentYear) || specialDayToday;
+
       // Resolve Dynamic Placeholders: {Name}, {Designation}, {Department}, {ID}, {Birthday}
       var personalizedWish = resolvePlaceholders(customMessage, {
         name: name,
@@ -108,6 +217,11 @@ function checkBirthdaysAndSendWishes() {
         birthday: dob.formatted
       });
 
+      // Enhance message if festive coincidence exists
+      if (celebrantSpecialDay && (!customMessage || customMessage.toString().trim() === "")) {
+        personalizedWish = "🎉 Happy Birthday, " + name + "! Double celebration today as your special day coincides with " + celebrantSpecialDay.name + " " + celebrantSpecialDay.icon + "! Wishing you joy, good health, and stellar milestones from the IE Central Team! ✨";
+      }
+
       var cleanPhone = phone.replace(/\\D/g, '');
       if (cleanPhone.indexOf('01') === 0) {
         cleanPhone = '88' + cleanPhone;
@@ -116,41 +230,49 @@ function checkBirthdaysAndSendWishes() {
       }
 
       var sentSuccess = false;
-      var usedChannel = "WhatsApp";
+      var channelsUsed = [];
 
-      // Try Primary Channel: WhatsApp
+      // 1. Dispatch Primary WhatsApp Channel
       if (cleanPhone.length >= 10) {
         var recipientFormatted = 'whatsapp:+' + cleanPhone;
         Logger.log("Attempting WhatsApp Dispatch to: " + name + " (" + recipientFormatted + ")");
-        sentSuccess = sendDirectWhatsApp(recipientFormatted, personalizedWish);
+        var waResult = sendDirectWhatsApp(recipientFormatted, personalizedWish);
+        if (waResult) {
+          dispatchedWhatsAppCount++;
+          channelsUsed.push("WhatsApp");
+        }
       }
 
-      // If WhatsApp failed or phone was missing -> Trigger Dual-Channel Email Fallback
-      if (!sentSuccess) {
-        if (email && email.indexOf('@') !== -1) {
-          Logger.log("WhatsApp unavailable for " + name + ". Triggering automated Email Fallback to: " + email);
-          var emailSuccess = sendFallbackBirthdayEmail(email, name, designation, department, personalizedWish);
-          if (emailSuccess) {
-            sentSuccess = true;
-            usedChannel = "Email Fallback";
-            dispatchedEmailFallbackCount++;
-          }
+      // 2. Dispatch Automated Email (Always sent if email is available for warm festive delivery!)
+      if (email && email.indexOf('@') !== -1) {
+        Logger.log("Dispatching Automated Email to: " + email + " for " + name);
+        var emailSent = false;
+        if (celebrantSpecialDay) {
+          emailSent = sendFestiveBirthdayEmail(email, name, designation, department, dob.formatted, celebrantSpecialDay, personalizedWish);
         } else {
-          Logger.log("WARNING: Neither valid WhatsApp (" + phone + ") nor Email (" + email + ") available for " + name);
+          emailSent = sendFallbackBirthdayEmail(email, name, designation, department, personalizedWish);
         }
-      } else {
-        dispatchedWhatsAppCount++;
+
+        if (emailSent) {
+          dispatchedEmailCount++;
+          channelsUsed.push(celebrantSpecialDay ? "Festive HTML Email" : "HTML Email");
+          sentSuccess = true;
+        }
+      }
+
+      if (channelsUsed.length > 0) {
+        sentSuccess = true;
       }
 
       // Record successful dispatch in Column L (Year)
       if (sentSuccess) {
         sheet.getRange(i + 1, 12).setValue(currentYear);
-        Logger.log("SUCCESS [" + usedChannel + "]: Delivered to " + name + ". Recorded " + currentYear + " in Column L.");
+        Logger.log("SUCCESS [" + channelsUsed.join(" + ") + "]: Delivered to " + name + ". Recorded " + currentYear + " in Column L.");
       }
     }
   }
 
-  Logger.log("=== 8:00 AM Dispatch Completed. WhatsApp: " + dispatchedWhatsAppCount + ", Email Fallbacks: " + dispatchedEmailFallbackCount + " ===");
+  Logger.log("=== 8:00 AM Dispatch Completed. WhatsApp: " + dispatchedWhatsAppCount + ", Emails Dispatched: " + dispatchedEmailCount + " ===");
 }
 
 /**
@@ -193,13 +315,16 @@ function sendAdminUpcomingBirthdayAlerts() {
     }
     var diffDays = Math.round((nextBday.getTime() - todayZero.getTime()) / (1000 * 60 * 60 * 24));
 
-    // Focus on 1 to 3 days ahead (or tomorrow)
+    // Focus on 1 to 3 days ahead (or today)
     if (diffDays >= 0 && diffDays <= 3) {
       var timeframe = diffDays === 0 ? "Today" : (diffDays === 1 ? "Tomorrow (1-Day Advance)" : "In " + diffDays + " days");
       var cleanPhone = phone.replace(/\\D/g, '');
       var hasWhatsApp = cleanPhone.length >= 10;
       var hasCustomWish = customMessage.length > 0;
       var hasEmail = email.indexOf('@') !== -1;
+
+      // Check for festive coincidence
+      var specialDayMatch = getSpecialDayForDate(dob.monthIndex, dob.day, currentYear);
 
       var resolvedWish = resolvePlaceholders(customMessage, {
         name: name,
@@ -223,7 +348,8 @@ function sendAdminUpcomingBirthdayAlerts() {
         hasEmail: hasEmail,
         customMessage: customMessage,
         hasCustomWish: hasCustomWish,
-        resolvedWish: resolvedWish
+        resolvedWish: resolvedWish,
+        specialDay: specialDayMatch
       });
     }
   }
@@ -244,8 +370,11 @@ function sendAdminUpcomingBirthdayAlerts() {
 
   for (var k = 0; k < upcomingCelebrants.length; k++) {
     var item = upcomingCelebrants[k];
+    var festiveNote = item.specialDay ? "   • ✨ *Festive Coincidence*: " + item.specialDay.icon + " " + item.specialDay.name + "\\n" : "";
+    
     waMessage += "*" + (k + 1) + ". " + item.name + "* (" + item.designation + ")\\n"
       + "   • 🎂 Birthday: *" + item.birthday + "* (" + item.timeframe + ")\\n"
+      + festiveNote
       + "   • 📱 Col J (WhatsApp): " + (item.hasWhatsApp ? item.phone : "❌ MISSING in Column J") + "\\n"
       + "   • ✉️ Col H (Email): " + (item.hasEmail ? item.email : "⚠️ Missing in Column H") + "\\n"
       + "   • 📝 Col K (Wish): " + (item.hasCustomWish ? "✅ Customized" : "⚠️ Default Template") + "\\n"
@@ -272,12 +401,17 @@ function sendAdminUpcomingBirthdayAlerts() {
 
   for (var j = 0; j < upcomingCelebrants.length; j++) {
     var c = upcomingCelebrants[j];
+    var festiveBadge = c.specialDay 
+      ? "<div style='margin-top: 4px; display: inline-block; background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: bold;'>✨ Coincides with " + c.specialDay.icon + " " + c.specialDay.name + "</div>" 
+      : "";
+
     html += "<div style='background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; margin-bottom: 14px;'>"
       + "<div style='display: flex; justify-content: space-between; align-items: center;'>"
       + "<strong style='font-size: 15px; color: #0f172a;'>" + (j + 1) + ". " + c.name + "</strong> "
       + "<span style='background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 99px; font-size: 11px; font-weight: bold;'>" + c.timeframe + "</span>"
       + "</div>"
       + "<div style='font-size: 12px; color: #475569; margin-top: 4px;'><strong>Designation:</strong> " + c.designation + " | <strong>Dept:</strong> " + c.department + " | <strong>ID:</strong> " + c.id + "</div>"
+      + festiveBadge
       + "<div style='font-size: 12px; color: #334155; margin-top: 6px; padding: 8px; background: #ffffff; border-radius: 6px; border: 1px solid #f1f5f9;'>"
       + "📱 <strong>Col J (WhatsApp):</strong> " + (c.hasWhatsApp ? "<span style='color:#16a34a; font-weight:bold;'>✓ " + c.phone + "</span>" : "<span style='color:#dc2626; font-weight:bold;'>✗ MISSING</span>") + "<br/>"
       + "✉️ <strong>Col H (Email):</strong> " + (c.hasEmail ? "<span style='color:#2563eb;'>✓ " + c.email + "</span>" : "<span style='color:#ea580c;'>✗ Missing</span>") + "<br/>"
@@ -289,7 +423,7 @@ function sendAdminUpcomingBirthdayAlerts() {
 
   html += "<div style='background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 12px; font-size: 12px; color: #1e40af; margin-top: 16px;'>"
     + "<strong>Action Plan for Team Leader:</strong><br/>"
-    + "1. Open Google Sheet ('Central IE List') to update any missing WhatsApp numbers (Column J).<br/>"
+    + "1. Open Google Sheet ('Central IE List') to update any missing WhatsApp numbers (Column J) and emails (Column H).<br/>"
     + "2. Customize wishing messages in Column K before the 8:00 AM automated dispatch."
     + "</div>"
     + "<p style='font-size: 11px; color: #94a3b8; margin-top: 16px;'>Sent automatically by IE Central Team Birthday System via Google Apps Script.</p></div></div>";
@@ -501,7 +635,55 @@ function sendDirectWhatsApp(toRecipient, messageText) {
 }
 
 /**
- * Dual-Channel Delivery: Automated Email Fallback using MailApp
+ * Specialized Warm Festive Birthday HTML Email Dispatcher
+ */
+function sendFestiveBirthdayEmail(toEmail, recipientName, designation, department, birthday, specialDay, messageBody) {
+  var icon = specialDay.icon || "🎉";
+  var specialName = specialDay.name || "Festive Celebration";
+  var subject = icon + " Happy Birthday, " + recipientName + "! Festive Celebration on " + specialName + " - IE Central Team 🎂✨";
+  
+  var html = "<div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);'>"
+    + "<div style='background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #311042 100%); padding: 32px 24px; text-align: center; color: #ffffff;'>"
+    + "<div style='display: inline-block; background: rgba(251, 191, 36, 0.2); border: 1px solid rgba(251, 191, 36, 0.6); border-radius: 999px; padding: 4px 14px; font-size: 12px; font-weight: bold; color: #fde047; text-transform: uppercase; margin-bottom: 12px;'>"
+    + icon + " Festive Celebration &bull; " + specialName
+    + "</div>"
+    + "<div style='font-size: 38px; margin-bottom: 8px;'>🎉🎂" + icon + "✨</div>"
+    + "<h1 style='margin: 0; font-size: 24px; color: #fbbf24; font-weight: bold;'>Happy Birthday, " + recipientName + "!</h1>"
+    + "<p style='margin: 6px 0 0 0; font-size: 13px; color: #cbd5e1;'>" + designation + " &bull; " + department + "</p>"
+    + "</div>"
+    + "<div style='background: #fef3c7; border-bottom: 1px solid #fde68a; padding: 12px 20px; text-align: center; font-size: 12px; color: #92400e; font-weight: 600;'>"
+    + "🌟 <strong>Double Celebration:</strong> Today beautifully coincides with <strong>" + specialName + "</strong>!"
+    + (specialDay.theme ? "<div style='font-size: 11px; color: #b45309; font-style: italic; margin-top: 2px;'>\"" + specialDay.theme + "\"</div>" : "")
+    + "</div>"
+    + "<div style='padding: 24px 24px; color: #334155; line-height: 1.65; font-size: 14px;'>"
+    + "<p style='margin-top: 0;'>Dear <strong>" + recipientName + "</strong>,</p>"
+    + "<div style='background: #f8fafc; border-left: 4px solid #f59e0b; padding: 16px 18px; border-radius: 0 8px 8px 0; margin: 16px 0; font-size: 15px; color: #0f172a; font-weight: 500;'>"
+    + messageBody
+    + "</div>"
+    + "<p>On this auspicious occasion, on behalf of the entire Industrial Engineering Central Team, we extend our heartfelt wishes for your continued health, prosperity, and joyous achievements!</p>"
+    + "<div style='margin-top: 24px; padding-top: 16px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b;'>"
+    + "<strong>IE Central Team Birthday & Festive Wishing Automation</strong><br/>"
+    + "Sender Phone: <strong>+8801625299521</strong> &bull; KDS Group Central Operations"
+    + "</div>"
+    + "</div></div>";
+
+  try {
+    MailApp.sendEmail({
+      to: toEmail,
+      subject: subject,
+      htmlBody: html,
+      name: "IE Central Team Festive Wishes"
+    });
+    Logger.log("Festive Email delivered successfully to: " + toEmail);
+    return true;
+  } catch (e) {
+    Logger.log("MailApp Festive delivery failed for " + toEmail + ": " + e);
+    return false;
+  }
+}
+
+/**
+ * Standard Automated HTML Birthday Email
  */
 function sendFallbackBirthdayEmail(toEmail, recipientName, designation, department, messageBody) {
   var subject = "🎂 Happy Birthday, " + recipientName + "! Special Wishes from IE Central Team 🎉";
@@ -531,7 +713,7 @@ function sendFallbackBirthdayEmail(toEmail, recipientName, designation, departme
       htmlBody: html,
       name: "IE Central Team Wishes"
     });
-    Logger.log("Email fallback delivered successfully to: " + toEmail);
+    Logger.log("Email delivered successfully to: " + toEmail);
     return true;
   } catch (e) {
     Logger.log("MailApp delivery failed for " + toEmail + ": " + e);
@@ -541,7 +723,7 @@ function sendFallbackBirthdayEmail(toEmail, recipientName, designation, departme
 
 /**
  * Setup All Cloud Triggers:
- * 1. 8:00 AM Daily Birthday Wishing Trigger (checkBirthdaysAndSendWishes)
+ * 1. 8:00 AM Daily Birthday & Festive Wishing Trigger (checkBirthdaysAndSendWishes)
  * 2. 5:00 PM (17:00) Evening Admin Advance Planning Alert Trigger (sendAdminUpcomingBirthdayAlerts)
  */
 function setupAllTriggers() {

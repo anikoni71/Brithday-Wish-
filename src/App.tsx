@@ -11,7 +11,7 @@ import { TwilioTester } from './components/TwilioTester';
 import { AutomationHistory } from './components/AutomationHistory';
 import { BirthdayDistributionChart } from './components/BirthdayDistributionChart';
 import { MailWorkstation } from './components/MailWorkstation';
-import { GlobalSpecialDaysBanner } from './components/GlobalSpecialDaysBanner';
+import { FestiveCalendarWorkstation } from './components/FestiveCalendarWorkstation';
 import { checkIsTodayBirthday, getUpcomingBirthdayInfo } from './utils/dateUtils';
 import { triggerBirthdayConfetti } from './utils/confetti';
 import { useTeamData } from './hooks/useTeamData';
@@ -33,7 +33,7 @@ interface ToastNotification {
 }
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'roster' | 'email' | 'generator' | 'script' | 'automation' | 'tester'>('roster');
+  const [activeTab, setActiveTab] = useState<'roster' | 'festive' | 'email' | 'generator' | 'script' | 'automation' | 'tester'>('roster');
   const [autoSyncEnabled, setAutoSyncEnabled] = useState<boolean>(true);
   const [toastNotification, setToastNotification] = useState<ToastNotification | null>(null);
   const [isWishModalOpen, setIsWishModalOpen] = useState<boolean>(false);
@@ -504,10 +504,10 @@ export default function App() {
         />
 
         {/* Top Summary Metrics Bar */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
           
           <div className="bg-white rounded-2xl p-3.5 border border-slate-200 shadow-2xs flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+            <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold shrink-0">
               <Users className="w-4.5 h-4.5" />
             </div>
             <div>
@@ -517,70 +517,79 @@ export default function App() {
           </div>
 
           <div className="bg-white rounded-2xl p-3.5 border border-amber-200 shadow-2xs flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+            <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold shrink-0">
               <Calendar className="w-4.5 h-4.5" />
             </div>
             <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Birthdays Today</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Today's Birthdays</p>
               <p className="text-lg font-bold text-amber-600">{todayBirthdays.length}</p>
             </div>
           </div>
 
+          <div
+            className="bg-white rounded-2xl p-3.5 border border-amber-200 shadow-2xs flex items-center gap-3 cursor-pointer hover:border-amber-400 transition"
+            onClick={() => setActiveTab('festive')}
+          >
+            <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold shrink-0">
+              <Sparkles className="w-4.5 h-4.5" />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Festive Hub</p>
+              <p className="text-xs font-bold text-amber-800 mt-0.5 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                Special Days
+              </p>
+            </div>
+          </div>
+
           <div className="bg-white rounded-2xl p-3.5 border border-slate-200 shadow-2xs flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+            <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold shrink-0">
               <PhoneCall className="w-4.5 h-4.5" />
             </div>
             <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">WhatsApp Sender</p>
-              <p className="text-xs font-mono font-bold text-slate-900 mt-0.5 truncate max-w-[110px]">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">WhatsApp</p>
+              <p className="text-xs font-mono font-bold text-slate-900 mt-0.5 truncate max-w-[95px]">
                 {twilioConfig.whatsappNumber.replace('whatsapp:', '')}
               </p>
             </div>
           </div>
 
           <div className="bg-white rounded-2xl p-3.5 border border-indigo-200 shadow-2xs flex items-center gap-3 cursor-pointer hover:border-indigo-300 transition" onClick={() => setActiveTab('email')}>
-            <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
+            <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold shrink-0">
               <Mail className="w-4.5 h-4.5" />
             </div>
             <div>
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Mail Station</p>
               <p className="text-xs font-bold text-indigo-700 mt-0.5 flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                Auto-Wish Ready
+                Auto-Wish
               </p>
             </div>
           </div>
 
           <div className="bg-white rounded-2xl p-3.5 border border-slate-200 shadow-2xs flex items-center gap-3 cursor-pointer hover:border-slate-300 transition" onClick={() => setIsAdminPlanningOpen(true)}>
-            <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+            <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold shrink-0">
               <Bell className="w-4.5 h-4.5" />
             </div>
             <div>
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Admin Planning</p>
-              <p className="text-xs font-bold text-amber-700 flex items-center gap-1 mt-0.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse inline-block"></span>
+              <p className="text-xs font-bold text-amber-700 flex items-center gap-1 mt-0.5 truncate">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse inline-block shrink-0"></span>
                 +880163529951
               </p>
             </div>
           </div>
         </div>
 
-        {/* Global Special Days & Festive Calendar Widget */}
-        <GlobalSpecialDaysBanner
-          members={teamMembers}
-          onSelectMemberFilter={(month) => {
-            setSelectedMonthFilter(month);
-            setActiveTab('roster');
-          }}
-        />
-
-        {/* Today's Birthday Banner */}
-        <TodayBirthdayBanner
-          todayBirthdays={todayBirthdays}
-          onOpenGenerator={handleOpenGenerator}
-          onSendWhatsApp={handleSendWhatsApp}
-          isSending={isSendingWhatsApp}
-        />
+        {/* Today's Birthday Banner (Only on Roster or Global) */}
+        {activeTab === 'roster' && (
+          <TodayBirthdayBanner
+            todayBirthdays={todayBirthdays}
+            onOpenGenerator={handleOpenGenerator}
+            onSendWhatsApp={handleSendWhatsApp}
+            isSending={isSendingWhatsApp}
+          />
+        )}
 
         {/* Tab Views */}
         {activeTab === 'roster' && (
@@ -610,6 +619,20 @@ export default function App() {
               onToggleWishSent={handleToggleWishSent}
             />
           </div>
+        )}
+
+        {/* Dedicated Global Special Days & Festive Calendar Workstation */}
+        {activeTab === 'festive' && (
+          <FestiveCalendarWorkstation
+            members={teamMembers}
+            onOpenGenerator={handleOpenGenerator}
+            onSendWhatsApp={handleSendWhatsApp}
+            onNavigateToRosterMonth={(month) => {
+              setSelectedMonthFilter(month);
+              setRosterFilterType('all');
+              setActiveTab('roster');
+            }}
+          />
         )}
 
         {/* Mail Workstation */}

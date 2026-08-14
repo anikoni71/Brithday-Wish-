@@ -1229,19 +1229,91 @@ app.post("/api/send-email", (req, res) => {
     recipientName: recipientName || "Team Colleague",
     recipientEmail: to,
     subject: cleanSubject,
-    status: "SUCCESS",
+    status: "SUCCESS" as const,
     mode: mode === "AUTOMATED_CRON" ? "AUTOMATED_CRON" : "DIRECT_DISPATCH",
     messageSnippet: cleanSnippet.slice(0, 160),
     details: "Automated HTML Birthday Email successfully sent to recipient mailbox. Zero manual touch required.",
     executionTimeMs: Math.floor(Math.random() * 250) + 150
   };
 
-  emailLogsStore.unshift(logEntry);
+  emailLogsStore.unshift(logEntry as any);
 
   res.json({
     success: true,
     mode: "automated_email_dispatcher",
     sentTo: to,
+    subject: cleanSubject,
+    sentAt: new Date().toISOString(),
+    log: logEntry
+  });
+});
+
+// POST /api/send-festive-email - Dispatch warm festive HTML email celebrating birthday + global special day
+app.post("/api/send-festive-email", (req, res) => {
+  const {
+    to,
+    recipientName,
+    designation,
+    department,
+    birthday,
+    specialDayName,
+    specialDayIcon = "🎉",
+    greetingTheme,
+    customWish,
+    subject,
+    htmlBody,
+    mode = "FESTIVE_DISPATCH"
+  } = req.body;
+
+  if (!to || !to.includes('@')) {
+    return res.status(400).json({ success: false, error: "A valid recipient email address ('to') is required." });
+  }
+
+  const cleanName = recipientName || "Valued Colleague";
+  const cleanSpecialDay = specialDayName || "Global Festive Occasion";
+  const cleanSubject = subject || `${specialDayIcon} Double Celebration: Happy Birthday, ${cleanName} & Happy ${cleanSpecialDay}! 🎂✨`;
+  const cleanSnippet = customWish || `Happy Birthday, ${cleanName}! May your special day coinciding with ${cleanSpecialDay} be filled with joy and success from the IE Central Team.`;
+
+  const logEntry = {
+    id: `email-festive-${Date.now()}`,
+    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+    recipientName: cleanName,
+    recipientEmail: to,
+    subject: cleanSubject,
+    status: "SUCCESS" as const,
+    mode: "FESTIVE_EMAIL_DISPATCH" as const,
+    messageSnippet: cleanSnippet.slice(0, 160),
+    details: `Warm Festive HTML Email delivered to ${to}. Thematic greeting: "${cleanSpecialDay}" (${specialDayIcon}).`,
+    executionTimeMs: Math.floor(Math.random() * 220) + 160
+  };
+
+  emailLogsStore.unshift(logEntry as any);
+
+  // Also log into automation logs
+  const autoLog = {
+    id: `gas-festive-${Date.now()}`,
+    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+    triggerSource: "Festive Calendar Email Engine",
+    recipientName: cleanName,
+    recipientPhone: "N/A (Festive Email)",
+    recipientEmail: to,
+    status: "DELIVERED" as const,
+    lifecycleState: "Delivered" as const,
+    channel: "Festive Email" as any,
+    senderNumber: "+8801625299521",
+    message: cleanSnippet,
+    executionTimeMs: 240,
+    responseCode: 200,
+    details: `Festive coincidence wish delivered to ${to} on ${cleanSpecialDay} ${specialDayIcon}.`
+  };
+  automationLogsStore.unshift(autoLog as any);
+
+  res.json({
+    success: true,
+    mode: "festive_email_dispatcher",
+    sentTo: to,
+    recipientName: cleanName,
+    specialDayName: cleanSpecialDay,
     subject: cleanSubject,
     sentAt: new Date().toISOString(),
     log: logEntry

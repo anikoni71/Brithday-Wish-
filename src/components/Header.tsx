@@ -1,9 +1,9 @@
 import React from 'react';
-import { RefreshCw, ExternalLink, Cake, Sparkles, Code2, Send, PhoneCall, Radio, CheckCircle2, Bot, Mail, Bell, Volume2, VolumeX } from 'lucide-react';
+import { RefreshCw, ExternalLink, Cake, Sparkles, Code2, Send, PhoneCall, Radio, CheckCircle2, Bot, Mail, Bell, Volume2, VolumeX, Globe } from 'lucide-react';
 
 interface HeaderProps {
-  activeTab: 'roster' | 'email' | 'generator' | 'script' | 'tester' | 'automation';
-  setActiveTab: (tab: 'roster' | 'email' | 'generator' | 'script' | 'tester' | 'automation') => void;
+  activeTab: 'roster' | 'festive' | 'email' | 'generator' | 'script' | 'tester' | 'automation';
+  setActiveTab: (tab: 'roster' | 'festive' | 'email' | 'generator' | 'script' | 'tester' | 'automation') => void;
   onSync: () => void;
   isSyncing: boolean;
   lastSynced: string | null;
@@ -211,6 +211,21 @@ export const Header: React.FC<HeaderProps> = ({
                 {dueSoonCount}
               </span>
             ) : null}
+          </button>
+
+          <button
+            onClick={() => setActiveTab('festive')}
+            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-t-lg border-b-2 transition whitespace-nowrap cursor-pointer ${
+              activeTab === 'festive'
+                ? 'border-amber-500 text-amber-900 bg-amber-50/60 font-bold'
+                : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+            }`}
+          >
+            <Globe className="w-4 h-4 text-amber-600" />
+            Global Special Days & Festive Calendar
+            <span className="ml-1 px-1.5 py-0.2 rounded-full text-[9px] bg-amber-100 text-amber-900 border border-amber-300 font-bold">
+              2026
+            </span>
           </button>
 
           <button

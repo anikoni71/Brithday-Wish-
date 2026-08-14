@@ -1,3 +1,5 @@
+import { TeamMember } from '../types';
+
 export const MONTH_NAMES = [
   { short: 'Jan', full: 'January', index: 0, monthNumber: 1 },
   { short: 'Feb', full: 'February', index: 1, monthNumber: 2 },
@@ -520,4 +522,225 @@ export function getUpcomingGlobalSpecialDays(
 
   candidates.sort((a, b) => a.daysRemaining - b.daysRemaining);
   return candidates.slice(0, limit);
+}
+
+export interface WeeklyCelebrationIntensity {
+  weekNumber: number; // 1, 2, 3, 4
+  weekLabel: string; // "Week 1 (14 Aug - 20 Aug)"
+  startOffsetDays: number;
+  endOffsetDays: number;
+  startDateFormatted: string;
+  endDateFormatted: string;
+  birthdays: CelebrantPlanningItem[];
+  holidays: UpcomingSpecialDayItem[];
+  coincidentCount: number;
+  totalCelebrations: number;
+  intensityScore: number; // 0 to 100
+  intensityLevel: 'low' | 'moderate' | 'high' | 'peak';
+  suggestedLunchDate: {
+    formatted: string; // e.g. "Thursday, 20 Aug 2026"
+    weekday: string; // e.g. "Thursday"
+    dayFormatted: string; // "20 Aug"
+    reason: string;
+  };
+}
+
+export interface CelebrationIntensityAnalysis {
+  weeks: WeeklyCelebrationIntensity[];
+  peakWeek: WeeklyCelebrationIntensity | null;
+  overallScore: number;
+  overallLevel: 'low' | 'moderate' | 'high' | 'peak';
+  totalBirthdaysInHorizon: number;
+  totalHolidaysInHorizon: number;
+  totalJointCoincidences: number;
+  recommendedGathering: {
+    dateFormatted: string;
+    weekday: string;
+    targetWeekLabel: string;
+    celebrantsSummary: string;
+    holidaysSummary: string;
+    strategicRationale: string;
+  } | null;
+}
+
+const WEEKDAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+/**
+ * Calculates Celebration Intensity across 7-day rolling weeks and determines optimal team lunch/gathering dates.
+ */
+export function calculateCelebrationIntensity(
+  members: TeamMember[],
+  horizonDays: number = 28,
+  baseDate: Date = new Date()
+): CelebrationIntensityAnalysis {
+  const totalDays = Math.max(7, horizonDays);
+  const numWeeks = Math.ceil(totalDays / 7);
+
+  // 1. Gather all birthdays and holidays in the window
+  const allBirthdays = getUpcomingCelebrantsPlanningList(members, totalDays, baseDate);
+  const allHolidays = getUpcomingGlobalSpecialDays(baseDate, 50, totalDays);
+
+  const weeks: WeeklyCelebrationIntensity[] = [];
+  let peakWeek: WeeklyCelebrationIntensity | null = null;
+  let maxScore = -1;
+
+  for (let w = 0; w < numWeeks; w++) {
+    const startOffset = w * 7;
+    const endOffset = Math.min((w + 1) * 7 - 1, totalDays);
+
+    const weekStartDate = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate() + startOffset);
+    const weekEndDate = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate() + endOffset);
+
+    const startFmt = `${weekStartDate.getDate()} ${MONTH_NAMES[weekStartDate.getMonth()].short}`;
+    const endFmt = `${weekEndDate.getDate()} ${MONTH_NAMES[weekEndDate.getMonth()].short}`;
+
+    const weekBirthdays = allBirthdays.filter(
+      (b) => b.daysRemaining >= startOffset && b.daysRemaining <= endOffset
+    );
+    const weekHolidays = allHolidays.filter(
+      (h) => h.daysRemaining >= startOffset && h.daysRemaining <= endOffset
+    );
+
+    // Coincident events: birthdays matching holiday window in this week
+    let coincidentCount = 0;
+    for (const b of weekBirthdays) {
+      const match = getNearbySpecialDayForBirthday(b.birthday, 2, weekStartDate.getFullYear());
+      if (match && match.relationship === 'exact') {
+        coincidentCount++;
+      }
+    }
+
+    const totalCelebrations = weekBirthdays.length + weekHolidays.length;
+    // Score calculation
+    const rawScore = (weekBirthdays.length * 15) + (weekHolidays.length * 10) + (coincidentCount * 20);
+    const intensityScore = Math.min(100, rawScore);
+
+    let intensityLevel: 'low' | 'moderate' | 'high' | 'peak' = 'low';
+    if (intensityScore >= 35 || totalCelebrations >= 3) {
+      intensityLevel = 'peak';
+    } else if (intensityScore >= 20 || totalCelebrations >= 2) {
+      intensityLevel = 'high';
+    } else if (intensityScore >= 10 || totalCelebrations >= 1) {
+      intensityLevel = 'moderate';
+    }
+
+    // Determine optimal team lunch/gathering date for this week
+    // Prefer Thursday (end of workweek before Fri/Sat weekend in BD), or day with multiple events
+    let optimalDate = new Date(weekStartDate);
+    let chosenDayOfWeek = 4; // Thursday
+
+    // Find the Thursday in this week range
+    let foundThursday: Date | null = null;
+    let foundEventDay: Date | null = null;
+
+    for (let d = startOffset; d <= endOffset; d++) {
+      const curDate = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate() + d);
+      if (curDate.getDay() === 4) { // Thursday
+        foundThursday = curDate;
+      }
+      // Check if any birthday falls on this exact day
+      const hasBday = weekBirthdays.some((b) => b.daysRemaining === d);
+      if (hasBday && !foundEventDay) {
+        foundEventDay = curDate;
+      }
+    }
+
+    if (foundThursday && (foundThursday.getTime() >= weekStartDate.getTime() && foundThursday.getTime() <= weekEndDate.getTime())) {
+      optimalDate = foundThursday;
+    } else if (foundEventDay) {
+      optimalDate = foundEventDay;
+    } else {
+      optimalDate = weekStartDate;
+    }
+
+    const weekdayStr = WEEKDAY_NAMES[optimalDate.getDay()];
+    const dayFmt = `${optimalDate.getDate()} ${MONTH_NAMES[optimalDate.getMonth()].short}`;
+    const dateFormatted = `${weekdayStr}, ${dayFmt} ${optimalDate.getFullYear()}`;
+
+    // Strategic reasoning for this week's lunch
+    let reason = '';
+    if (weekBirthdays.length > 0 && weekHolidays.length > 0) {
+      const names = weekBirthdays.map((b) => b.name.split(' ')[0]).join(' & ');
+      const hName = weekHolidays[0].shortName || weekHolidays[0].name;
+      reason = `Clusters ${weekBirthdays.length} birthday (${names}) with ${hName} — maximizes department turnout & consolidates event budget before weekend.`;
+    } else if (weekBirthdays.length > 1) {
+      const names = weekBirthdays.map((b) => b.name.split(' ')[0]).join(', ');
+      reason = `Combines ${weekBirthdays.length} team birthdays (${names}) into a single high-energy departmental lunch on ${weekdayStr}.`;
+    } else if (weekBirthdays.length === 1) {
+      reason = `Dedicated birthday gathering & cake-cutting for ${weekBirthdays[0].name} on ${weekdayStr}.`;
+    } else if (weekHolidays.length > 0) {
+      reason = `Festive team briefing & holiday refreshments aligned with ${weekHolidays[0].name}.`;
+    } else {
+      reason = `Regular operations window — suitable for standard team syncs or one-on-one catchups.`;
+    }
+
+    const weekItem: WeeklyCelebrationIntensity = {
+      weekNumber: w + 1,
+      weekLabel: `Week ${w + 1} (${startFmt} - ${endFmt})`,
+      startOffsetDays: startOffset,
+      endOffsetDays: endOffset,
+      startDateFormatted: startFmt,
+      endDateFormatted: endFmt,
+      birthdays: weekBirthdays,
+      holidays: weekHolidays,
+      coincidentCount,
+      totalCelebrations,
+      intensityScore,
+      intensityLevel,
+      suggestedLunchDate: {
+        formatted: dateFormatted,
+        weekday: weekdayStr,
+        dayFormatted: dayFmt,
+        reason,
+      },
+    };
+
+    weeks.push(weekItem);
+
+    if (intensityScore > maxScore) {
+      maxScore = intensityScore;
+      peakWeek = weekItem;
+    }
+  }
+
+  // If no peak week had celebrations, default to Week 1
+  if (!peakWeek && weeks.length > 0) {
+    peakWeek = weeks[0];
+  }
+
+  const overallScore = Math.round(weeks.reduce((sum, w) => sum + w.intensityScore, 0) / Math.max(1, weeks.length));
+  let overallLevel: 'low' | 'moderate' | 'high' | 'peak' = 'low';
+  if (peakWeek && peakWeek.intensityLevel === 'peak') {
+    overallLevel = 'peak';
+  } else if (peakWeek && peakWeek.intensityLevel === 'high') {
+    overallLevel = 'high';
+  } else if (overallScore >= 10 || allBirthdays.length > 0) {
+    overallLevel = 'moderate';
+  }
+
+  let recommendedGathering: CelebrationIntensityAnalysis['recommendedGathering'] = null;
+  if (peakWeek && (peakWeek.birthdays.length > 0 || peakWeek.holidays.length > 0)) {
+    const celebrantsList = peakWeek.birthdays.map((b) => `${b.name} (${b.birthday})`).join(', ');
+    const holidaysList = peakWeek.holidays.map((h) => `${h.name} (${h.dateFormatted})`).join(', ');
+
+    recommendedGathering = {
+      dateFormatted: peakWeek.suggestedLunchDate.formatted,
+      weekday: peakWeek.suggestedLunchDate.weekday,
+      targetWeekLabel: peakWeek.weekLabel,
+      celebrantsSummary: celebrantsList || 'None in peak week',
+      holidaysSummary: holidaysList || 'None in peak week',
+      strategicRationale: peakWeek.suggestedLunchDate.reason,
+    };
+  }
+
+  return {
+    weeks,
+    peakWeek,
+    overallScore,
+    overallLevel,
+    totalBirthdaysInHorizon: allBirthdays.length,
+    totalHolidaysInHorizon: allHolidays.length,
+    totalJointCoincidences: weeks.reduce((sum, w) => sum + w.coincidentCount, 0),
+    recommendedGathering,
+  };
 }
