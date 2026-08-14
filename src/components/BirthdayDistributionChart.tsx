@@ -467,7 +467,7 @@ export const BirthdayDistributionChart: React.FC<BirthdayDistributionChartProps>
             return topRoundedRectPath(bx, curY, bw, curH, barRadius);
           };
         }
-        return d3.interpolatePath ? (d3 as any).interpolatePath(currentPath, endPath) : () => endPath;
+        return (d3 as any).interpolatePath ? (d3 as any).interpolatePath(currentPath, endPath) : () => endPath;
       });
 
     // Morph label positions

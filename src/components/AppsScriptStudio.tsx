@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { getAppsScriptCode } from '../data/googleAppsScriptCode';
 import { TwilioConfig } from '../types';
-import { Code2, Copy, Check, Download, Key, ShieldCheck, Clock, FileSpreadsheet, ArrowRight, Sparkles } from 'lucide-react';
+import { Code2, Copy, Check, Download, Key, ShieldCheck, Clock, FileSpreadsheet, ArrowRight, Sparkles, Phone, Mail, Bell } from 'lucide-react';
 
 interface AppsScriptStudioProps {
   twilioConfig: TwilioConfig;
@@ -13,11 +13,15 @@ export const AppsScriptStudio: React.FC<AppsScriptStudioProps> = ({
   onUpdateTwilioConfig,
 }) => {
   const [copied, setCopied] = useState(false);
+  const [adminPhone, setAdminPhone] = useState<string>(() => {
+    return localStorage.getItem('admin_planning_whatsapp') || '+880163529951';
+  });
 
   const scriptCode = getAppsScriptCode(
     twilioConfig.accountSid,
     twilioConfig.authToken,
-    twilioConfig.whatsappNumber
+    twilioConfig.whatsappNumber,
+    adminPhone.startsWith('whatsapp:') ? adminPhone : `whatsapp:${adminPhone}`
   );
 
   const handleCopy = () => {
@@ -50,11 +54,11 @@ export const AppsScriptStudio: React.FC<AppsScriptStudioProps> = ({
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
                 Google Apps Script Studio
                 <span className="px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-emerald-500/30 text-emerald-200 border border-emerald-400/30">
-                  Code.gs (100% Free - No Twilio Required)
+                  Dual-Trigger Cloud Engine
                 </span>
               </h2>
               <p className="text-xs text-slate-300">
-                Automated daily birthday alert trigger for Google Sheets ("Central IE List"). Runs every year without human touch.
+                Zero-touch 8:00 AM dispatch & 5:00 PM Admin 1-3 days advance planning alerts for Google Sheets ("Central IE List").
               </p>
             </div>
           </div>
@@ -75,6 +79,60 @@ export const AppsScriptStudio: React.FC<AppsScriptStudioProps> = ({
               <Download className="w-4 h-4 text-emerald-400" />
               Download Code.gs
             </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Target Recipient & Admin Settings */}
+      <div className="bg-amber-50/80 border border-amber-300 rounded-2xl p-5 shadow-xs">
+        <div className="flex items-start gap-3">
+          <div className="p-2 bg-amber-600 text-white rounded-xl shrink-0 mt-0.5">
+            <Bell className="w-5 h-5" />
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <h3 className="text-sm font-bold text-amber-950 flex items-center gap-2">
+                Admin Advance Birthday Planning Notification System
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-amber-200 text-amber-900 font-bold border border-amber-300">
+                  1 to 3 Days Ahead
+                </span>
+              </h3>
+            </div>
+            <p className="text-xs text-amber-900 mt-1 leading-relaxed">
+              Every day at <strong>5:00 PM (17:00)</strong>, Google Apps Script runs <code className="bg-amber-100 px-1 py-0.5 rounded font-mono text-[11px]">sendAdminUpcomingBirthdayAlerts()</code> to scan Column G. It sends a multi-channel briefing to the Team Leader's WhatsApp (<strong>+880163529951</strong>) and Admin Email containing the verification checklist (Column J WhatsApp check & Column K customized message check).
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4 pt-3 border-t border-amber-200/80">
+              <div>
+                <label className="block text-[11px] font-bold text-amber-950 mb-1 flex items-center gap-1">
+                  <Phone className="w-3 h-3 text-amber-700" />
+                  Admin WhatsApp Recipient Number:
+                </label>
+                <input
+                  type="text"
+                  value={adminPhone}
+                  onChange={(e) => {
+                    setAdminPhone(e.target.value);
+                    localStorage.setItem('admin_planning_whatsapp', e.target.value);
+                  }}
+                  placeholder="+880163529951"
+                  className="w-full px-3 py-1.5 text-xs font-mono font-bold bg-white border border-amber-300 rounded-lg focus:border-amber-600 focus:outline-hidden text-slate-900"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-amber-950 mb-1 flex items-center gap-1">
+                  <Mail className="w-3 h-3 text-amber-700" />
+                  Admin Notification Email:
+                </label>
+                <input
+                  type="text"
+                  disabled
+                  value="Session.getActiveUser().getEmail() (Auto-detected)"
+                  className="w-full px-3 py-1.5 text-xs font-medium bg-amber-100/70 border border-amber-200 rounded-lg text-amber-900 cursor-not-allowed"
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -168,11 +226,11 @@ export const AppsScriptStudio: React.FC<AppsScriptStudioProps> = ({
       <div className="bg-slate-50 rounded-2xl border border-slate-200 p-6">
         <h3 className="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-amber-500" />
-          4-Step Google Apps Script Deployment Guide
+          5-Step Google Apps Script & Dual-Trigger Setup Guide
         </h3>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white p-4 rounded-xl border border-slate-200">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+          <div className="bg-white p-3.5 rounded-xl border border-slate-200">
             <div className="w-7 h-7 rounded-lg bg-blue-100 text-blue-800 font-bold text-xs flex items-center justify-center mb-2">
               1
             </div>
@@ -184,7 +242,7 @@ export const AppsScriptStudio: React.FC<AppsScriptStudioProps> = ({
             </p>
           </div>
 
-          <div className="bg-white p-4 rounded-xl border border-slate-200">
+          <div className="bg-white p-3.5 rounded-xl border border-slate-200">
             <div className="w-7 h-7 rounded-lg bg-blue-100 text-blue-800 font-bold text-xs flex items-center justify-center mb-2">
               2
             </div>
@@ -196,27 +254,39 @@ export const AppsScriptStudio: React.FC<AppsScriptStudioProps> = ({
             </p>
           </div>
 
-          <div className="bg-white p-4 rounded-xl border border-slate-200">
+          <div className="bg-white p-3.5 rounded-xl border border-slate-200">
             <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-800 font-bold text-xs flex items-center justify-center mb-2">
               3
             </div>
             <h4 className="text-xs font-bold text-slate-800 mb-1 flex items-center gap-1">
-              <Key className="w-3.5 h-3.5 text-emerald-600" /> Admin Email
+              <Sparkles className="w-3.5 h-3.5 text-emerald-600" /> One-Click Setup
             </h4>
             <p className="text-[11px] text-slate-500 leading-relaxed">
-              Script auto-detects your Google email (<span className="font-mono text-slate-700">ADMIN_EMAIL</span>) to send 1-click WhatsApp alert emails daily.
+              Select function <span className="font-mono font-bold text-emerald-800">setupAllTriggers</span> from the dropdown and click <strong>Run</strong> once!
             </p>
           </div>
 
-          <div className="bg-white p-4 rounded-xl border border-slate-200">
-            <div className="w-7 h-7 rounded-lg bg-blue-100 text-blue-800 font-bold text-xs flex items-center justify-center mb-2">
+          <div className="bg-white p-3.5 rounded-xl border border-slate-200">
+            <div className="w-7 h-7 rounded-lg bg-amber-100 text-amber-800 font-bold text-xs flex items-center justify-center mb-2">
               4
             </div>
             <h4 className="text-xs font-bold text-slate-800 mb-1 flex items-center gap-1">
-              <Clock className="w-3.5 h-3.5 text-blue-600" /> Daily Trigger
+              <Bell className="w-3.5 h-3.5 text-amber-600" /> 5:00 PM Trigger
             </h4>
             <p className="text-[11px] text-slate-500 leading-relaxed">
-              Click <span className="font-semibold text-slate-700">Triggers (Clock icon)</span> → Add Trigger → <span className="font-mono text-slate-700">checkBirthdaysAndSendWishes</span> → Day timer (8:00 AM - 9:00 AM).
+              Automatically alerts Admin WhatsApp (+880163529951) for 1-3 days advance planning checklist.
+            </p>
+          </div>
+
+          <div className="bg-white p-3.5 rounded-xl border border-slate-200">
+            <div className="w-7 h-7 rounded-lg bg-blue-100 text-blue-800 font-bold text-xs flex items-center justify-center mb-2">
+              5
+            </div>
+            <h4 className="text-xs font-bold text-slate-800 mb-1 flex items-center gap-1">
+              <Clock className="w-3.5 h-3.5 text-blue-600" /> 8:00 AM Trigger
+            </h4>
+            <p className="text-[11px] text-slate-500 leading-relaxed">
+              Zero-touch automatic birthday wishing dispatch via WhatsApp with Email fallback.
             </p>
           </div>
         </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { TeamMember, EmailLogEntry, AutomationLogEntry } from '../types';
 import { fetchLiveTeamData } from '../services/sheetService';
 import { getDemoTeamMembers } from '../data/fallbackData';

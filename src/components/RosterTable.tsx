@@ -1,7 +1,13 @@
 import React, { useState } from 'react';
 import { TeamMember } from '../types';
-import { parseBirthMonth, checkIsTodayBirthday, MONTH_NAMES } from '../utils/dateUtils';
-import { Search, Filter, Phone, MessageSquare, Send, Sparkles, Check, Copy, User, CheckCircle2, Clock, CheckSquare, Square, ShieldCheck, Radio, X, Calendar } from 'lucide-react';
+import {
+  parseBirthMonth,
+  checkIsTodayBirthday,
+  getUpcomingBirthdayInfo,
+  getNearbySpecialDayForBirthday,
+  MONTH_NAMES,
+} from '../utils/dateUtils';
+import { Search, Filter, Phone, MessageSquare, Send, Sparkles, Check, Copy, User, CheckCircle2, Clock, CheckSquare, Square, ShieldCheck, Radio, X, Calendar, CalendarClock, AlertCircle } from 'lucide-react';
 
 interface RosterTableProps {
   members: TeamMember[];
@@ -12,6 +18,8 @@ interface RosterTableProps {
   onToggleWishSent?: (idOrSl: string) => void;
   selectedMonthFilter?: number | null;
   onClearMonthFilter?: () => void;
+  externalFilterType?: 'all' | 'today' | 'due_soon' | 'sent_2026' | 'pending' | 'has_wa';
+  onFilterChange?: (filter: 'all' | 'today' | 'due_soon' | 'sent_2026' | 'pending' | 'has_wa') => void;
 }
 
 const MONTH_SHORT_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -25,12 +33,24 @@ export const RosterTable: React.FC<RosterTableProps> = ({
   onToggleWishSent,
   selectedMonthFilter = null,
   onClearMonthFilter,
+  externalFilterType,
+  onFilterChange,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState<'all' | 'today' | 'sent_2026' | 'pending' | 'has_wa'>('all');
+  const [internalFilterType, setInternalFilterType] = useState<'all' | 'today' | 'due_soon' | 'sent_2026' | 'pending' | 'has_wa'>('all');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const filterType = externalFilterType || internalFilterType;
+
+  const handleSetFilterType = (newFilter: 'all' | 'today' | 'due_soon' | 'sent_2026' | 'pending' | 'has_wa') => {
+    setInternalFilterType(newFilter);
+    if (onFilterChange) {
+      onFilterChange(newFilter);
+    }
+  };
+
 
   const currentYear = new Date().getFullYear().toString();
 
@@ -50,8 +70,10 @@ export const RosterTable: React.FC<RosterTableProps> = ({
     }
 
     const isSentThisYear = m.lastSentYear ? m.lastSentYear.toString() === currentYear : false;
+    const upcomingInfo = getUpcomingBirthdayInfo(m.birthday, 7);
 
     if (filterType === 'today') return m.isBirthdayToday || checkIsTodayBirthday(m.birthday);
+    if (filterType === 'due_soon') return upcomingInfo.isDueSoon;
     if (filterType === 'sent_2026') return isSentThisYear;
     if (filterType === 'pending') return !isSentThisYear;
     if (filterType === 'has_wa') return Boolean(m.whatsapp && m.whatsapp.trim().length > 0);
@@ -60,6 +82,7 @@ export const RosterTable: React.FC<RosterTableProps> = ({
   });
 
   const todayCount = members.filter((m) => m.isBirthdayToday || checkIsTodayBirthday(m.birthday)).length;
+  const dueSoonCount = members.filter((m) => getUpcomingBirthdayInfo(m.birthday, 7).isDueSoon).length;
   const sentCount = members.filter((m) => m.lastSentYear ? m.lastSentYear.toString() === currentYear : false).length;
 
   const handleStartEdit = (m: TeamMember) => {
@@ -99,7 +122,7 @@ export const RosterTable: React.FC<RosterTableProps> = ({
         {/* Filter Pills */}
         <div className="flex items-center gap-1.5 flex-wrap">
           <button
-            onClick={() => setFilterType('all')}
+            onClick={() => handleSetFilterType('all')}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
               filterType === 'all'
                 ? 'bg-slate-900 text-white'
@@ -110,7 +133,7 @@ export const RosterTable: React.FC<RosterTableProps> = ({
           </button>
 
           <button
-            onClick={() => setFilterType('today')}
+            onClick={() => handleSetFilterType('today')}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer flex items-center gap-1 ${
               filterType === 'today'
                 ? 'bg-amber-500 text-white'
@@ -121,7 +144,19 @@ export const RosterTable: React.FC<RosterTableProps> = ({
           </button>
 
           <button
-            onClick={() => setFilterType('sent_2026')}
+            onClick={() => handleSetFilterType('due_soon')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 ${
+              filterType === 'due_soon'
+                ? 'bg-amber-600 text-white shadow-xs font-bold'
+                : 'bg-amber-50/80 border border-amber-200 text-amber-900 hover:bg-amber-100'
+            }`}
+          >
+            <Clock className="w-3.5 h-3.5" />
+            Due Soon (7 Days) ({dueSoonCount})
+          </button>
+
+          <button
+            onClick={() => handleSetFilterType('sent_2026')}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer flex items-center gap-1 ${
               filterType === 'sent_2026'
                 ? 'bg-emerald-600 text-white'
@@ -133,7 +168,7 @@ export const RosterTable: React.FC<RosterTableProps> = ({
           </button>
 
           <button
-            onClick={() => setFilterType('pending')}
+            onClick={() => handleSetFilterType('pending')}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer flex items-center gap-1 ${
               filterType === 'pending'
                 ? 'bg-slate-800 text-white'
@@ -145,7 +180,7 @@ export const RosterTable: React.FC<RosterTableProps> = ({
           </button>
 
           <button
-            onClick={() => setFilterType('has_wa')}
+            onClick={() => handleSetFilterType('has_wa')}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
               filterType === 'has_wa'
                 ? 'bg-slate-900 text-white'
@@ -154,6 +189,7 @@ export const RosterTable: React.FC<RosterTableProps> = ({
           >
             WhatsApp Ready ({members.filter((m) => m.whatsapp).length})
           </button>
+
 
           {selectedMonthFilter !== null && (
             <div className="flex items-center gap-1.5 bg-amber-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-2xs">
@@ -183,7 +219,7 @@ export const RosterTable: React.FC<RosterTableProps> = ({
               <th className="py-3 px-4">Name (Col D)</th>
               <th className="py-3 px-4">Designation (Col E)</th>
               <th className="py-3 px-4">Birthday (Col G)</th>
-              <th className="py-3 px-4 min-w-[150px]">Wish Status ({currentYear})</th>
+              <th className="py-3 px-4 min-w-[160px]">Wish Status ({currentYear})</th>
               <th className="py-3 px-4 min-w-[150px]">Server Dispatch</th>
               <th className="py-3 px-4">WhatsApp (Col J)</th>
               <th className="py-3 px-4 min-w-[260px]">Wishing Message (Col K)</th>
@@ -210,12 +246,20 @@ export const RosterTable: React.FC<RosterTableProps> = ({
 
                 const isEditing = editingId === (member.id || member.sl);
                 const isSentThisYear = member.lastSentYear ? member.lastSentYear.toString() === currentYear : false;
+                const isToday = member.isBirthdayToday || checkIsTodayBirthday(member.birthday);
+                const upcomingInfo = getUpcomingBirthdayInfo(member.birthday, 7);
+                const isDueSoon = !isToday && upcomingInfo.isDueSoon;
+                const specialDayMatch = getNearbySpecialDayForBirthday(member.birthday, 3);
 
                 return (
                   <tr
                     key={key}
                     className={`hover:bg-slate-50/80 transition ${
-                      member.isBirthdayToday ? 'bg-amber-50/60 font-medium' : ''
+                      isToday
+                        ? 'bg-amber-50/60 font-medium'
+                        : isDueSoon
+                        ? 'bg-amber-50/25'
+                        : ''
                     }`}
                   >
                     {/* SL */}
@@ -228,11 +272,17 @@ export const RosterTable: React.FC<RosterTableProps> = ({
 
                     {/* Name (Column D) */}
                     <td className="py-3 px-4 font-bold text-slate-900">
-                      <div className="flex items-center gap-1.5">
-                        {member.name}
-                        {member.isBirthdayToday && (
-                          <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-amber-500 text-white font-bold animate-pulse">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span>{member.name}</span>
+                        {isToday && (
+                          <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-amber-500 text-white font-bold animate-pulse shadow-2xs inline-flex items-center gap-0.5">
                             🎂 Today!
+                          </span>
+                        )}
+                        {isDueSoon && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] bg-amber-100 text-amber-900 border border-amber-300 font-bold inline-flex items-center gap-1 shadow-2xs">
+                            <Clock className="w-2.5 h-2.5 text-amber-600" />
+                            Due Soon ({upcomingInfo.daysRemaining === 1 ? 'Tomorrow' : `in ${upcomingInfo.daysRemaining}d`})
                           </span>
                         )}
                       </div>
@@ -243,18 +293,43 @@ export const RosterTable: React.FC<RosterTableProps> = ({
                       {member.designation || '-'}
                     </td>
 
-                    {/* Birthday (Column G) */}
+                    {/* Birthday & Global Holiday Alignments (Column G) */}
                     <td className="py-3 px-4">
                       {member.birthday ? (
-                        <span
-                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold ${
-                            member.isBirthdayToday
-                              ? 'bg-amber-100 text-amber-900 border border-amber-300'
-                              : 'bg-slate-100 text-slate-700'
-                          }`}
-                        >
-                          🗓️ {member.birthday}
-                        </span>
+                        <div className="flex flex-col gap-1 items-start">
+                          <div className="inline-flex items-center gap-1.5 flex-wrap">
+                            <span
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold ${
+                                isToday
+                                  ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                                  : isDueSoon
+                                  ? 'bg-amber-50 text-amber-900 border border-amber-200'
+                                  : 'bg-slate-100 text-slate-700'
+                              }`}
+                            >
+                              🗓️ {member.birthday}
+                            </span>
+                            {isDueSoon && (
+                              <span className="text-[10px] font-bold text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded border border-amber-200">
+                                {upcomingInfo.daysRemaining === 1 ? 'Tomorrow' : `In ${upcomingInfo.daysRemaining}d`}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Global / National Festive Sub-Badge */}
+                          {specialDayMatch && (
+                            <span
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold border transition shadow-2xs ${
+                                specialDayMatch.relationship === 'exact'
+                                  ? specialDayMatch.specialDay.badgeColor || 'bg-amber-100 text-amber-950 border-amber-300'
+                                  : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                              }`}
+                              title={`${specialDayMatch.subText} • Greeting Theme: ${specialDayMatch.specialDay.greetingTheme}`}
+                            >
+                              <span>{specialDayMatch.label}</span>
+                            </span>
+                          )}
+                        </div>
                       ) : (
                         <span className="text-slate-400 italic">Not set</span>
                       )}
@@ -268,10 +343,15 @@ export const RosterTable: React.FC<RosterTableProps> = ({
                             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                             Wish Sent ({currentYear})
                           </span>
-                        ) : member.isBirthdayToday ? (
+                        ) : isToday ? (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-400 animate-pulse shadow-2xs">
                             <Sparkles className="w-3.5 h-3.5 text-amber-600" />
                             Birthday Today (Pending)
+                          </span>
+                        ) : isDueSoon ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200 shadow-2xs">
+                            <Clock className="w-3.5 h-3.5 text-amber-600" />
+                            Due Soon ({upcomingInfo.daysRemaining === 1 ? 'Tomorrow' : `in ${upcomingInfo.daysRemaining}d`})
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
@@ -303,7 +383,7 @@ export const RosterTable: React.FC<RosterTableProps> = ({
                           <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
                           Dispatched (Headless)
                         </span>
-                      ) : member.isBirthdayToday ? (
+                      ) : isToday ? (
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 animate-pulse shadow-2xs">
                           <Radio className="w-3 h-3 text-amber-600 animate-pulse" />
                           Awaiting 8 AM Trigger

@@ -1,7 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { TeamMember, TwilioConfig, LogEntry, AutomationLogEntry } from './types';
 import { Header } from './components/Header';
 import { TodayBirthdayBanner } from './components/TodayBirthdayBanner';
+import { UpcomingBirthdayAlertBanner } from './components/UpcomingBirthdayAlertBanner';
+import { AdminAdvanceAlertModal } from './components/AdminAdvanceAlertModal';
 import { RosterTable } from './components/RosterTable';
 import { WishGeneratorModal } from './components/WishGeneratorModal';
 import { AppsScriptStudio } from './components/AppsScriptStudio';
@@ -9,11 +11,19 @@ import { TwilioTester } from './components/TwilioTester';
 import { AutomationHistory } from './components/AutomationHistory';
 import { BirthdayDistributionChart } from './components/BirthdayDistributionChart';
 import { MailWorkstation } from './components/MailWorkstation';
-import { checkIsTodayBirthday } from './utils/dateUtils';
+import { GlobalSpecialDaysBanner } from './components/GlobalSpecialDaysBanner';
+import { checkIsTodayBirthday, getUpcomingBirthdayInfo } from './utils/dateUtils';
 import { triggerBirthdayConfetti } from './utils/confetti';
 import { useTeamData } from './hooks/useTeamData';
 import { computeDerivedAnalytics } from './utils/analyticsCalculations';
-import { Sparkles, Calendar, Users, PhoneCall, Code2, CheckCircle2, X, Bot, Mail, RefreshCw } from 'lucide-react';
+import {
+  requestNotificationPermission,
+  sendBrowserBirthdayNotification,
+  updateDocumentTitleWithBirthdayReminder,
+  areNotificationsEnabled,
+} from './utils/browserNotifications';
+import { playBirthdayAlertChime, playSuccessChime } from './utils/notificationSound';
+import { Sparkles, Calendar, Users, PhoneCall, Code2, CheckCircle2, X, Bot, Mail, RefreshCw, Bell } from 'lucide-react';
 
 interface ToastNotification {
   type: 'success' | 'info' | 'error';
@@ -27,10 +37,24 @@ export default function App() {
   const [autoSyncEnabled, setAutoSyncEnabled] = useState<boolean>(true);
   const [toastNotification, setToastNotification] = useState<ToastNotification | null>(null);
   const [isWishModalOpen, setIsWishModalOpen] = useState<boolean>(false);
+  const [isAdminPlanningOpen, setIsAdminPlanningOpen] = useState<boolean>(false);
+  const [isAlertBannerDismissed, setIsAlertBannerDismissed] = useState<boolean>(false);
   const [selectedMemberForWish, setSelectedMemberForWish] = useState<TeamMember | null>(null);
   const [isSendingWhatsApp, setIsSendingWhatsApp] = useState<boolean>(false);
   const [manualLogs, setManualLogs] = useState<LogEntry[]>([]);
   const [selectedMonthFilter, setSelectedMonthFilter] = useState<number | null>(null);
+  const [rosterFilterType, setRosterFilterType] = useState<'all' | 'today' | 'due_soon' | 'sent_2026' | 'pending' | 'has_wa'>('all');
+
+  // Desktop Notifications & Audio settings
+  const [desktopNotificationsEnabled, setDesktopNotificationsEnabled] = useState<boolean>(() => {
+    return areNotificationsEnabled() && localStorage.getItem('desktop_notifications_pref') === 'true';
+  });
+  const [soundEnabled, setSoundEnabled] = useState<boolean>(() => {
+    const saved = localStorage.getItem('birthday_sound_enabled');
+    return saved !== null ? saved === 'true' : true;
+  });
+
+  const hasTriggeredInitialAlertsRef = useRef(false);
 
   // Persistent Twilio & Connected WhatsApp Number configuration (Default: +8801625299521)
   const [twilioConfig, setTwilioConfig] = useState<TwilioConfig>(() => {
@@ -62,7 +86,7 @@ export default function App() {
     return {};
   });
 
-  // Centralized State & Single Source of Truth via Dedicated Hook with AbortController
+  // Centralized State & Single Source of Truth via Dedicated Hook
   const {
     teamMembers,
     automationLogs,
@@ -77,10 +101,96 @@ export default function App() {
     setAutomationLogs,
   } = useTeamData(autoSyncEnabled, sentYearMap);
 
-  // Pre-calculated memoized derived analytics passed as pure presentation props to visualization components
+  // Pre-calculated memoized derived analytics
   const derivedAnalytics = useMemo(() => {
     return computeDerivedAnalytics(teamMembers, emailLogs);
   }, [teamMembers, emailLogs]);
+
+  const todayBirthdays = useMemo(() => {
+    return teamMembers.filter((m) => m.isBirthdayToday || checkIsTodayBirthday(m.birthday));
+  }, [teamMembers]);
+
+  const dueSoonBirthdays = useMemo(() => {
+    return teamMembers.filter((m) => {
+      const info = getUpcomingBirthdayInfo(m.birthday, 7);
+      return info.isDueSoon && !info.isToday;
+    });
+  }, [teamMembers]);
+
+  // Sync browser tab title with dynamic reminder badge
+  useEffect(() => {
+    updateDocumentTitleWithBirthdayReminder(todayBirthdays.length, dueSoonBirthdays.length);
+  }, [todayBirthdays.length, dueSoonBirthdays.length]);
+
+  // Trigger initial sound & desktop alert when data first loads
+  useEffect(() => {
+    if (teamMembers.length > 0 && !hasTriggeredInitialAlertsRef.current) {
+      hasTriggeredInitialAlertsRef.current = true;
+
+      // Play audio chime if enabled and there are birthdays today or due soon
+      if (soundEnabled && (todayBirthdays.length > 0 || dueSoonBirthdays.length > 0)) {
+        // Small delay to allow audio context readiness
+        setTimeout(() => {
+          playBirthdayAlertChime(soundEnabled);
+        }, 800);
+      }
+
+      // Dispatch desktop notification if permission enabled
+      if (desktopNotificationsEnabled && (todayBirthdays.length > 0 || dueSoonBirthdays.length > 0)) {
+        if (todayBirthdays.length > 0) {
+          sendBrowserBirthdayNotification(
+            `🎉 Birthday Alert: ${todayBirthdays.length} Celebrant(s) Today!`,
+            `${todayBirthdays.map((m) => m.name).join(', ')} from the IE Central Team have birthdays today.`
+          );
+        } else if (dueSoonBirthdays.length > 0) {
+          const firstDue = dueSoonBirthdays[0];
+          sendBrowserBirthdayNotification(
+            `🔔 Advance Birthday Alert (${dueSoonBirthdays.length} Due Soon)`,
+            `${firstDue.name}'s birthday is coming up on ${firstDue.birthday}. Total ${dueSoonBirthdays.length} due this week.`
+          );
+        }
+      }
+    }
+  }, [teamMembers.length, todayBirthdays, dueSoonBirthdays, soundEnabled, desktopNotificationsEnabled]);
+
+  // Toggle Desktop Notifications
+  const handleToggleDesktopNotifications = async () => {
+    if (!desktopNotificationsEnabled) {
+      const granted = await requestNotificationPermission();
+      if (granted) {
+        setDesktopNotificationsEnabled(true);
+        localStorage.setItem('desktop_notifications_pref', 'true');
+        sendBrowserBirthdayNotification(
+          '🔔 Desktop Notifications Enabled!',
+          'You will receive instant alerts for today and due soon birthdays (1-7 days advance).'
+        );
+      } else {
+        alert('Notification permission was blocked in your browser. Please enable permissions in browser site settings.');
+      }
+    } else {
+      setDesktopNotificationsEnabled(false);
+      localStorage.setItem('desktop_notifications_pref', 'false');
+    }
+  };
+
+  // Toggle Sound Chimes
+  const handleToggleSound = () => {
+    setSoundEnabled((prev) => {
+      const next = !prev;
+      localStorage.setItem('birthday_sound_enabled', String(next));
+      if (next) {
+        playBirthdayAlertChime(true);
+      }
+      return next;
+    });
+  };
+
+  // Handle View Due Soon filter from Alert Banner
+  const handleViewDueSoonFilter = () => {
+    setActiveTab('roster');
+    setRosterFilterType('due_soon');
+    setSelectedMonthFilter(null);
+  };
 
   // Simulate Google Apps Script 8:00 AM Cloud Trigger run
   const handleSimulateTriggerRun = async () => {
@@ -103,10 +213,6 @@ export default function App() {
       console.error('Simulation trigger error:', e);
     }
   };
-
-  const todayBirthdays = useMemo(() => {
-    return teamMembers.filter((m) => m.isBirthdayToday || checkIsTodayBirthday(m.birthday));
-  }, [teamMembers]);
 
   // Toggle wish sent status for current year
   const handleToggleWishSent = (idOrSl: string) => {
@@ -215,6 +321,7 @@ export default function App() {
       }).then(() => refetchAutomationLogs()).catch(() => {});
 
       triggerBirthdayConfetti();
+      playSuccessChime(soundEnabled);
 
       setToastNotification({
         type: 'success',
@@ -225,6 +332,7 @@ export default function App() {
     } catch (err: any) {
       console.error('Send WhatsApp error:', err);
       triggerBirthdayConfetti();
+      playSuccessChime(soundEnabled);
 
       setTeamMembers((prev) =>
         prev.map((m) => {
@@ -250,7 +358,7 @@ export default function App() {
     }
   };
 
-  // Direct test send from tester tab (Manual Logs)
+  // Direct test send from tester tab
   const handleSendWhatsAppDirect = async (phone: string, msg: string) => {
     if (!phone) return;
 
@@ -282,6 +390,7 @@ export default function App() {
 
       setManualLogs((prev) => [newManualLog, ...prev]);
       triggerBirthdayConfetti();
+      playSuccessChime(soundEnabled);
 
       setToastNotification({
         type: 'success',
@@ -362,7 +471,7 @@ export default function App() {
         </div>
       )}
 
-      {/* Navigation Header */}
+      {/* Navigation Header with Notification Controls */}
       <Header
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -370,14 +479,30 @@ export default function App() {
         isSyncing={isSyncing}
         lastSynced={lastSynced}
         todayCount={todayBirthdays.length}
+        dueSoonCount={dueSoonBirthdays.length}
         connectedPhone={twilioConfig.whatsappNumber}
         autoSyncEnabled={autoSyncEnabled}
         onToggleAutoSync={() => setAutoSyncEnabled((prev) => !prev)}
+        desktopNotificationsEnabled={desktopNotificationsEnabled}
+        onToggleDesktopNotifications={handleToggleDesktopNotifications}
+        soundEnabled={soundEnabled}
+        onToggleSound={handleToggleSound}
+        onOpenNotificationCenter={() => setIsAdminPlanningOpen(true)}
+        onOpenAdminPlanning={() => setIsAdminPlanningOpen(true)}
       />
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
+        {/* In-App Notification Alert Banner for Due Soon & Today Birthdays */}
+        <UpcomingBirthdayAlertBanner
+          members={teamMembers}
+          onViewDueSoon={handleViewDueSoonFilter}
+          onOpenAdminPlanning={() => setIsAdminPlanningOpen(true)}
+          onDismiss={() => setIsAlertBannerDismissed(true)}
+          isDismissed={isAlertBannerDismissed}
+        />
+
         {/* Top Summary Metrics Bar */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5 mb-8">
           
@@ -426,19 +551,28 @@ export default function App() {
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl p-3.5 border border-slate-200 shadow-2xs flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold">
-              <Code2 className="w-4.5 h-4.5" />
+          <div className="bg-white rounded-2xl p-3.5 border border-slate-200 shadow-2xs flex items-center gap-3 cursor-pointer hover:border-slate-300 transition" onClick={() => setIsAdminPlanningOpen(true)}>
+            <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+              <Bell className="w-4.5 h-4.5" />
             </div>
             <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Cloud Trigger</p>
-              <p className="text-xs font-bold text-emerald-600 flex items-center gap-1 mt-0.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block"></span>
-                8:00 AM Cron
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Admin Planning</p>
+              <p className="text-xs font-bold text-amber-700 flex items-center gap-1 mt-0.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse inline-block"></span>
+                +880163529951
               </p>
             </div>
           </div>
         </div>
+
+        {/* Global Special Days & Festive Calendar Widget */}
+        <GlobalSpecialDaysBanner
+          members={teamMembers}
+          onSelectMemberFilter={(month) => {
+            setSelectedMonthFilter(month);
+            setActiveTab('roster');
+          }}
+        />
 
         {/* Today's Birthday Banner */}
         <TodayBirthdayBanner
@@ -456,7 +590,10 @@ export default function App() {
               members={teamMembers}
               monthData={derivedAnalytics.monthlyBirthdayData}
               selectedMonth={selectedMonthFilter}
-              onSelectMonth={setSelectedMonthFilter}
+              onSelectMonth={(month) => {
+                setSelectedMonthFilter(month);
+                setRosterFilterType('all');
+              }}
             />
 
             {/* Central IE Team Roster Table */}
@@ -464,6 +601,8 @@ export default function App() {
               members={teamMembers}
               selectedMonthFilter={selectedMonthFilter}
               onClearMonthFilter={() => setSelectedMonthFilter(null)}
+              externalFilterType={rosterFilterType}
+              onFilterChange={setRosterFilterType}
               onOpenGenerator={handleOpenGenerator}
               onSendWhatsApp={handleSendWhatsApp}
               isSending={isSendingWhatsApp}
@@ -473,7 +612,7 @@ export default function App() {
           </div>
         )}
 
-        {/* Mail Workstation - Every Person's Mail & Automated Wishing Mails */}
+        {/* Mail Workstation */}
         {activeTab === 'email' && (
           <MailWorkstation
             members={teamMembers}
@@ -483,6 +622,7 @@ export default function App() {
           />
         )}
 
+        {/* Wish Generator Hub */}
         {activeTab === 'generator' && (
           <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs mb-8 max-w-2xl mx-auto">
             <div className="mb-6">
@@ -508,6 +648,7 @@ export default function App() {
           </div>
         )}
 
+        {/* Apps Script Studio */}
         {activeTab === 'script' && (
           <AppsScriptStudio
             twilioConfig={twilioConfig}
@@ -515,6 +656,7 @@ export default function App() {
           />
         )}
 
+        {/* Automation History */}
         {activeTab === 'automation' && (
           <AutomationHistory
             logs={automationLogs}
@@ -524,6 +666,7 @@ export default function App() {
           />
         )}
 
+        {/* WhatsApp Tester & Credentials */}
         {activeTab === 'tester' && (
           <TwilioTester
             twilioConfig={twilioConfig}
@@ -548,6 +691,15 @@ export default function App() {
           setIsWishModalOpen(false);
           alert('Updated local Column K wish preview!');
         }}
+      />
+
+      {/* Admin Advance Birthday Planning Alert Modal */}
+      <AdminAdvanceAlertModal
+        isOpen={isAdminPlanningOpen}
+        onClose={() => setIsAdminPlanningOpen(false)}
+        members={teamMembers}
+        twilioConfig={twilioConfig}
+        onRefreshLogs={refetchAutomationLogs}
       />
 
       {/* Footer */}

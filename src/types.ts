@@ -1,9 +1,13 @@
+export type DispatchLifecycleStatus = 'Pending' | 'Dispatched' | 'Delivered' | 'Failed';
+export type DeliveryChannelType = 'WhatsApp' | 'Email Fallback' | 'Dual Channel';
+
 export interface TeamMember {
   sl: string;
   id: string;
   name: string;
   designation: string;
-  birthday: string; // e.g. "8/13" or "2/21"
+  department?: string; // Column F (Department)
+  birthday: string; // e.g. "8/13", "2/21", "6th May", "21st Feb", "4th Aug"
   mobile: string;
   email: string;
   whatsapp: string; // e.g. "8801829870593"
@@ -11,6 +15,10 @@ export interface TeamMember {
   isBirthdayToday: boolean;
   lastSentYear?: string | number; // Year wish was sent (e.g. 2026)
   serverDispatched?: boolean; // Indicates message was sent via headless backend dispatch
+  dispatchStatus?: DispatchLifecycleStatus; // 'Pending' | 'Dispatched' | 'Delivered' | 'Failed'
+  deliveryChannel?: 'whatsapp' | 'email_fallback' | 'dual_channel';
+  lastDispatchError?: string;
+  status?: string;
 }
 
 export interface TwilioConfig {
@@ -26,10 +34,11 @@ export interface EmailLogEntry {
   recipientEmail: string;
   subject: string;
   status: 'SUCCESS' | 'FAILED' | 'SKIPPED';
-  mode: 'AUTOMATED_CRON' | 'DIRECT_DISPATCH' | 'MANUAL';
+  mode: 'AUTOMATED_CRON' | 'DIRECT_DISPATCH' | 'MANUAL' | 'FALLBACK_AUTO' | 'ADMIN_ADVANCE_ALERT';
   messageSnippet: string;
   details?: string;
   executionTimeMs?: number;
+  errorCode?: string;
 }
 
 export interface EmailTemplateOption {
@@ -55,18 +64,30 @@ export interface LogEntry {
   details?: string;
   source?: 'manual' | 'automation';
   waLink?: string;
+  channel?: string;
 }
 
 export interface AutomationLogEntry {
   id: string;
   timestamp: string;
-  triggerSource: 'Google Apps Script (Time-Driven 8:00 AM)' | 'Server Headless Dispatch' | 'Sheet Auto-Sync Trigger';
+  triggerSource:
+    | 'Google Apps Script (Time-Driven 8:00 AM)'
+    | 'Google Apps Script (5:00 PM Advance Alert)'
+    | 'Server Headless Dispatch'
+    | 'Sheet Auto-Sync Trigger'
+    | 'Email Fallback Router';
   recipientName: string;
   recipientPhone: string;
-  status: 'SUCCESS' | 'FAILED' | 'SKIPPED_DUPLICATE';
+  recipientEmail?: string;
+  status: 'SUCCESS' | 'FAILED' | 'SKIPPED_DUPLICATE' | 'DELIVERED' | 'DISPATCHED' | 'PENDING';
+  lifecycleState?: DispatchLifecycleStatus;
+  channel?: DeliveryChannelType;
   senderNumber: string; // "+8801625299521"
   message: string;
   executionTimeMs?: number;
   responseCode?: number | string;
+  errorCode?: string;
+  errorReason?: string;
   details?: string;
 }
+
