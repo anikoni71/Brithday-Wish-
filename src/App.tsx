@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { TeamMember, TwilioConfig, LogEntry, AutomationLogEntry } from './types';
 import { Header } from './components/Header';
+import { BirthdayCakeHero } from './components/BirthdayCakeHero';
 import { TodayBirthdayBanner } from './components/TodayBirthdayBanner';
 import { UpcomingBirthdayAlertBanner } from './components/UpcomingBirthdayAlertBanner';
 import { AdminAdvanceAlertModal } from './components/AdminAdvanceAlertModal';
@@ -580,6 +581,15 @@ export default function App() {
             </div>
           </div>
         </div>
+
+        {/* Interactive 3D Animated Birthday Cake Hero & Celebration Experience */}
+        {activeTab === 'roster' && (
+          <BirthdayCakeHero
+            todayBirthdays={todayBirthdays}
+            dueSoonBirthdays={dueSoonBirthdays}
+            onOpenWishModal={handleOpenGenerator}
+          />
+        )}
 
         {/* Today's Birthday Banner (Only on Roster or Global) */}
         {activeTab === 'roster' && (

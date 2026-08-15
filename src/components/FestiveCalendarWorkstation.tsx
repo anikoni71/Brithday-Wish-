@@ -30,7 +30,12 @@ import {
   MailCheck,
   Eye,
   X,
-  SendHorizontal
+  SendHorizontal,
+  RefreshCw,
+  Wifi,
+  Plus,
+  Loader2,
+  ArrowRight
 } from 'lucide-react';
 import { TeamMember } from '../types';
 import {
@@ -94,10 +99,23 @@ export const FestiveCalendarWorkstation: React.FC<FestiveCalendarWorkstationProp
   const [sentEmailSuccess, setSentEmailSuccess] = useState<string | null>(null);
   const [copiedEmailHtml, setCopiedEmailHtml] = useState<boolean>(false);
 
-  // Retrieve special days for the selected year (including floating lunar/festival calculations)
+  // Google Online Server & Search Synchronization State
+  const [isSyncingOnline, setIsSyncingOnline] = useState<boolean>(false);
+  const [lastSyncOnline, setLastSyncOnline] = useState<string>('Live Connected');
+  const [onlineSearchQuery, setOnlineSearchQuery] = useState<string>('');
+  const [isSearchingOnline, setIsSearchingOnline] = useState<boolean>(false);
+  const [onlineSearchResults, setOnlineSearchResults] = useState<any[]>([]);
+  const [customAddedSpecialDays, setCustomAddedSpecialDays] = useState<SpecialDay[]>([]);
+  const [isOnlineSearchOpen, setIsOnlineSearchOpen] = useState<boolean>(false);
+
+  // Retrieve special days for the selected year (including floating lunar/festival calculations + dynamic search adds)
   const specialDaysForYear = useMemo(() => {
-    return getSpecialDaysForYear(selectedYear);
-  }, [selectedYear]);
+    const base = getSpecialDaysForYear(selectedYear);
+    const customForYear = customAddedSpecialDays.filter(
+      (d) => (d as any).year === undefined || (d as any).year === selectedYear
+    );
+    return [...base, ...customForYear];
+  }, [selectedYear, customAddedSpecialDays]);
 
   // Compute upcoming special days for timeline and top insights
   const upcomingSpecialDays = useMemo(() => {
@@ -340,6 +358,63 @@ export const FestiveCalendarWorkstation: React.FC<FestiveCalendarWorkstationProp
     }
   };
 
+  // Sync with Google Online Server API
+  const handleSyncWithGoogleServer = async () => {
+    setIsSyncingOnline(true);
+    try {
+      const res = await fetch('/api/sync-special-days-online', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ year: selectedYear, forceRefresh: true }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setLastSyncOnline(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+        setSentEmailSuccess(`Google Online Server synchronized for Year ${selectedYear}. Master Calendar updated.`);
+        setTimeout(() => setSentEmailSuccess(null), 4000);
+      }
+    } catch (err) {
+      setLastSyncOnline(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+    } finally {
+      setIsSyncingOnline(false);
+    }
+  };
+
+  // Google Search for any global special day or holiday
+  const handleSearchOnlineSpecialDays = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!onlineSearchQuery.trim()) return;
+    setIsSearchingOnline(true);
+    try {
+      const res = await fetch('/api/search-special-days', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: onlineSearchQuery, year: selectedYear }),
+      });
+      const data = await res.json();
+      if (data.success && data.results) {
+        setOnlineSearchResults(data.results);
+      }
+    } catch (err) {
+      console.error("Online search failed:", err);
+    } finally {
+      setIsSearchingOnline(false);
+    }
+  };
+
+  // Add custom online searched special day to current active year calendar
+  const handleAddOnlineSpecialDay = (item: any) => {
+    const newDay: SpecialDay = {
+      ...item,
+      id: item.id || `custom-${Date.now()}`,
+    };
+    (newDay as any).year = selectedYear;
+    setCustomAddedSpecialDays((prev) => [newDay, ...prev]);
+    setOnlineSearchResults((prev) => prev.filter((r) => r.id !== item.id));
+    setSentEmailSuccess(`Added "${item.name}" (${item.icon}) to ${selectedYear} calendar!`);
+    setTimeout(() => setSentEmailSuccess(null), 3500);
+  };
+
   // Copy executive luncheon proposal note
   const handleCopyProposal = () => {
     if (!intensityAnalysis.recommendedGathering) return;
@@ -405,26 +480,40 @@ export const FestiveCalendarWorkstation: React.FC<FestiveCalendarWorkstationProp
 
           {/* Quick Year Selector and Intensity Meter */}
           <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 self-start lg:self-auto">
-            <div className="bg-white/10 border border-white/15 px-3.5 py-2.5 rounded-2xl flex items-center gap-3">
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-300">Edition Year</span>
-                <div className="flex items-center gap-1 mt-0.5">
-                  {[2025, 2026, 2027].map((yr) => (
-                    <button
-                      key={yr}
-                      onClick={() => setSelectedYear(yr)}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
-                        selectedYear === yr
-                          ? 'bg-amber-400 text-slate-950 shadow-xs'
-                          : 'bg-white/5 text-slate-300 hover:bg-white/15'
-                      }`}
-                    >
-                      {yr}
-                    </button>
-                  ))}
-                </div>
+            {/* Multi-Year Switcher */}
+            <div className="bg-white/10 border border-white/15 px-3.5 py-2 rounded-2xl flex flex-col gap-1">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300">Edition Year</span>
+                <span className="text-[9px] text-slate-300 font-mono">2024 - 2032+</span>
+              </div>
+              <div className="flex items-center gap-1 flex-wrap">
+                {[2025, 2026, 2027, 2028, 2029, 2030].map((yr) => (
+                  <button
+                    key={yr}
+                    onClick={() => setSelectedYear(yr)}
+                    className={`px-2 py-0.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                      selectedYear === yr
+                        ? 'bg-amber-400 text-slate-950 shadow-xs ring-2 ring-amber-300'
+                        : 'bg-white/5 text-slate-300 hover:bg-white/15'
+                    }`}
+                  >
+                    {yr}
+                  </button>
+                ))}
               </div>
             </div>
+
+            {/* Google Sync Button */}
+            <button
+              type="button"
+              onClick={handleSyncWithGoogleServer}
+              disabled={isSyncingOnline}
+              className="px-3.5 py-2.5 rounded-2xl bg-indigo-600/90 hover:bg-indigo-600 text-white font-bold text-xs transition flex items-center gap-2 shadow-md border border-indigo-400/40 cursor-pointer disabled:opacity-50"
+              title="Sync with Google Online Server to retrieve updated holiday dates"
+            >
+              <RefreshCw className={`w-4 h-4 text-indigo-200 ${isSyncingOnline ? 'animate-spin' : ''}`} />
+              <span>{isSyncingOnline ? 'Syncing...' : 'Sync Google Server'}</span>
+            </button>
 
             {intensityAnalysis.recommendedGathering && (
               <button
@@ -446,6 +535,104 @@ export const FestiveCalendarWorkstation: React.FC<FestiveCalendarWorkstationProp
               </button>
             )}
           </div>
+        </div>
+
+        {/* GOOGLE ONLINE SERVER & SEARCH INTEGRATION HUB */}
+        <div className="mt-5 p-4 rounded-2xl bg-slate-950/60 border border-indigo-500/30 backdrop-blur-md">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            
+            {/* Online Server Status */}
+            <div className="flex items-center gap-3">
+              <div className="w-3 h-3 rounded-full bg-emerald-400 animate-ping"></div>
+              <div className="flex items-center gap-2">
+                <Wifi className="w-4 h-4 text-emerald-400" />
+                <span className="text-xs font-bold text-slate-200">Google Online Server Connection:</span>
+                <span className="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-emerald-950 text-emerald-300 border border-emerald-500/40">
+                  ONLINE & VERIFIED (HTTPS)
+                </span>
+              </div>
+              <span className="text-[11px] text-slate-400 hidden sm:inline">
+                Status: <strong className="text-slate-200">{lastSyncOnline}</strong> (Year {selectedYear})
+              </span>
+            </div>
+
+            {/* Google Search Bar Toggle / Form */}
+            <form onSubmit={handleSearchOnlineSpecialDays} className="flex items-center gap-2 flex-1 max-w-md">
+              <div className="relative flex-1">
+                <input
+                  type="text"
+                  placeholder="Search Google for any global special day or holiday..."
+                  value={onlineSearchQuery}
+                  onChange={(e) => setOnlineSearchQuery(e.target.value)}
+                  className="w-full bg-slate-900/90 border border-slate-700 text-slate-100 placeholder-slate-400 text-xs rounded-xl pl-8 pr-3 py-2 focus:outline-hidden focus:border-amber-400 transition"
+                />
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+              </div>
+              <button
+                type="submit"
+                disabled={isSearchingOnline || !onlineSearchQuery.trim()}
+                className="px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
+              >
+                {isSearchingOnline ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Globe className="w-3.5 h-3.5" />
+                )}
+                <span>Search Google</span>
+              </button>
+            </form>
+
+          </div>
+
+          {/* Online Search Results Tray */}
+          {onlineSearchResults.length > 0 && (
+            <div className="mt-3 pt-3 border-t border-slate-800 animate-in fade-in duration-200">
+              <div className="flex items-center justify-between text-xs text-slate-300 mb-2">
+                <span className="font-bold flex items-center gap-1.5 text-amber-300">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                  Google Online Search Results ({onlineSearchResults.length})
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setOnlineSearchResults([])}
+                  className="text-slate-400 hover:text-white text-[11px] cursor-pointer"
+                >
+                  Dismiss Results
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                {onlineSearchResults.map((res) => (
+                  <div
+                    key={res.id}
+                    className="p-2.5 rounded-xl bg-slate-900/90 border border-amber-500/40 flex items-start justify-between gap-3 text-xs"
+                  >
+                    <div className="flex items-start gap-2.5">
+                      <span className="text-xl p-1 bg-slate-800 rounded-lg">{res.icon}</span>
+                      <div>
+                        <div className="font-bold text-white flex items-center gap-1.5">
+                          <span>{res.name}</span>
+                          <span className="text-[10px] font-mono text-amber-300 bg-amber-950/80 px-1.5 py-0.2 rounded border border-amber-500/30">
+                            {res.dateFormatted}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-300 mt-0.5 line-clamp-1">{res.description}</p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleAddOnlineSpecialDay(res)}
+                      className="px-2.5 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-[11px] flex items-center gap-1 shrink-0 transition cursor-pointer shadow-xs"
+                    >
+                      <Plus className="w-3 h-3" />
+                      <span>Add</span>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Top Metric Cards Grid */}

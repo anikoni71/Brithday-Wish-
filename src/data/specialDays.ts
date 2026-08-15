@@ -34,14 +34,21 @@ export function getNthWeekdayOfMonth(year: number, month: number, weekday: numbe
 }
 
 /**
- * Verified Lunar / Floating holidays reference map by year (2025, 2026, 2027)
+ * Verified Lunar / Floating holidays reference map by year (2024 to 2035)
  */
 export const FLOATING_HOLIDAY_SCHEDULES: Record<number, Record<string, { month: number; day: number; dateFormatted: string }>> = {
+  2024: {
+    'eid-ul-fitr': { month: 3, day: 10, dateFormatted: '10 Apr' },
+    'eid-ul-adha': { month: 5, day: 17, dateFormatted: '17 Jun' },
+    'mother-day': { month: 4, day: 12, dateFormatted: '12 May' },
+    'father-day': { month: 5, day: 16, dateFormatted: '16 Jun' },
+    'friendship-day': { month: 7, day: 4, dateFormatted: '4 Aug' },
+  },
   2025: {
     'eid-ul-fitr': { month: 2, day: 31, dateFormatted: '31 Mar' },
     'eid-ul-adha': { month: 5, day: 7, dateFormatted: '7 Jun' },
     'mother-day': { month: 4, day: 11, dateFormatted: '11 May' }, // 2nd Sunday of May
-    'father-day': { month: 5, day: 21, dateFormatted: '21 Jun' }, // 3rd Sunday of Jun
+    'father-day': { month: 5, day: 15, dateFormatted: '15 Jun' }, // 3rd Sunday of Jun
     'friendship-day': { month: 7, day: 3, dateFormatted: '3 Aug' }, // 1st Sunday of Aug
   },
   2026: {
@@ -57,6 +64,62 @@ export const FLOATING_HOLIDAY_SCHEDULES: Record<number, Record<string, { month: 
     'mother-day': { month: 4, day: 9, dateFormatted: '9 May' }, // 2nd Sunday of May
     'father-day': { month: 5, day: 20, dateFormatted: '20 Jun' }, // 3rd Sunday of Jun
     'friendship-day': { month: 7, day: 1, dateFormatted: '1 Aug' }, // 1st Sunday of Aug
+  },
+  2028: {
+    'eid-ul-fitr': { month: 1, day: 27, dateFormatted: '27 Feb' },
+    'eid-ul-adha': { month: 4, day: 5, dateFormatted: '5 May' },
+    'mother-day': { month: 4, day: 14, dateFormatted: '14 May' },
+    'father-day': { month: 5, day: 18, dateFormatted: '18 Jun' },
+    'friendship-day': { month: 7, day: 6, dateFormatted: '6 Aug' },
+  },
+  2029: {
+    'eid-ul-fitr': { month: 1, day: 15, dateFormatted: '15 Feb' },
+    'eid-ul-adha': { month: 3, day: 24, dateFormatted: '24 Apr' },
+    'mother-day': { month: 4, day: 13, dateFormatted: '13 May' },
+    'father-day': { month: 5, day: 17, dateFormatted: '17 Jun' },
+    'friendship-day': { month: 7, day: 5, dateFormatted: '5 Aug' },
+  },
+  2030: {
+    'eid-ul-fitr': { month: 1, day: 5, dateFormatted: '5 Feb' },
+    'eid-ul-adha': { month: 3, day: 14, dateFormatted: '14 Apr' },
+    'mother-day': { month: 4, day: 12, dateFormatted: '12 May' },
+    'father-day': { month: 5, day: 16, dateFormatted: '16 Jun' },
+    'friendship-day': { month: 7, day: 4, dateFormatted: '4 Aug' },
+  },
+  2031: {
+    'eid-ul-fitr': { month: 0, day: 25, dateFormatted: '25 Jan' },
+    'eid-ul-adha': { month: 3, day: 3, dateFormatted: '3 Apr' },
+    'mother-day': { month: 4, day: 11, dateFormatted: '11 May' },
+    'father-day': { month: 5, day: 15, dateFormatted: '15 Jun' },
+    'friendship-day': { month: 7, day: 3, dateFormatted: '3 Aug' },
+  },
+  2032: {
+    'eid-ul-fitr': { month: 0, day: 14, dateFormatted: '14 Jan' },
+    'eid-ul-adha': { month: 2, day: 22, dateFormatted: '22 Mar' },
+    'mother-day': { month: 4, day: 9, dateFormatted: '9 May' },
+    'father-day': { month: 5, day: 20, dateFormatted: '20 Jun' },
+    'friendship-day': { month: 7, day: 1, dateFormatted: '1 Aug' },
+  },
+  2033: {
+    'eid-ul-fitr': { month: 0, day: 2, dateFormatted: '2 Jan' },
+    'eid-ul-adha': { month: 2, day: 11, dateFormatted: '11 Mar' },
+    'mother-day': { month: 4, day: 8, dateFormatted: '8 May' },
+    'father-day': { month: 5, day: 19, dateFormatted: '19 Jun' },
+    'friendship-day': { month: 7, day: 7, dateFormatted: '7 Aug' },
+  },
+  2034: {
+    'eid-ul-fitr': { month: 11, day: 22, dateFormatted: '22 Dec' },
+    'eid-ul-adha': { month: 2, day: 1, dateFormatted: '1 Mar' },
+    'mother-day': { month: 4, day: 14, dateFormatted: '14 May' },
+    'father-day': { month: 5, day: 18, dateFormatted: '18 Jun' },
+    'friendship-day': { month: 7, day: 6, dateFormatted: '6 Aug' },
+  },
+  2035: {
+    'eid-ul-fitr': { month: 11, day: 12, dateFormatted: '12 Dec' },
+    'eid-ul-adha': { month: 1, day: 19, dateFormatted: '19 Feb' },
+    'mother-day': { month: 4, day: 13, dateFormatted: '13 May' },
+    'father-day': { month: 5, day: 17, dateFormatted: '17 Jun' },
+    'friendship-day': { month: 7, day: 5, dateFormatted: '5 Aug' },
   }
 };
 
@@ -470,6 +533,8 @@ export const GLOBAL_SPECIAL_DAYS: SpecialDay[] = [
   }
 ];
 
+const MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
 /**
  * Normalizes and calculates accurate SpecialDay object for any given year.
  */
@@ -477,14 +542,30 @@ export function getSpecialDaysForYear(targetYear: number): SpecialDay[] {
   const scheduleForYear = FLOATING_HOLIDAY_SCHEDULES[targetYear];
 
   return GLOBAL_SPECIAL_DAYS.map((sd) => {
-    if (sd.isFloating && scheduleForYear && scheduleForYear[sd.id]) {
-      const override = scheduleForYear[sd.id];
-      return {
-        ...sd,
-        month: override.month,
-        day: override.day,
-        dateFormatted: override.dateFormatted,
-      };
+    if (sd.isFloating) {
+      if (scheduleForYear && scheduleForYear[sd.id]) {
+        const override = scheduleForYear[sd.id];
+        return {
+          ...sd,
+          month: override.month,
+          day: override.day,
+          dateFormatted: override.dateFormatted,
+        };
+      }
+
+      // Dynamic fallback calculations for years beyond schedule table
+      if (sd.id === 'mother-day') {
+        const day = getNthWeekdayOfMonth(targetYear, 4, 0, 2); // 2nd Sunday in May (month 4)
+        return { ...sd, month: 4, day, dateFormatted: `${day} May` };
+      }
+      if (sd.id === 'father-day') {
+        const day = getNthWeekdayOfMonth(targetYear, 5, 0, 3); // 3rd Sunday in Jun (month 5)
+        return { ...sd, month: 5, day, dateFormatted: `${day} Jun` };
+      }
+      if (sd.id === 'friendship-day') {
+        const day = getNthWeekdayOfMonth(targetYear, 7, 0, 1); // 1st Sunday in Aug (month 7)
+        return { ...sd, month: 7, day, dateFormatted: `${day} Aug` };
+      }
     }
     return sd;
   });

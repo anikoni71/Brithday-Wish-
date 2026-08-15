@@ -14,8 +14,10 @@ import {
   ArrowUpRight,
   TrendingUp,
   X,
-  Filter
+  Filter,
+  PieChart
 } from 'lucide-react';
+import { BirthdayMonthPieChart } from './BirthdayMonthPieChart';
 
 export interface MonthData {
   monthIndex: number; // 0-11
@@ -575,120 +577,137 @@ export const BirthdayDistributionChart: React.FC<BirthdayDistributionChartProps>
       </div>
 
       {/* Main Chart Canvas Container */}
-      <div className="p-5 relative">
-        {/* Month Selector Pills on Top of Canvas */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-3 mb-2 scrollbar-thin scrollbar-thumb-slate-200">
-          <button
-            onClick={() => handleMonthPillClick(-1)}
-            className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all shrink-0 ${
-              activeMonthFilter === null
-                ? 'bg-slate-800 text-white shadow-xs'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-            }`}
-          >
-            All Months ({totalWithBirthdays})
-          </button>
-          {monthData.map((m) => {
-            const isSelected = activeMonthFilter === m.monthIndex;
-            const isCurrent = m.isCurrentMonth;
-            return (
+      <div className="p-5">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          
+          {/* LEFT 8 COLS: 12-Month Bar Chart Workspace */}
+          <div className="lg:col-span-8 flex flex-col">
+            {/* Month Selector Pills on Top of Canvas */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-3 mb-2 scrollbar-thin scrollbar-thumb-slate-200">
               <button
-                key={m.shortName}
-                onClick={() => handleMonthPillClick(m.monthIndex)}
-                className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-all shrink-0 flex items-center gap-1.5 ${
-                  isSelected
-                    ? 'bg-amber-500 text-white shadow-xs ring-2 ring-amber-300'
-                    : isCurrent
-                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold hover:bg-emerald-200'
-                    : m.count > 0
-                    ? 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-100'
-                    : 'bg-slate-50 text-slate-400 hover:bg-slate-100 border border-slate-100'
+                onClick={() => handleMonthPillClick(-1)}
+                className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all shrink-0 ${
+                  activeMonthFilter === null
+                    ? 'bg-slate-800 text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
-                <span>{m.shortName}</span>
-                <span
-                  className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                    isSelected
-                      ? 'bg-amber-600 text-white'
-                      : isCurrent
-                      ? 'bg-emerald-600 text-white'
-                      : m.count > 0
-                      ? 'bg-indigo-600 text-white'
-                      : 'bg-slate-200 text-slate-500'
-                  }`}
-                >
-                  {m.count}
-                </span>
+                All Months ({totalWithBirthdays})
               </button>
-            );
-          })}
-        </div>
-
-        {/* SVG Container */}
-        <div ref={containerRef} className="w-full relative min-h-[290px] select-none">
-          <svg ref={svgRef} className="w-full h-[290px] overflow-visible" />
-
-          {/* Interactive Floating Tooltip */}
-          {hoveredMonth && tooltipPos && (
-            <div
-              className="absolute z-30 pointer-events-none transition-all duration-75 transform -translate-x-1/2 -translate-y-full bg-slate-900/95 backdrop-blur-md text-white text-xs rounded-xl p-3 shadow-xl border border-slate-700 min-w-[200px]"
-              style={{
-                left: `${tooltipPos.x}px`,
-                top: `${tooltipPos.y - 12}px`,
-              }}
-            >
-              <div className="flex items-center justify-between border-b border-slate-700/80 pb-2 mb-2">
-                <div className="flex items-center gap-1.5 font-bold text-slate-100 text-sm">
-                  <Calendar className="w-4 h-4 text-indigo-400" />
-                  <span>{hoveredMonth.fullName}</span>
-                </div>
-                {hoveredMonth.isCurrentMonth && (
-                  <span className="px-1.5 py-0.5 rounded text-[10px] bg-emerald-500/30 text-emerald-300 font-bold border border-emerald-500/40">
-                    Active Month
-                  </span>
-                )}
-              </div>
-
-              <div className="space-y-1.5">
-                <div className="flex justify-between text-slate-300">
-                  <span>Total Celebrants:</span>
-                  <span className="font-mono font-bold text-white text-sm">
-                    {hoveredMonth.count}
-                  </span>
-                </div>
-
-                {hoveredMonth.count > 0 ? (
-                  <div className="pt-1.5 border-t border-slate-800">
-                    <p className="text-[10px] text-slate-400 font-medium mb-1">Celebrants:</p>
-                    <div className="max-h-[110px] overflow-y-auto space-y-1 pr-1 scrollbar-thin scrollbar-thumb-slate-700">
-                      {hoveredMonth.members.map((member, i) => (
-                        <div
-                          key={i}
-                          className="flex items-center justify-between text-[11px] bg-slate-800/80 px-2 py-1 rounded border border-slate-700/50"
-                        >
-                          <span className="font-semibold text-slate-200 truncate max-w-[120px]">
-                            {member.name}
-                          </span>
-                          <span className="font-mono text-emerald-400 font-bold ml-2">
-                            {member.birthday}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-[11px] text-slate-400 italic pt-1">
-                    No birthdays in this month.
-                  </p>
-                )}
-              </div>
-
-              <div className="mt-2 pt-2 border-t border-slate-800 flex items-center justify-between text-[10px] text-indigo-300 font-medium">
-                <span>Click bar to filter roster</span>
-                <ChevronRight className="w-3 h-3" />
-              </div>
+              {monthData.map((m) => {
+                const isSelected = activeMonthFilter === m.monthIndex;
+                const isCurrent = m.isCurrentMonth;
+                return (
+                  <button
+                    key={m.shortName}
+                    onClick={() => handleMonthPillClick(m.monthIndex)}
+                    className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-all shrink-0 flex items-center gap-1.5 ${
+                      isSelected
+                        ? 'bg-amber-500 text-white shadow-xs ring-2 ring-amber-300'
+                        : isCurrent
+                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold hover:bg-emerald-200'
+                        : m.count > 0
+                        ? 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-100'
+                        : 'bg-slate-50 text-slate-400 hover:bg-slate-100 border border-slate-100'
+                    }`}
+                  >
+                    <span>{m.shortName}</span>
+                    <span
+                      className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                        isSelected
+                          ? 'bg-amber-600 text-white'
+                          : isCurrent
+                          ? 'bg-emerald-600 text-white'
+                          : m.count > 0
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-slate-200 text-slate-500'
+                      }`}
+                    >
+                      {m.count}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
-          )}
+
+            {/* SVG Container */}
+            <div ref={containerRef} className="w-full relative min-h-[290px] select-none">
+              <svg ref={svgRef} className="w-full h-[290px] overflow-visible" />
+
+              {/* Interactive Floating Tooltip */}
+              {hoveredMonth && tooltipPos && (
+                <div
+                  className="absolute z-30 pointer-events-none transition-all duration-75 transform -translate-x-1/2 -translate-y-full bg-slate-900/95 backdrop-blur-md text-white text-xs rounded-xl p-3 shadow-xl border border-slate-700 min-w-[200px]"
+                  style={{
+                    left: `${tooltipPos.x}px`,
+                    top: `${tooltipPos.y - 12}px`,
+                  }}
+                >
+                  <div className="flex items-center justify-between border-b border-slate-700/80 pb-2 mb-2">
+                    <div className="flex items-center gap-1.5 font-bold text-slate-100 text-sm">
+                      <Calendar className="w-4 h-4 text-indigo-400" />
+                      <span>{hoveredMonth.fullName}</span>
+                    </div>
+                    {hoveredMonth.isCurrentMonth && (
+                      <span className="px-1.5 py-0.5 rounded text-[10px] bg-emerald-500/30 text-emerald-300 font-bold border border-emerald-500/40">
+                        Active Month
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between text-slate-300">
+                      <span>Total Celebrants:</span>
+                      <span className="font-mono font-bold text-white text-sm">
+                        {hoveredMonth.count}
+                      </span>
+                    </div>
+
+                    {hoveredMonth.count > 0 ? (
+                      <div className="pt-1.5 border-t border-slate-800">
+                        <p className="text-[10px] text-slate-400 font-medium mb-1">Celebrants:</p>
+                        <div className="max-h-[110px] overflow-y-auto space-y-1 pr-1 scrollbar-thin scrollbar-thumb-slate-700">
+                          {hoveredMonth.members.map((member, i) => (
+                            <div
+                              key={i}
+                              className="flex items-center justify-between text-[11px] bg-slate-800/80 px-2 py-1 rounded border border-slate-700/50"
+                            >
+                              <span className="font-semibold text-slate-200 truncate max-w-[120px]">
+                                {member.name}
+                              </span>
+                              <span className="font-mono text-emerald-400 font-bold ml-2">
+                                {member.birthday}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-[11px] text-slate-400 italic pt-1">
+                        No birthdays in this month.
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="mt-2 pt-2 border-t border-slate-800 flex items-center justify-between text-[10px] text-indigo-300 font-medium">
+                    <span>Click bar to filter roster</span>
+                    <ChevronRight className="w-3 h-3" />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* RIGHT 4 COLS: Dedicated Month-Wise Total Birthday Pie Chart Card */}
+          <div className="lg:col-span-4 h-full">
+            <BirthdayMonthPieChart
+              monthData={monthData}
+              totalCelebrants={totalWithBirthdays}
+              activeMonthFilter={activeMonthFilter}
+              onSelectMonth={onSelectMonth || handleMonthPillClick}
+            />
+          </div>
+
         </div>
       </div>
 
