@@ -1,0 +1,17 @@
+{
+  "name": "ie-birthday-companion-worker",
+  "version": "1.0.0",
+  "description": "Standalone background worker for IE Central Team Birthday wishing",
+  "main": "worker.js",
+  "scripts": {
+    "start": "node worker.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "google-spreadsheet": "^4.1.4",
+    "node-cron": "^3.0.3",
+    "nodemailer": "^6.9.13",
+    "qrcode-terminal": "^0.12.0",
+    "whatsapp-web.js": "^1.23.0"
+  }
+}

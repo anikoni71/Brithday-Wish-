@@ -166,6 +166,64 @@ const Sparkline: React.FC<{
   );
 };
 
+// ==========================================================================
+// SYSTEM DIAGNOSTICS COMPONENT
+// ==========================================================================
+const SystemDiagnostics: React.FC<{
+  lockDate: string | null;
+  onReset: () => void;
+  celebrantsCount: number;
+}> = ({ lockDate, onReset, celebrantsCount }) => {
+  const today = new Date().toISOString().split('T')[0];
+  const isActive = lockDate === today;
+
+  return (
+    <div className="p-4 rounded-xl bg-zinc-950/40 border border-zinc-800/60 border-dashed mt-2">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <Activity className="w-3.5 h-3.5 text-zinc-400" />
+          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest font-mono">System Diagnostics</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]' : 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)] animate-pulse'}`} />
+          <span className={`text-[9px] font-bold uppercase tracking-tighter font-mono ${isActive ? 'text-emerald-400' : 'text-amber-400'}`}>
+            {isActive ? 'Lock Active' : 'Lock Armed'}
+          </span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-1">
+          <div className="text-[9px] text-zinc-500 uppercase font-bold tracking-tight font-mono">localStorage Key</div>
+          <div className="text-[11px] font-mono font-bold text-zinc-200 truncate bg-black/40 p-1.5 rounded border border-white/5">
+            {lockDate || 'NULL (PENDING)'}
+          </div>
+        </div>
+        <div className="space-y-1 flex flex-col items-end">
+          <div className="text-[9px] text-zinc-500 uppercase font-bold tracking-tight font-mono">Control Action</div>
+          <button
+            onClick={onReset}
+            className="w-full px-2 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-[9px] font-bold text-zinc-300 transition border border-zinc-700 cursor-pointer active:scale-95 font-mono"
+          >
+            RESET KEY
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-3 pt-3 border-t border-zinc-900 flex items-center justify-between text-[9px] font-mono">
+        <div className="flex items-center gap-1.5 text-zinc-500">
+          <Cpu className="w-3 h-3" />
+          <span>V-Core Trace: {isActive ? '0x01' : '0x00'}</span>
+        </div>
+        <div className={`flex items-center gap-1.5 ${celebrantsCount > 0 ? 'text-emerald-500' : 'text-zinc-600'}`}>
+          <Users className="w-3 h-3" />
+          <span>Buffer: {celebrantsCount} Target(s)</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
   members,
   adminConfig,
@@ -186,6 +244,8 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
   const [outlookRange, setOutlookRange] = useState<30 | 14 | 7>(30);
   const [logFilter, setLogFilter] = useState<'ALL' | 'SYNC' | 'WHATSAPP' | 'SYSTEM'>('ALL');
   const [timelineSearch, setTimelineSearch] = useState('');
+  const [autoTriggerLogs, setAutoTriggerLogs] = useState<any[]>([]);
+  const [dispatchLockDate, setDispatchLockDate] = useState<string | null>(localStorage.getItem('last_auto_dispatch_date'));
 
   // 1. Key Metrics Calculations
   const totalMembers = members.length;
@@ -193,6 +253,54 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
   const todayCelebrants = useMemo(() => {
     return members.filter((m) => m.isBirthdayToday || checkIsTodayBirthday(m.birthday));
   }, [members]);
+
+  // ==========================================================================
+  // OPTION 1: THE MORNING BOOT-UP AUTO-TRIGGER
+  // ==========================================================================
+  useEffect(() => {
+    // 1. Daily Execution Lock (localStorage)
+    const today = new Date().toISOString().split('T')[0];
+    const lastRunDate = localStorage.getItem('last_auto_dispatch_date');
+
+    // Only run if it hasn't run today and we have celebrants
+    if (lastRunDate !== today && todayCelebrants.length > 0) {
+      console.log(`[AUTO] Morning bootstrap: Starting auto-dispatch for ${todayCelebrants.length} celebrants`);
+
+      // 2. Background Dispatch: WhatsApp
+      todayCelebrants.forEach(member => {
+        // Trigger the existing handleSendWhatsApp function passed via prop
+        onSendWhatsApp(member);
+      });
+
+      // 3. Background Dispatch: Email (Direct API call to headless auto-dispatch)
+      fetch('/api/email-auto-dispatch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ members }), // Backend filters for today's celebrants
+      }).catch(err => console.error('[AUTO] Email dispatch failed:', err));
+
+      // 4. Terminal Logging
+      const newLog = {
+        id: `auto-dispatch-${Date.now()}`,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+        level: 'OK',
+        category: 'SYSTEM',
+        message: `[AUTO] Morning sequence complete: ${todayCelebrants.length} wishes sent`,
+        subtext: `Admin Notification: ${adminConfig?.adminEmail || 'anik.barua@kdsgroup.net'}`,
+      };
+      
+      setAutoTriggerLogs(prev => [newLog, ...prev]);
+
+      // 5. Update Daily Lock
+      localStorage.setItem('last_auto_dispatch_date', today);
+      setDispatchLockDate(today);
+    }
+  }, [todayCelebrants, onSendWhatsApp, adminConfig, members]);
+
+  const handleResetDispatchLock = () => {
+    localStorage.removeItem('last_auto_dispatch_date');
+    setDispatchLockDate(null);
+  };
 
   const upcoming7DaysCelebrants = useMemo(() => {
     return members.filter((m) => {
@@ -368,6 +476,11 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
         });
       });
     }
+
+    // Add Morning Auto-Trigger Logs to the terminal feed
+    autoTriggerLogs.forEach(log => {
+      logs.unshift(log);
+    });
 
     // Filter logs if needed
     return logs.filter((log) => {
@@ -1252,6 +1365,13 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
                   </a>
                 </div>
               </div>
+
+              {/* SYSTEM DIAGNOSTICS COMPONENT */}
+              <SystemDiagnostics 
+                lockDate={dispatchLockDate} 
+                onReset={handleResetDispatchLock} 
+                celebrantsCount={todayCelebrants.length} 
+              />
             </div>
           </div>
 
