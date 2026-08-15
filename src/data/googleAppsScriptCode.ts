@@ -278,8 +278,74 @@ function checkBirthdaysAndSendWishes() {
 /**
  * AUTOMATED ADMIN ADVANCE BIRTHDAY PLANNING NOTIFICATION (1 to 3 Days Ahead):
  * Scans Column G for upcoming birthdays in the next 1 to 3 days.
- * Dispatches multi-channel briefing to Admin WhatsApp (+880163529951) and Admin Email.
+ * Dynamically collects Admin WhatsApp & Email from Google Sheet or falls back to defaults.
+ * Dispatches multi-channel briefing to Admin WhatsApp & Admin Email.
  */
+function extractAdminContactFromSheet(sheet, data) {
+  var detected = {
+    whatsapp: ADMIN_WHATSAPP_NUMBER || "whatsapp:+880163529951",
+    email: ADMIN_EMAIL || "admin.ie@kdsgroup.net",
+    source: "default"
+  };
+
+  // 1. Scan metadata header rows (Rows 1 to 5) for Admin / Leader keywords
+  var maxHeaderRows = Math.min(6, data.length);
+  for (var r = 0; r < maxHeaderRows; r++) {
+    var row = data[r];
+    for (var c = 0; c < row.length; c++) {
+      var cell = row[c] ? row[c].toString().trim() : "";
+      if (!cell) continue;
+
+      var lower = cell.toLowerCase();
+      if (lower.indexOf("admin") !== -1 || lower.indexOf("leader") !== -1 || lower.indexOf("manager") !== -1 || lower.indexOf("notification") !== -1) {
+        // Look for phone or email in this cell or adjacent cells
+        for (var off = 0; off <= 3; off++) {
+          var targetVal = (row[c + off] ? row[c + off].toString().trim() : "") || cell;
+          // Check for email
+          var emailMatch = targetVal.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}/);
+          if (emailMatch && emailMatch[0]) {
+            detected.email = emailMatch[0];
+            detected.source = "sheet_header_metadata";
+          }
+          // Check for phone number
+          var phoneMatch = targetVal.match(/(?:\\+?88)?01[3-9]\\d{8}/);
+          if (phoneMatch && phoneMatch[0]) {
+            var rawPhone = phoneMatch[0];
+            var normalized = rawPhone.startsWith("+") ? rawPhone : (rawPhone.startsWith("88") ? "+" + rawPhone : "+88" + rawPhone);
+            detected.whatsapp = "whatsapp:" + normalized;
+            detected.source = "sheet_header_metadata";
+          }
+        }
+      }
+    }
+  }
+
+  // 2. Scan roster for designated Head / Manager / Lead if not found in header
+  if (detected.source === "default") {
+    for (var i = 4; i < data.length; i++) {
+      var desig = data[i][4] ? data[i][4].toString().toLowerCase() : "";
+      var name = data[i][3] ? data[i][3].toString().toLowerCase() : "";
+      if (desig.indexOf("head") !== -1 || desig.indexOf("manager") !== -1 || desig.indexOf("leader") !== -1 || name.indexOf("danushka") !== -1 || name.indexOf("anik") !== -1) {
+        var rosterPhone = data[i][9] ? data[i][9].toString().trim() : "";
+        var rosterEmail = data[i][7] ? data[i][7].toString().trim() : (data[i][8] ? data[i][8].toString().trim() : "");
+        if (rosterPhone && rosterPhone.replace(/\\D/g, '').length >= 10) {
+          var pDigits = rosterPhone.replace(/\\D/g, '');
+          var formattedP = pDigits.startsWith("88") ? "+" + pDigits : (pDigits.startsWith("01") ? "+88" + pDigits : "+" + pDigits);
+          detected.whatsapp = "whatsapp:" + formattedP;
+          detected.source = "roster_leadership_role";
+        }
+        if (rosterEmail && rosterEmail.indexOf("@") !== -1) {
+          detected.email = rosterEmail;
+          detected.source = "roster_leadership_role";
+        }
+        break;
+      }
+    }
+  }
+
+  return detected;
+}
+
 function sendAdminUpcomingBirthdayAlerts() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = ss.getSheetByName(SHEET_NAME) || ss.getSheets()[0];
@@ -289,7 +355,9 @@ function sendAdminUpcomingBirthdayAlerts() {
   var currentYear = today.getFullYear();
   var todayZero = new Date(currentYear, today.getMonth(), today.getDate());
 
-  Logger.log("=== Scanning Column G for 1 to 3 Days Advance Birthdays for Admin Alert ===");
+  // Dynamically extract active Admin WhatsApp & Email from Google Sheet
+  var dynamicAdmin = extractAdminContactFromSheet(sheet, data);
+  Logger.log("=== Scanning Column G for 1 to 3 Days Advance Birthdays for Admin Alert (Admin: " + dynamicAdmin.whatsapp + " / " + dynamicAdmin.email + " via " + dynamicAdmin.source + ") ===");
 
   var upcomingCelebrants = [];
 
@@ -383,12 +451,12 @@ function sendAdminUpcomingBirthdayAlerts() {
 
   waMessage += "📝 *Actionable Plan*: Please review Column J (WhatsApp) & Column K (Wishing Message) in Google Sheet before the 8:00 AM zero-touch dispatch!";
 
-  var adminWaTarget = ADMIN_WHATSAPP_NUMBER || "whatsapp:+880163529951";
+  var adminWaTarget = dynamicAdmin.whatsapp || ADMIN_WHATSAPP_NUMBER || "whatsapp:+880163529951";
   sendDirectWhatsApp(adminWaTarget, waMessage);
-  Logger.log("Admin WhatsApp Advance Planning briefing dispatched to: " + adminWaTarget);
+  Logger.log("Admin WhatsApp Advance Planning briefing dispatched to: " + adminWaTarget + " (Source: " + dynamicAdmin.source + ")");
 
   // 2. Send Email Planning Briefing to Admin Email
-  var adminEmailTarget = ADMIN_EMAIL || "admin.ie@kdsgroup.net";
+  var adminEmailTarget = dynamicAdmin.email || ADMIN_EMAIL || "admin.ie@kdsgroup.net";
   var emailSubject = "🔔 [Admin Advance Planning Alert] " + upcomingCelebrants.length + " Birthday(s) Coming Up (Next 1-3 Days) - IE Central Team";
   
   var html = "<div style='font-family: Arial, sans-serif; max-width: 620px; margin: 0 auto; color: #1e293b;'>"
@@ -750,6 +818,120 @@ function setupAllTriggers() {
     .create();
 
   Logger.log("SUCCESS: Both 8:00 AM Wish Dispatch & 5:00 PM Admin Advance Planning Alert Triggers installed!");
+}
+
+/**
+ * =========================================================================
+ * REAL-TIME GOOGLE SHEET EDIT TRIGGER & INSTANT WEBHOOK SYNCHRONIZATION
+ * =========================================================================
+ * Whenever you update or edit:
+ * 1. WhatsApp Wishing Message Sender Number (Connected WhatsApp)
+ * 2. Admin Notification Email
+ * 3. Admin WhatsApp Number
+ * inside Google Sheets, this trigger immediately executes and pushes the changes
+ * to the web application server in real time without manual reload!
+ */
+
+// Global Webhook URL (Current Hosted App Endpoint)
+var WEBHOOK_APP_URL = ""; // Optional: Enter public custom URL if deployed to dedicated domain
+
+/**
+ * Real-Time onEdit Trigger: Fires automatically on every cell modification in Google Sheets
+ */
+function onEdit(e) {
+  try {
+    var range = e.range;
+    var row = range.getRow();
+    var col = range.getColumn();
+    
+    // If edit happened in top 20 rows or headers, sync real-time configuration
+    if (row <= 20) {
+      syncConfigWithWebApp();
+    }
+  } catch (err) {
+    Logger.log("onEdit exception: " + err);
+  }
+}
+
+/**
+ * Reads the 3 configuration values directly from Google Sheet and posts them to Web App Webhook
+ */
+function syncConfigWithWebApp() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(SHEET_NAME) || ss.getSheets()[0];
+  var data = sheet.getDataRange().getValues();
+  
+  var detectedSender = SENDER_WHATSAPP_NUMBER || "+8801625299521";
+  var detectedAdminWA = ADMIN_WHATSAPP_NUMBER || "+8801625299521";
+  var detectedAdminEmail = ADMIN_EMAIL || "anik.barua@kdsgroup.net";
+  
+  // Scan sheet rows for table headers / labels
+  for (var r = 0; r < Math.min(data.length, 15); r++) {
+    var row = data[r] || [];
+    for (var c = 0; c < row.length; c++) {
+      var cell = String(row[c] || "").trim().toLowerCase();
+      var nextRowVal = data[r + 1] && data[r + 1][c] ? String(data[r + 1][c]).trim() : "";
+      
+      // Sender Number
+      if (cell.indexOf("sender") !== -1 && (cell.indexOf("number") !== -1 || cell.indexOf("whatsapp") !== -1)) {
+        if (nextRowVal) detectedSender = nextRowVal;
+      }
+      // Admin Notification Email
+      if (cell.indexOf("admin") !== -1 && (cell.indexOf("email") !== -1 || cell.indexOf("mail") !== -1 || cell.indexOf("notification") !== -1)) {
+        if (nextRowVal && nextRowVal.indexOf("@") !== -1) detectedAdminEmail = nextRowVal;
+      }
+      // Admin WhatsApp Number
+      if (cell.indexOf("admin") !== -1 && (cell.indexOf("whatsapp") !== -1 || cell.indexOf("whatapp") !== -1 || cell.indexOf("number") !== -1)) {
+        if (nextRowVal) detectedAdminWA = nextRowVal;
+      }
+    }
+  }
+  
+  var payload = {
+    source: "google_apps_script_onEdit",
+    event: "onEdit",
+    senderNumber: detectedSender,
+    senderWhatsApp: detectedSender,
+    adminNotificationEmail: detectedAdminEmail,
+    adminEmail: detectedAdminEmail,
+    adminWhatsAppNumber: detectedAdminWA,
+    adminWhatsApp: detectedAdminWA,
+    timestamp: new Date().toISOString()
+  };
+  
+  Logger.log("Synchronizing Google Sheet Config with Web App: " + JSON.stringify(payload));
+  
+  // If WEBHOOK_APP_URL is specified, post over HTTP
+  if (WEBHOOK_APP_URL) {
+    try {
+      var options = {
+        method: "post",
+        contentType: "application/json",
+        payload: JSON.stringify(payload),
+        muteHttpExceptions: true
+      };
+      UrlFetchApp.fetch(WEBHOOK_APP_URL + "/api/sheet/webhook", options);
+    } catch (fetchErr) {
+      Logger.log("UrlFetchApp failed: " + fetchErr);
+    }
+  }
+  
+  return payload;
+}
+
+/**
+ * Creates custom interactive menu in Google Sheets toolbar
+ */
+function onOpen() {
+  var ui = SpreadsheetApp.getUi();
+  ui.createMenu("🎂 IE Birthday Engine")
+    .addItem("⚡ Sync Configuration with Web App Now", "syncConfigWithWebApp")
+    .addSeparator()
+    .addItem("▶️ Test 8:00 AM Birthday & Festive Dispatch", "checkBirthdaysAndSendWishes")
+    .addItem("🔔 Test 5:00 PM Admin Advance Planning Alert", "sendAdminUpcomingBirthdayAlerts")
+    .addSeparator()
+    .addItem("⚙️ Install Cloud Triggers", "setupAllTriggers")
+    .addToUi();
 }
 
 // Backward compatibility aliases

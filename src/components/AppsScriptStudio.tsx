@@ -1,21 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { getAppsScriptCode } from '../data/googleAppsScriptCode';
-import { TwilioConfig } from '../types';
-import { Code2, Copy, Check, Download, Key, ShieldCheck, Clock, FileSpreadsheet, ArrowRight, Sparkles, Phone, Mail, Bell } from 'lucide-react';
+import { TwilioConfig, AdminSheetConfig } from '../types';
+import { Code2, Copy, Check, Download, Key, ShieldCheck, Clock, FileSpreadsheet, ArrowRight, Sparkles, Phone, Mail, Bell, CheckCheck } from 'lucide-react';
 
 interface AppsScriptStudioProps {
   twilioConfig: TwilioConfig;
+  adminConfig?: AdminSheetConfig;
   onUpdateTwilioConfig: (config: TwilioConfig) => void;
 }
 
 export const AppsScriptStudio: React.FC<AppsScriptStudioProps> = ({
   twilioConfig,
+  adminConfig,
   onUpdateTwilioConfig,
 }) => {
   const [copied, setCopied] = useState(false);
   const [adminPhone, setAdminPhone] = useState<string>(() => {
-    return localStorage.getItem('admin_planning_whatsapp') || '+880163529951';
+    return adminConfig?.adminWhatsApp || localStorage.getItem('admin_planning_whatsapp') || '+880163529951';
   });
+
+  useEffect(() => {
+    if (adminConfig?.adminWhatsApp) {
+      setAdminPhone(adminConfig.adminWhatsApp);
+    }
+  }, [adminConfig]);
 
   const scriptCode = getAppsScriptCode(
     twilioConfig.accountSid,
@@ -99,15 +107,20 @@ export const AppsScriptStudio: React.FC<AppsScriptStudioProps> = ({
               </h3>
             </div>
             <p className="text-xs text-amber-900 mt-1 leading-relaxed">
-              Every day at <strong>5:00 PM (17:00)</strong>, Google Apps Script runs <code className="bg-amber-100 px-1 py-0.5 rounded font-mono text-[11px]">sendAdminUpcomingBirthdayAlerts()</code> to scan Column G. It sends a multi-channel briefing to the Team Leader's WhatsApp (<strong>+880163529951</strong>) and Admin Email containing the verification checklist (Column J WhatsApp check & Column K customized message check).
+              Every day at <strong>5:00 PM (17:00)</strong>, Google Apps Script runs <code className="bg-amber-100 px-1 py-0.5 rounded font-mono text-[11px]">sendAdminUpcomingBirthdayAlerts()</code> to scan Column G. It automatically extracts the Admin WhatsApp Number (<strong>{adminPhone}</strong>) and Admin Email from the Google Sheet (or active session) and sends a multi-channel briefing containing the celebrant verification checklist.
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4 pt-3 border-t border-amber-200/80">
               <div>
-                <label className="block text-[11px] font-bold text-amber-950 mb-1 flex items-center gap-1">
-                  <Phone className="w-3 h-3 text-amber-700" />
-                  Admin WhatsApp Recipient Number:
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-[11px] font-bold text-amber-950 flex items-center gap-1">
+                    <Phone className="w-3 h-3 text-amber-700" />
+                    Admin WhatsApp Recipient Number:
+                  </label>
+                  <span className="text-[9px] font-bold uppercase px-1.5 py-0.2 rounded bg-amber-200/80 text-amber-900 border border-amber-300">
+                    From Google Sheet
+                  </span>
+                </div>
                 <input
                   type="text"
                   value={adminPhone}
@@ -121,14 +134,19 @@ export const AppsScriptStudio: React.FC<AppsScriptStudioProps> = ({
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-amber-950 mb-1 flex items-center gap-1">
-                  <Mail className="w-3 h-3 text-amber-700" />
-                  Admin Notification Email:
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-[11px] font-bold text-amber-950 flex items-center gap-1">
+                    <Mail className="w-3 h-3 text-amber-700" />
+                    Admin Notification Email:
+                  </label>
+                  <span className="text-[9px] font-bold uppercase px-1.5 py-0.2 rounded bg-amber-200/80 text-amber-900 border border-amber-300">
+                    From Google Sheet / Session
+                  </span>
+                </div>
                 <input
                   type="text"
                   disabled
-                  value="Session.getActiveUser().getEmail() (Auto-detected)"
+                  value={adminConfig?.adminEmail || "admin.ie@kdsgroup.net (Session.getActiveUser().getEmail())"}
                   className="w-full px-3 py-1.5 text-xs font-medium bg-amber-100/70 border border-amber-200 rounded-lg text-amber-900 cursor-not-allowed"
                 />
               </div>

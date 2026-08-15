@@ -49,6 +49,18 @@ export interface EmailTemplateOption {
   theme: 'festive' | 'corporate' | 'executive' | 'elegant';
 }
 
+export interface AdminSheetConfig {
+  senderWhatsApp: string; // WhatsApp Wishing Message Sender Number (e.g. "+8801625299521")
+  adminWhatsApp: string;  // Admin WhatsApp Number (e.g. "+8801625299521")
+  adminEmail: string;     // Admin Notification Email (e.g. "anik.barua@kdsgroup.net")
+  source: 'google_sheet_meta' | 'google_sheet_webhook' | 'google_sheet_roster' | 'google_sheet_default' | 'user_override';
+  isAutoDetected: boolean;
+  sheetName?: string;
+  detectedRole?: string;
+  lastSynced?: string;
+  syncId?: string;
+}
+
 export interface WishGenerationRequest {
   name: string;
   designation: string;

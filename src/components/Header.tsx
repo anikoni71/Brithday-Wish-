@@ -1,15 +1,18 @@
 import React from 'react';
-import { RefreshCw, ExternalLink, Cake, Sparkles, Code2, Send, PhoneCall, Radio, CheckCircle2, Bot, Mail, Bell, Volume2, VolumeX, Globe } from 'lucide-react';
+import { RefreshCw, ExternalLink, Cake, Sparkles, Code2, Send, PhoneCall, Radio, CheckCircle2, Bot, Mail, Bell, Volume2, VolumeX, Globe, ShieldCheck, LayoutDashboard } from 'lucide-react';
+import { AdminSheetConfig } from '../types';
 
 interface HeaderProps {
-  activeTab: 'roster' | 'festive' | 'email' | 'generator' | 'script' | 'tester' | 'automation';
-  setActiveTab: (tab: 'roster' | 'festive' | 'email' | 'generator' | 'script' | 'tester' | 'automation') => void;
+  activeTab: 'dashboard' | 'roster' | 'festive' | 'email' | 'generator' | 'script' | 'tester' | 'automation';
+  setActiveTab: (tab: 'dashboard' | 'roster' | 'festive' | 'email' | 'generator' | 'script' | 'tester' | 'automation') => void;
   onSync: () => void;
   isSyncing: boolean;
+  isRealtimeConnected?: boolean;
   lastSynced: string | null;
   todayCount: number;
   dueSoonCount?: number;
   connectedPhone?: string;
+  adminConfig?: AdminSheetConfig;
   autoSyncEnabled?: boolean;
   onToggleAutoSync?: () => void;
   desktopNotificationsEnabled?: boolean;
@@ -25,10 +28,12 @@ export const Header: React.FC<HeaderProps> = ({
   setActiveTab,
   onSync,
   isSyncing,
+  isRealtimeConnected = true,
   lastSynced,
   todayCount,
   dueSoonCount = 0,
   connectedPhone = '+8801625299521',
+  adminConfig,
   autoSyncEnabled = true,
   onToggleAutoSync,
   desktopNotificationsEnabled = false,
@@ -40,7 +45,8 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTODUAg2mUYQUTN3P9SPB5Q41Ta_9SufI2gct0GBYDUbPSJX81O1mWHgBjElAIfNfobEbd7Mkii18lt/pubhtml?gid=0&single=true";
 
-  const displayPhone = connectedPhone.replace('whatsapp:', '');
+  const effectiveSender = adminConfig?.senderWhatsApp || connectedPhone;
+  const displayPhone = effectiveSender.replace('whatsapp:', '');
   const totalUpcomingAlerts = todayCount + dueSoonCount;
 
   return (
@@ -72,31 +78,31 @@ export const Header: React.FC<HeaderProps> = ({
               </div>
 
               <div className="flex items-center gap-2 sm:gap-3 mt-1 flex-wrap">
-                {/* Connected WhatsApp Badge */}
-                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 font-mono text-[11px] font-bold">
+                {/* Connected WhatsApp Sender Badge */}
+                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-900 border border-emerald-300 font-mono text-[11px] font-bold shadow-2xs">
                   <PhoneCall className="w-3 h-3 text-emerald-600" />
-                  Connected WhatsApp: {displayPhone}
+                  Sender: {displayPhone}
                 </span>
 
-                {/* Auto Sync Badge */}
+                {/* Auto Sync & Real-Time SSE Badge */}
                 <button
                   onClick={onToggleAutoSync}
-                  className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold border transition cursor-pointer ${
+                  className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold border transition cursor-pointer shadow-2xs ${
                     autoSyncEnabled
-                      ? 'bg-blue-50 text-blue-800 border-blue-200 hover:bg-blue-100'
+                      ? 'bg-blue-50 text-blue-900 border-blue-300 hover:bg-blue-100'
                       : 'bg-slate-100 text-slate-600 border-slate-200'
                   }`}
                   title="Click to toggle real-time background sync"
                 >
-                  <Radio className={`w-3 h-3 ${autoSyncEnabled ? 'text-blue-600 animate-pulse' : 'text-slate-400'}`} />
-                  {autoSyncEnabled ? 'Live Sync (15s)' : 'Sync Paused'}
+                  <Radio className={`w-3 h-3 ${isRealtimeConnected ? 'text-emerald-600 animate-pulse' : autoSyncEnabled ? 'text-blue-600 animate-pulse' : 'text-slate-400'}`} />
+                  {isRealtimeConnected ? 'Sheet Real-Time (SSE)' : autoSyncEnabled ? 'Live Sync (15s)' : 'Sync Paused'}
                   {lastSynced && <span className="text-[10px] text-slate-500">({lastSynced})</span>}
                 </button>
 
-                {/* Direct Automation Badge */}
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-emerald-100 text-emerald-950 border border-emerald-300 text-[11px] font-bold">
-                  <CheckCircle2 className="w-3 h-3 text-emerald-700" />
-                  Direct API Mode (Zero Touch)
+                {/* Google Sheet Direct Source Tag */}
+                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-teal-50 text-teal-900 border border-teal-300 text-[11px] font-bold shadow-2xs" title={`Single Source of Truth: Google Sheet (${adminConfig?.sheetName || 'Central IE List'})\nAdmin WA: ${adminConfig?.adminWhatsApp || '+8801625299521'}\nAdmin Email: ${adminConfig?.adminEmail || 'anik.barua@kdsgroup.net'}`}>
+                  <CheckCircle2 className="w-3 h-3 text-teal-700" />
+                  Sheet Synced ({adminConfig?.sheetName || 'Central IE List'})
                 </span>
               </div>
             </div>
@@ -192,6 +198,22 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Navigation Tabs */}
         <div className="flex items-center space-x-1 border-t border-slate-100 pt-2 overflow-x-auto no-scrollbar">
+          {/* Executive Dashboard Tab (First Position) */}
+          <button
+            onClick={() => setActiveTab('dashboard')}
+            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-t-lg border-b-2 transition whitespace-nowrap cursor-pointer ${
+              activeTab === 'dashboard'
+                ? 'border-indigo-600 text-indigo-900 bg-indigo-50/70 font-bold shadow-xs'
+                : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+            }`}
+          >
+            <LayoutDashboard className={`w-4 h-4 ${activeTab === 'dashboard' ? 'text-indigo-600' : 'text-slate-500'}`} />
+            Executive Dashboard
+            <span className="ml-1 px-1.5 py-0.2 rounded-full text-[9px] bg-indigo-100 text-indigo-800 border border-indigo-200 font-bold">
+              Overview
+            </span>
+          </button>
+
           <button
             onClick={() => setActiveTab('roster')}
             className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-t-lg border-b-2 transition whitespace-nowrap cursor-pointer ${

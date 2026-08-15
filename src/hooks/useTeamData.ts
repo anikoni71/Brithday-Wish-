@@ -1,20 +1,23 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { TeamMember, EmailLogEntry, AutomationLogEntry } from '../types';
+import { TeamMember, EmailLogEntry, AutomationLogEntry, AdminSheetConfig } from '../types';
 import { fetchLiveTeamData } from '../services/sheetService';
 import { getDemoTeamMembers } from '../data/fallbackData';
 
 interface UseTeamDataResult {
   teamMembers: TeamMember[];
+  adminConfig: AdminSheetConfig;
   automationLogs: AutomationLogEntry[];
   emailLogs: EmailLogEntry[];
   isLoading: boolean;
   isSyncing: boolean;
+  isRealtimeConnected: boolean;
   lastSynced: string;
   error: string | null;
   refetch: (isSilent?: boolean) => Promise<void>;
   refetchEmailLogs: () => Promise<void>;
   refetchAutomationLogs: () => Promise<void>;
   setTeamMembers: React.Dispatch<React.SetStateAction<TeamMember[]>>;
+  setAdminConfig: React.Dispatch<React.SetStateAction<AdminSheetConfig>>;
   setEmailLogs: React.Dispatch<React.SetStateAction<EmailLogEntry[]>>;
   setAutomationLogs: React.Dispatch<React.SetStateAction<AutomationLogEntry[]>>;
 }
@@ -24,10 +27,21 @@ export function useTeamData(
   sentYearMap: Record<string, string> = {}
 ): UseTeamDataResult {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>(() => getDemoTeamMembers());
+  const [adminConfig, setAdminConfig] = useState<AdminSheetConfig>({
+    senderWhatsApp: '+8801625299521',
+    adminWhatsApp: '+8801625299521',
+    adminEmail: 'anik.barua@kdsgroup.net',
+    source: 'google_sheet_default',
+    isAutoDetected: true,
+    sheetName: 'Central IE List',
+    detectedRole: 'IE Central Management (Danushka Wanniarachchi / Anik Barua)',
+    lastSynced: ''
+  });
   const [automationLogs, setAutomationLogs] = useState<AutomationLogEntry[]>([]);
   const [emailLogs, setEmailLogs] = useState<EmailLogEntry[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [isRealtimeConnected, setIsRealtimeConnected] = useState<boolean>(false);
   const [lastSynced, setLastSynced] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
 
@@ -41,6 +55,76 @@ export function useTeamData(
   useEffect(() => {
     sentYearMapRef.current = sentYearMap;
   }, [sentYearMap]);
+
+  // Real-Time Server-Sent Events (SSE) connection to listen for Google Sheet onEdit webhooks
+  useEffect(() => {
+    let sse: EventSource | null = null;
+    let reconnectTimeout: any = null;
+
+    const connectSSE = () => {
+      try {
+        sse = new EventSource('/api/realtime/stream');
+
+        sse.onopen = () => {
+          setIsRealtimeConnected(true);
+        };
+
+        sse.onmessage = (event) => {
+          if (!event.data) return;
+          try {
+            const parsed = JSON.parse(event.data);
+            if (parsed.type === 'CONFIG_UPDATE' || parsed.type === 'INITIAL_STATE') {
+              if (parsed.config) {
+                setAdminConfig((prev) => ({
+                  ...prev,
+                  ...parsed.config,
+                  senderWhatsApp: parsed.config.senderWhatsApp || prev.senderWhatsApp,
+                  adminWhatsApp: parsed.config.adminWhatsApp || prev.adminWhatsApp,
+                  adminEmail: parsed.config.adminEmail || prev.adminEmail,
+                  lastSynced: parsed.config.lastSynced || new Date().toLocaleTimeString(),
+                  syncId: parsed.config.syncId
+                }));
+                setLastSynced(new Date().toLocaleTimeString());
+              }
+              if (parsed.fullData && Array.isArray(parsed.fullData) && parsed.fullData.length > 0) {
+                const currentMap = sentYearMapRef.current;
+                const merged = parsed.fullData.map((m: TeamMember) => {
+                  const key = m.id || m.sl;
+                  const localSentYear = currentMap[key];
+                  return {
+                    ...m,
+                    lastSentYear: localSentYear !== undefined && localSentYear !== '' ? localSentYear : m.lastSentYear || ''
+                  };
+                });
+                setTeamMembers(merged);
+              }
+            }
+          } catch (_e) {
+            // Non-JSON or heartbeat
+          }
+        };
+
+        sse.onerror = () => {
+          setIsRealtimeConnected(false);
+          if (sse) {
+            sse.close();
+            sse = null;
+          }
+          // Retry connection after 5s
+          reconnectTimeout = setTimeout(connectSSE, 5000);
+        };
+      } catch (_err) {
+        setIsRealtimeConnected(false);
+      }
+    };
+
+    connectSSE();
+
+    return () => {
+      if (sse) sse.close();
+      if (reconnectTimeout) clearTimeout(reconnectTimeout);
+    };
+  }, []);
 
   // Fetch Sheet Data with AbortController
   const refetch = useCallback(async (isSilent: boolean = false) => {
@@ -79,9 +163,15 @@ export function useTeamData(
         });
 
         setTeamMembers(mergedMembers);
+        if (result.adminConfig) {
+          setAdminConfig(result.adminConfig);
+        }
         setLastSynced(new Date().toLocaleTimeString());
       } else {
         setTeamMembers((prev) => (prev.length > 0 ? prev : getDemoTeamMembers()));
+        if (result.adminConfig) {
+          setAdminConfig(result.adminConfig);
+        }
         setLastSynced(new Date().toLocaleTimeString());
       }
     } catch (err: any) {
@@ -188,16 +278,19 @@ export function useTeamData(
 
   return {
     teamMembers,
+    adminConfig,
     automationLogs,
     emailLogs,
     isLoading,
     isSyncing,
+    isRealtimeConnected,
     lastSynced,
     error,
     refetch,
     refetchEmailLogs,
     refetchAutomationLogs,
     setTeamMembers,
+    setAdminConfig,
     setEmailLogs,
     setAutomationLogs
   };

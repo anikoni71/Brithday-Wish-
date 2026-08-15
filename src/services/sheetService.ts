@@ -1,9 +1,163 @@
-import { TeamMember } from '../types';
+import { TeamMember, AdminSheetConfig } from '../types';
 import { checkIsTodayBirthday } from '../utils/dateUtils';
 import { REAL_IE_TEAM_ROSTER } from '../data/fallbackData';
 
 export const DEFAULT_GOOGLE_SHEET_CSV_URL =
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vTODUAg2mUYQUTN3P9SPB5Q41Ta_9SufI2gct0GBYDUbPSJX81O1mWHgBjElAIfNfobEbd7Mkii18lt/pub?gid=0&single=true&output=csv";
+
+/**
+ * Intelligent Admin Configuration Collector from Google Sheet:
+ * Scans top metadata rows, specific column headers (Sender Number, Admin Notification Email, Admin WhatsApp Number),
+ * and management roles to automatically retrieve live configuration.
+ */
+export function extractAdminConfigFromSheet(
+  rows: string[][],
+  members: TeamMember[]
+): AdminSheetConfig {
+  let detectedSenderNumber = '';
+  let detectedWhatsApp = '';
+  let detectedEmail = '';
+  let detectedRole = '';
+
+  const normalizePhone = (numStr: string): string => {
+    if (!numStr) return '';
+    const clean = numStr.trim().replace(/[^\d+]/g, '');
+    if (!clean) return '';
+    if (clean.startsWith('+')) return clean;
+    if (clean.startsWith('880')) return '+' + clean;
+    if (clean.startsWith('01')) return '+88' + clean;
+    return '+' + clean;
+  };
+
+  // 1. Check for specific table header row: "Sender Number", "Admin Notification Email", "Admin WhatsApp Number"
+  for (let r = 0; r < Math.min(rows.length, 15); r++) {
+    const row = rows[r] || [];
+    for (let c = 0; c < row.length; c++) {
+      const header = (row[c] || '').trim().toLowerCase();
+      const nextRowVal = rows[r + 1] && rows[r + 1][c] ? (rows[r + 1][c] || '').trim() : '';
+
+      // Match "Sender Number" / "WhatsApp Sender" / "Wishing Message Sender Number"
+      if (header.includes('sender') && (header.includes('number') || header.includes('whatsapp') || header.includes('phone') || header.includes('sender'))) {
+        if (nextRowVal && !detectedSenderNumber) {
+          detectedSenderNumber = normalizePhone(nextRowVal);
+          detectedRole = 'Google Sheet Config Table';
+        }
+      }
+
+      // Match "Admin Notification Email" / "Admin Email"
+      if (header.includes('admin') && (header.includes('email') || header.includes('mail') || header.includes('notification'))) {
+        if (nextRowVal && nextRowVal.includes('@') && !detectedEmail) {
+          const emailMatch = nextRowVal.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+          if (emailMatch) {
+            detectedEmail = emailMatch[0];
+            detectedRole = 'Google Sheet Config Table';
+          }
+        }
+      }
+
+      // Match "Admin WhatsApp Number" / "Admin WhatsApp"
+      if (header.includes('admin') && (header.includes('whatsapp') || header.includes('whatapp') || (header.includes('admin') && header.includes('number')))) {
+        if (nextRowVal && !detectedWhatsApp) {
+          detectedWhatsApp = normalizePhone(nextRowVal);
+          detectedRole = 'Google Sheet Config Table';
+        }
+      }
+    }
+  }
+
+  // 2. Scan all cells for inline key-value pairs or metadata
+  for (const row of rows) {
+    for (let c = 0; c < row.length; c++) {
+      const cell = (row[c] || '').trim();
+      const cellLower = cell.toLowerCase();
+
+      // Check for Sender Number inline
+      if (!detectedSenderNumber && cellLower.includes('sender') && (cellLower.includes('number') || cellLower.includes('whatsapp') || cellLower.includes('phone') || cellLower.includes('sender'))) {
+        const textToCheck = cell + ' ' + (row[c + 1] || '');
+        const phoneMatch = textToCheck.match(/(\+?880[0-9]{9,10}|01[0-9]{9}|880[0-9]{9,10})/);
+        if (phoneMatch) {
+          detectedSenderNumber = normalizePhone(phoneMatch[0]);
+        }
+      }
+
+      // Check for Admin Email patterns
+      if (
+        (cellLower.includes('admin') || cellLower.includes('leader') || cellLower.includes('notification')) &&
+        cellLower.includes('@')
+      ) {
+        const emailMatch = cell.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+        if (emailMatch && !detectedEmail) {
+          detectedEmail = emailMatch[0];
+          detectedRole = 'Google Sheet Header Metadata';
+        }
+      } else if (cellLower.includes('admin email') || cellLower.includes('notification email') || cellLower.includes('leader email')) {
+        const nextCell = (row[c + 1] || '').trim();
+        const emailMatch = nextCell.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+        if (emailMatch && !detectedEmail) {
+          detectedEmail = emailMatch[0];
+          detectedRole = 'Google Sheet Header Metadata';
+        }
+      }
+
+      // Check for Admin WhatsApp / Phone patterns
+      if (
+        (cellLower.includes('admin') || cellLower.includes('leader') || cellLower.includes('notification')) &&
+        (cellLower.includes('whatsapp') || cellLower.includes('phone') || cellLower.includes('mobile') || cellLower.includes('contact'))
+      ) {
+        const textToCheck = cell + ' ' + (row[c + 1] || '');
+        const phoneMatch = textToCheck.match(/(\+?880[0-9]{9,10}|01[0-9]{9}|880[0-9]{9,10})/);
+        if (phoneMatch && !detectedWhatsApp) {
+          detectedWhatsApp = normalizePhone(phoneMatch[0]);
+          detectedRole = 'Google Sheet Header Metadata';
+        }
+      }
+    }
+  }
+
+  // 3. Fallbacks from roster leadership roles if needed
+  if (!detectedWhatsApp || !detectedEmail || !detectedSenderNumber) {
+    const leader = members.find(
+      (m) =>
+        m.designation.toLowerCase().includes('manager') ||
+        m.designation.toLowerCase().includes('leader') ||
+        m.designation.toLowerCase().includes('head') ||
+        m.name.toLowerCase().includes('danushka') ||
+        m.name.toLowerCase().includes('anik')
+    );
+
+    if (leader) {
+      if (!detectedWhatsApp && leader.whatsapp) {
+        detectedWhatsApp = normalizePhone(leader.whatsapp);
+      }
+      if (!detectedEmail && leader.email && leader.email.includes('@')) {
+        detectedEmail = leader.email;
+      }
+      if (!detectedSenderNumber) {
+        detectedSenderNumber = normalizePhone(leader.whatsapp || '+8801625299521');
+      }
+      if (!detectedRole) {
+        detectedRole = `${leader.name} (${leader.designation})`;
+      }
+    }
+  }
+
+  // Final default fallbacks matching latest official KDS Central IE credentials
+  const finalSender = detectedSenderNumber || '+8801625299521';
+  const finalWhatsApp = detectedWhatsApp || '+8801625299521';
+  const finalEmail = detectedEmail || 'anik.barua@kdsgroup.net';
+
+  return {
+    senderWhatsApp: finalSender,
+    adminWhatsApp: finalWhatsApp,
+    adminEmail: finalEmail,
+    source: detectedWhatsApp || detectedEmail || detectedSenderNumber ? 'google_sheet_meta' : 'google_sheet_default',
+    isAutoDetected: true,
+    sheetName: 'Central IE List',
+    detectedRole: detectedRole || 'Central IE Management (Sender & Leadership)',
+    lastSynced: new Date().toLocaleTimeString(),
+    syncId: `sync-${Date.now()}`
+  };
+}
 
 /**
  * Robust CSV string tokenizer handling RFC4180 quotes, commas, newlines
@@ -187,6 +341,7 @@ export async function fetchLiveTeamData(targetSheetUrl?: string): Promise<{
   success: boolean;
   source: string;
   data: TeamMember[];
+  adminConfig?: AdminSheetConfig;
 }> {
   const finalUrl = targetSheetUrl || DEFAULT_GOOGLE_SHEET_CSV_URL;
 
@@ -200,7 +355,8 @@ export async function fetchLiveTeamData(targetSheetUrl?: string): Promise<{
         return {
           success: true,
           source: json.source || 'server_proxy',
-          data: json.data
+          data: json.data,
+          adminConfig: json.adminConfig
         };
       }
     }
@@ -252,10 +408,12 @@ export async function fetchLiveTeamData(targetSheetUrl?: string): Promise<{
             }).filter((m: any) => m.name && m.name.trim().length > 0);
 
             if (parsed.length > 0) {
+              const adminConfig = jsonData.adminConfig || extractAdminConfigFromSheet([], parsed);
               return {
                 success: true,
                 source: 'client_direct_apps_script',
-                data: parsed
+                data: parsed,
+                adminConfig
               };
             }
           }
@@ -268,10 +426,12 @@ export async function fetchLiveTeamData(targetSheetUrl?: string): Promise<{
       const rows = parseCSV(rawText);
       const members = parseSheetRowsToMembers(rows);
       if (members.length > 0) {
+        const adminConfig = extractAdminConfigFromSheet(rows, members);
         return {
           success: true,
           source: 'client_direct_sheet_csv',
-          data: members
+          data: members,
+          adminConfig
         };
       }
     }
@@ -280,12 +440,22 @@ export async function fetchLiveTeamData(targetSheetUrl?: string): Promise<{
   }
 
   // Step 3: Resilient fallback to real official baseline IE team data
+  const fallbackMembers = REAL_IE_TEAM_ROSTER.map((m) => ({
+    ...m,
+    isBirthdayToday: checkIsTodayBirthday(m.birthday)
+  }));
   return {
     success: true,
     source: 'baseline_roster',
-    data: REAL_IE_TEAM_ROSTER.map((m) => ({
-      ...m,
-      isBirthdayToday: checkIsTodayBirthday(m.birthday)
-    }))
+    data: fallbackMembers,
+    adminConfig: {
+      senderWhatsApp: '+8801625299521',
+      adminWhatsApp: '+8801625299521',
+      adminEmail: 'anik.barua@kdsgroup.net',
+      source: 'google_sheet_default',
+      isAutoDetected: true,
+      sheetName: 'Central IE List',
+      detectedRole: 'IE Central Management (Danushka Wanniarachchi / Anik Barua)'
+    }
   };
 }

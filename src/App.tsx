@@ -13,6 +13,7 @@ import { AutomationHistory } from './components/AutomationHistory';
 import { BirthdayDistributionChart } from './components/BirthdayDistributionChart';
 import { MailWorkstation } from './components/MailWorkstation';
 import { FestiveCalendarWorkstation } from './components/FestiveCalendarWorkstation';
+import { ExecutiveDashboard } from './components/ExecutiveDashboard';
 import { checkIsTodayBirthday, getUpcomingBirthdayInfo } from './utils/dateUtils';
 import { triggerBirthdayConfetti } from './utils/confetti';
 import { useTeamData } from './hooks/useTeamData';
@@ -34,7 +35,7 @@ interface ToastNotification {
 }
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'roster' | 'festive' | 'email' | 'generator' | 'script' | 'automation' | 'tester'>('roster');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'roster' | 'festive' | 'email' | 'generator' | 'script' | 'automation' | 'tester'>('dashboard');
   const [autoSyncEnabled, setAutoSyncEnabled] = useState<boolean>(true);
   const [toastNotification, setToastNotification] = useState<ToastNotification | null>(null);
   const [isWishModalOpen, setIsWishModalOpen] = useState<boolean>(false);
@@ -90,10 +91,12 @@ export default function App() {
   // Centralized State & Single Source of Truth via Dedicated Hook
   const {
     teamMembers,
+    adminConfig,
     automationLogs,
     emailLogs,
     isLoading,
     isSyncing,
+    isRealtimeConnected,
     lastSynced,
     refetch,
     refetchAutomationLogs,
@@ -101,6 +104,21 @@ export default function App() {
     setTeamMembers,
     setAutomationLogs,
   } = useTeamData(autoSyncEnabled, sentYearMap);
+
+  // Automatically keep twilioConfig sender synced with Google Sheet master source
+  useEffect(() => {
+    if (adminConfig?.senderWhatsApp) {
+      const formatted = adminConfig.senderWhatsApp.startsWith('whatsapp:')
+        ? adminConfig.senderWhatsApp
+        : `whatsapp:${adminConfig.senderWhatsApp}`;
+      if (twilioConfig.whatsappNumber !== formatted) {
+        setTwilioConfig((prev) => ({
+          ...prev,
+          whatsappNumber: formatted,
+        }));
+      }
+    }
+  }, [adminConfig?.senderWhatsApp]);
 
   // Pre-calculated memoized derived analytics
   const derivedAnalytics = useMemo(() => {
@@ -478,10 +496,12 @@ export default function App() {
         setActiveTab={setActiveTab}
         onSync={() => refetch(false)}
         isSyncing={isSyncing}
+        isRealtimeConnected={isRealtimeConnected}
         lastSynced={lastSynced}
         todayCount={todayBirthdays.length}
         dueSoonCount={dueSoonBirthdays.length}
-        connectedPhone={twilioConfig.whatsappNumber}
+        connectedPhone={adminConfig?.senderWhatsApp || twilioConfig.whatsappNumber}
+        adminConfig={adminConfig}
         autoSyncEnabled={autoSyncEnabled}
         onToggleAutoSync={() => setAutoSyncEnabled((prev) => !prev)}
         desktopNotificationsEnabled={desktopNotificationsEnabled}
@@ -548,9 +568,9 @@ export default function App() {
               <PhoneCall className="w-4.5 h-4.5" />
             </div>
             <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">WhatsApp</p>
-              <p className="text-xs font-mono font-bold text-slate-900 mt-0.5 truncate max-w-[95px]">
-                {twilioConfig.whatsappNumber.replace('whatsapp:', '')}
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Sender WA</p>
+              <p className="text-xs font-mono font-bold text-slate-900 mt-0.5 truncate max-w-[95px]" title={adminConfig?.senderWhatsApp || twilioConfig.whatsappNumber}>
+                {(adminConfig?.senderWhatsApp || twilioConfig.whatsappNumber).replace('whatsapp:', '')}
               </p>
             </div>
           </div>
@@ -560,10 +580,10 @@ export default function App() {
               <Mail className="w-4.5 h-4.5" />
             </div>
             <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Mail Station</p>
-              <p className="text-xs font-bold text-indigo-700 mt-0.5 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                Auto-Wish
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Admin Email</p>
+              <p className="text-xs font-bold text-indigo-700 mt-0.5 flex items-center gap-1 truncate max-w-[95px]" title={adminConfig?.adminEmail || 'anik.barua@kdsgroup.net'}>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+                {adminConfig?.adminEmail || 'anik.barua@kdsgroup.net'}
               </p>
             </div>
           </div>
@@ -574,9 +594,9 @@ export default function App() {
             </div>
             <div>
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Admin Planning</p>
-              <p className="text-xs font-bold text-amber-700 flex items-center gap-1 mt-0.5 truncate">
+              <p className="text-xs font-bold text-amber-700 flex items-center gap-1 mt-0.5 truncate max-w-[95px]" title={adminConfig?.adminWhatsApp || '+8801625299521'}>
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse inline-block shrink-0"></span>
-                +880163529951
+                {(adminConfig?.adminWhatsApp || '+8801625299521').replace('whatsapp:', '')}
               </p>
             </div>
           </div>
@@ -602,6 +622,25 @@ export default function App() {
         )}
 
         {/* Tab Views */}
+        {activeTab === 'dashboard' && (
+          <ExecutiveDashboard
+            members={teamMembers}
+            adminConfig={adminConfig}
+            emailLogs={emailLogs}
+            automationLogs={automationLogs}
+            isRealtimeConnected={isRealtimeConnected}
+            lastSynced={lastSynced}
+            onSync={() => refetch(false)}
+            isSyncing={isSyncing}
+            onOpenGenerator={handleOpenGenerator}
+            onSendWhatsApp={handleSendWhatsApp}
+            isSendingWhatsApp={isSendingWhatsApp}
+            onNavigateTab={setActiveTab}
+            onOpenAdminPlanning={() => setIsAdminPlanningOpen(true)}
+          />
+        )}
+
+        {/* Central IE Team Roster & Birthday Workstation */}
         {activeTab === 'roster' && (
           <div className="space-y-6">
             {/* D3 Birthday Distribution Chart Section with Pre-Calculated Props */}
@@ -685,6 +724,7 @@ export default function App() {
         {activeTab === 'script' && (
           <AppsScriptStudio
             twilioConfig={twilioConfig}
+            adminConfig={adminConfig}
             onUpdateTwilioConfig={handleUpdateTwilioConfig}
           />
         )}
@@ -732,7 +772,9 @@ export default function App() {
         onClose={() => setIsAdminPlanningOpen(false)}
         members={teamMembers}
         twilioConfig={twilioConfig}
+        adminConfig={adminConfig}
         onRefreshLogs={refetchAutomationLogs}
+        onReCollectFromSheet={() => refetch(false)}
       />
 
       {/* Footer */}

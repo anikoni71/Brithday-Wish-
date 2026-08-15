@@ -200,6 +200,205 @@ function resolveMessagePlaceholders(template: string, member: any): string {
 }
 
 
+function normalizePhoneNumber(raw?: string): string {
+  if (!raw) return '';
+  const clean = String(raw).trim().replace(/[^\d+]/g, '');
+  if (!clean) return '';
+  if (clean.startsWith('+')) return clean;
+  if (clean.startsWith('880')) return '+' + clean;
+  if (clean.startsWith('01')) return '+88' + clean;
+  return '+' + clean;
+}
+
+export interface LiveSheetConfig {
+  senderWhatsApp: string; // WhatsApp Wishing Message Sender Number (e.g. "+8801625299521")
+  adminEmail: string;     // Admin Notification Email (e.g. "anik.barua@kdsgroup.net")
+  adminWhatsApp: string;  // Admin WhatsApp Number (e.g. "+8801625299521")
+  source: string;
+  isAutoDetected: boolean;
+  sheetName: string;
+  detectedRole: string;
+  lastSynced: string;
+  syncId: string;
+}
+
+// Master Server-Side State Cache (Single Source of Truth)
+let currentLiveSheetConfig: LiveSheetConfig = {
+  senderWhatsApp: '+8801625299521',
+  adminEmail: 'anik.barua@kdsgroup.net',
+  adminWhatsApp: '+8801625299521',
+  source: 'google_sheet_meta',
+  isAutoDetected: true,
+  sheetName: 'Central IE List',
+  detectedRole: 'IE Central Management (Anik Barua / Sender Config)',
+  lastSynced: new Date().toLocaleTimeString(),
+  syncId: `init-${Date.now()}`
+};
+
+// Connected Real-Time SSE Clients
+const sseClients: Set<express.Response> = new Set();
+
+export function broadcastConfigUpdate(configUpdate: Partial<LiveSheetConfig>, fullData?: any) {
+  currentLiveSheetConfig = {
+    ...currentLiveSheetConfig,
+    ...configUpdate,
+    lastSynced: new Date().toLocaleTimeString(),
+    syncId: `sync-${Date.now()}`
+  };
+
+  const payload = JSON.stringify({
+    type: 'CONFIG_UPDATE',
+    config: currentLiveSheetConfig,
+    fullData,
+    timestamp: new Date().toISOString()
+  });
+
+  for (const client of sseClients) {
+    try {
+      client.write(`data: ${payload}\n\n`);
+    } catch (_e) {
+      sseClients.delete(client);
+    }
+  }
+}
+
+// Intelligent Admin & Sender Configuration Collector from Google Sheet in Server
+function extractAdminConfigFromSheetServer(rows: string[][], members: any[]): LiveSheetConfig {
+  let detectedSenderNumber = '';
+  let detectedWhatsApp = '';
+  let detectedEmail = '';
+  let detectedRole = '';
+
+  // 1. Scan for specific header rows: "Sender Number", "Admin Notification Email", "Admin WhatsApp Number"
+  for (let r = 0; r < Math.min(rows.length, 15); r++) {
+    const row = rows[r] || [];
+    for (let c = 0; c < row.length; c++) {
+      const header = String(row[c] || '').trim().toLowerCase();
+      const nextRowVal = rows[r + 1] && rows[r + 1][c] ? String(rows[r + 1][c] || '').trim() : '';
+
+      // Match "Sender Number" / "WhatsApp Sender" / "Wishing Message Sender Number"
+      if (header.includes('sender') && (header.includes('number') || header.includes('whatsapp') || header.includes('phone') || header.includes('sender'))) {
+        if (nextRowVal && !detectedSenderNumber) {
+          detectedSenderNumber = normalizePhoneNumber(nextRowVal);
+          detectedRole = 'Google Sheet Config Table';
+        }
+      }
+
+      // Match "Admin Notification Email" / "Admin Email"
+      if (header.includes('admin') && (header.includes('email') || header.includes('mail') || header.includes('notification'))) {
+        if (nextRowVal && nextRowVal.includes('@') && !detectedEmail) {
+          const emailMatch = nextRowVal.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+          if (emailMatch) {
+            detectedEmail = emailMatch[0];
+            detectedRole = 'Google Sheet Config Table';
+          }
+        }
+      }
+
+      // Match "Admin WhatsApp Number" / "Admin WhatsApp"
+      if (header.includes('admin') && (header.includes('whatsapp') || header.includes('whatapp') || (header.includes('admin') && header.includes('number')))) {
+        if (nextRowVal && !detectedWhatsApp) {
+          detectedWhatsApp = normalizePhoneNumber(nextRowVal);
+          detectedRole = 'Google Sheet Config Table';
+        }
+      }
+    }
+  }
+
+  // 2. Scan metadata rows and inline key-value cells
+  for (let r = 0; r < Math.min(rows.length, 25); r++) {
+    const row = rows[r] || [];
+    for (let c = 0; c < row.length; c++) {
+      const cell = String(row[c] || '').trim();
+      const cellLower = cell.toLowerCase();
+
+      // Check for Sender Number inline
+      if (!detectedSenderNumber && cellLower.includes('sender') && (cellLower.includes('number') || cellLower.includes('whatsapp') || cellLower.includes('phone') || cellLower.includes('sender'))) {
+        const textToCheck = cell + ' ' + String(row[c + 1] || '');
+        const phoneMatch = textToCheck.match(/(\+?880[0-9]{9,10}|01[0-9]{9}|880[0-9]{9,10})/);
+        if (phoneMatch) {
+          detectedSenderNumber = normalizePhoneNumber(phoneMatch[0]);
+        }
+      }
+
+      // Check for Admin Email patterns
+      if (
+        (cellLower.includes('admin') || cellLower.includes('leader') || cellLower.includes('notification')) &&
+        cellLower.includes('@')
+      ) {
+        const emailMatch = cell.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+        if (emailMatch && !detectedEmail) {
+          detectedEmail = emailMatch[0];
+          detectedRole = 'Google Sheet Header Metadata';
+        }
+      } else if (cellLower.includes('admin email') || cellLower.includes('notification email') || cellLower.includes('leader email')) {
+        const nextCell = String(row[c + 1] || '').trim();
+        const emailMatch = nextCell.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+        if (emailMatch && !detectedEmail) {
+          detectedEmail = emailMatch[0];
+          detectedRole = 'Google Sheet Header Metadata';
+        }
+      }
+
+      // Check for Admin WhatsApp / Phone patterns
+      if (
+        (cellLower.includes('admin') || cellLower.includes('leader') || cellLower.includes('notification')) &&
+        (cellLower.includes('whatsapp') || cellLower.includes('phone') || cellLower.includes('mobile') || cellLower.includes('contact'))
+      ) {
+        const textToCheck = cell + ' ' + String(row[c + 1] || '');
+        const phoneMatch = textToCheck.match(/(\+?880[0-9]{9,10}|01[0-9]{9}|880[0-9]{9,10})/);
+        if (phoneMatch && !detectedWhatsApp) {
+          detectedWhatsApp = normalizePhoneNumber(phoneMatch[0]);
+          detectedRole = 'Google Sheet Header Metadata';
+        }
+      }
+    }
+  }
+
+  // 3. Check roster managers or leaders
+  if (!detectedWhatsApp || !detectedEmail || !detectedSenderNumber) {
+    const leader = members.find(
+      (m) =>
+        (m.designation && (m.designation.toLowerCase().includes('manager') || m.designation.toLowerCase().includes('leader') || m.designation.toLowerCase().includes('head'))) ||
+        (m.name && (m.name.toLowerCase().includes('danushka') || m.name.toLowerCase().includes('anik')))
+    );
+
+    if (leader) {
+      if (!detectedWhatsApp && leader.whatsapp) {
+        detectedWhatsApp = normalizePhoneNumber(leader.whatsapp);
+      }
+      if (!detectedEmail && leader.email && leader.email.includes('@')) {
+        detectedEmail = leader.email;
+      }
+      if (!detectedSenderNumber) {
+        detectedSenderNumber = normalizePhoneNumber(leader.whatsapp || '+8801625299521');
+      }
+      if (!detectedRole) {
+        detectedRole = `${leader.name} (${leader.designation})`;
+      }
+    }
+  }
+
+  const finalSender = detectedSenderNumber || currentLiveSheetConfig.senderWhatsApp || '+8801625299521';
+  const finalWhatsApp = detectedWhatsApp || currentLiveSheetConfig.adminWhatsApp || '+8801625299521';
+  const finalEmail = detectedEmail || currentLiveSheetConfig.adminEmail || 'anik.barua@kdsgroup.net';
+
+  const updatedConfig: LiveSheetConfig = {
+    senderWhatsApp: finalSender,
+    adminWhatsApp: finalWhatsApp,
+    adminEmail: finalEmail,
+    source: detectedWhatsApp || detectedEmail || detectedSenderNumber ? 'google_sheet_meta' : 'google_sheet_default',
+    isAutoDetected: true,
+    sheetName: 'Central IE List',
+    detectedRole: detectedRole || 'IE Central Management (Sender & Leadership)',
+    lastSynced: new Date().toLocaleTimeString(),
+    syncId: `sync-${Date.now()}`
+  };
+
+  currentLiveSheetConfig = updatedConfig;
+  return updatedConfig;
+}
+
 // Generate dynamic fallback team data covering all 12 calendar months + dynamic today celebrant
 function getFallbackTeamData() {
   const today = new Date();
@@ -283,11 +482,13 @@ app.get("/api/sheet-data", async (req, res) => {
           }).filter((m: any) => m.name && m.name.trim().length > 0);
 
           if (parsed.length > 0) {
+            const adminConfig = jsonData.adminConfig || extractAdminConfigFromSheetServer([], parsed);
             return res.json({
               success: true,
               source: "apps_script_json",
               fetchedAt: new Date().toISOString(),
-              data: parsed
+              data: parsed,
+              adminConfig
             });
           }
         }
@@ -301,10 +502,12 @@ app.get("/api/sheet-data", async (req, res) => {
 
     if (rows.length < 5) {
       // Not enough rows in CSV, return rich fallback data
+      const fallbackData = getFallbackTeamData();
       return res.json({
         success: true,
         source: "fallback_short_sheet",
-        data: getFallbackTeamData()
+        data: fallbackData,
+        adminConfig: extractAdminConfigFromSheetServer(rows, fallbackData)
       });
     }
 
@@ -419,28 +622,174 @@ app.get("/api/sheet-data", async (req, res) => {
     }
 
     if (parsedMembers.length === 0) {
+      const fallbackData = getFallbackTeamData();
       return res.json({
         success: true,
         source: "fallback_empty_parse",
-        data: getFallbackTeamData()
+        data: fallbackData,
+        adminConfig: extractAdminConfigFromSheetServer(rows, fallbackData)
       });
     }
+
+    const adminConfig = extractAdminConfigFromSheetServer(rows, parsedMembers);
+
+    // Broadcast live sheet update to all connected SSE clients
+    broadcastConfigUpdate(adminConfig, parsedMembers);
 
     res.json({
       success: true,
       source: "live_sheet",
       fetchedAt: new Date().toISOString(),
-      data: parsedMembers
+      data: parsedMembers,
+      adminConfig
     });
   } catch (error: any) {
     console.error("Sheet sync error:", error);
+    const fallbackData = getFallbackTeamData();
     res.json({
       success: true,
       source: "fallback_error",
       error: error.message,
-      data: getFallbackTeamData()
+      data: fallbackData,
+      adminConfig: extractAdminConfigFromSheetServer([], fallbackData)
     });
   }
+});
+
+// ==========================================
+// REAL-TIME SERVER-SENT EVENTS (SSE) & WEBHOOK
+// ==========================================
+
+// GET /api/realtime/stream - Real-Time Server-Sent Events stream to push updates instantly
+app.get(["/api/realtime/stream", "/api/sheet/events", "/api/live-config/stream"], (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache, no-transform');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no');
+  res.flushHeaders();
+
+  // Send initial connected state
+  const initialPayload = JSON.stringify({
+    type: 'INITIAL_STATE',
+    config: currentLiveSheetConfig,
+    timestamp: new Date().toISOString()
+  });
+  res.write(`data: ${initialPayload}\n\n`);
+
+  sseClients.add(res);
+
+  // Keep-alive heartbeat every 15s
+  const keepAlive = setInterval(() => {
+    try {
+      res.write(`: heartbeat ${Date.now()}\n\n`);
+    } catch (_err) {
+      clearInterval(keepAlive);
+      sseClients.delete(res);
+    }
+  }, 15000);
+
+  req.on('close', () => {
+    clearInterval(keepAlive);
+    sseClients.delete(res);
+  });
+});
+
+// POST /api/sheet/webhook - Webhook listener for Google Apps Script onEdit trigger & real-time sync
+app.post(["/api/sheet/webhook", "/api/sheet/config-update"], (req, res) => {
+  const {
+    senderNumber,
+    senderWhatsApp,
+    adminNotificationEmail,
+    adminEmail,
+    adminWhatsAppNumber,
+    adminWhatsApp,
+    source = "google_apps_script_webhook",
+    event = "onEdit"
+  } = req.body || {};
+
+  const newSender = senderWhatsApp || senderNumber || '';
+  const newEmail = adminEmail || adminNotificationEmail || '';
+  const newAdminWA = adminWhatsApp || adminWhatsAppNumber || '';
+
+  const updatedConfig: Partial<LiveSheetConfig> = {
+    source: 'google_sheet_webhook',
+    isAutoDetected: true,
+    sheetName: 'Central IE List',
+    detectedRole: 'Google Apps Script Real-Time onEdit Webhook',
+    lastSynced: new Date().toLocaleTimeString(),
+    syncId: `webhook-${Date.now()}`
+  };
+
+  if (newSender) updatedConfig.senderWhatsApp = normalizePhoneNumber(newSender);
+  if (newEmail && newEmail.includes('@')) updatedConfig.adminEmail = newEmail.trim();
+  if (newAdminWA) updatedConfig.adminWhatsApp = normalizePhoneNumber(newAdminWA);
+
+  currentLiveSheetConfig = { ...currentLiveSheetConfig, ...updatedConfig };
+
+  // Add automation log entry for tracking
+  automationLogsStore.unshift({
+    id: `webhook-log-${Date.now()}`,
+    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+    triggerSource: "Google Apps Script (Real-Time Webhook onEdit)" as any,
+    recipientName: "System Configuration & Web App",
+    recipientPhone: currentLiveSheetConfig.adminWhatsApp,
+    recipientEmail: currentLiveSheetConfig.adminEmail,
+    status: "DELIVERED",
+    lifecycleState: "Delivered",
+    channel: "WhatsApp" as any,
+    senderNumber: currentLiveSheetConfig.senderWhatsApp,
+    message: `[Real-Time Sync] Google Sheet onEdit updated config: Sender: ${currentLiveSheetConfig.senderWhatsApp}, Email: ${currentLiveSheetConfig.adminEmail}, Admin WA: ${currentLiveSheetConfig.adminWhatsApp}`,
+    executionTimeMs: 35,
+    responseCode: 200,
+    details: `Google Apps Script onEdit trigger sent Webhook POST to server. Broadcasted via SSE to ${sseClients.size} active frontend client(s).`
+  });
+
+  // Broadcast instantly to all connected SSE clients
+  broadcastConfigUpdate(currentLiveSheetConfig);
+
+  console.log(`[Google Sheet Webhook] Received live update: Sender=${currentLiveSheetConfig.senderWhatsApp}, Email=${currentLiveSheetConfig.adminEmail}, AdminWA=${currentLiveSheetConfig.adminWhatsApp}`);
+
+  return res.json({
+    success: true,
+    message: "Google Sheet live configuration received and broadcasted in real-time.",
+    config: currentLiveSheetConfig,
+    activeSseClients: sseClients.size,
+    timestamp: new Date().toISOString()
+  });
+});
+
+// GET /api/sheet/config - Retrieve current active Google Sheet live configuration
+app.get("/api/sheet/config", (_req, res) => {
+  res.json({
+    success: true,
+    config: currentLiveSheetConfig,
+    activeSseClients: sseClients.size,
+    timestamp: new Date().toISOString()
+  });
+});
+
+// POST /api/sheet/config - Update active configuration manually
+app.post("/api/sheet/config", (req, res) => {
+  const { senderWhatsApp, adminEmail, adminWhatsApp } = req.body || {};
+
+  const updatedConfig: Partial<LiveSheetConfig> = {
+    source: 'user_override',
+    lastSynced: new Date().toLocaleTimeString(),
+    syncId: `manual-${Date.now()}`
+  };
+
+  if (senderWhatsApp) updatedConfig.senderWhatsApp = normalizePhoneNumber(senderWhatsApp);
+  if (adminEmail && adminEmail.includes('@')) updatedConfig.adminEmail = adminEmail.trim();
+  if (adminWhatsApp) updatedConfig.adminWhatsApp = normalizePhoneNumber(adminWhatsApp);
+
+  currentLiveSheetConfig = { ...currentLiveSheetConfig, ...updatedConfig };
+  broadcastConfigUpdate(currentLiveSheetConfig);
+
+  res.json({
+    success: true,
+    config: currentLiveSheetConfig,
+    timestamp: new Date().toISOString()
+  });
 });
 
 // Generate custom AI Birthday Wish for Colleague
