@@ -64,6 +64,7 @@ import {
   getUpcomingBirthdayInfo,
   normalizeBirthdayString
 } from '../utils/dateUtils';
+import { BirthdayTree } from './BirthdayTree';
 
 interface ExecutiveDashboardProps {
   members: TeamMember[];
@@ -163,6 +164,90 @@ const Sparkline: React.FC<{
         points={points}
       />
     </svg>
+  );
+};
+
+// ==========================================================================
+// CUSTOM CANDLE BAR SHAPE FOR ANNUAL BIRTHDAY DISTRIBUTION CHART
+// ==========================================================================
+const CandleBar = (props: any) => {
+  const { x = 0, y = 0, width = 0, height = 0, fill = '#10b981', value } = props;
+
+  // If value is 0 or height is non-positive, do not render candle
+  if (!height || height <= 0 || value === 0) {
+    return null;
+  }
+
+  // Slim candle body (constrained between 10px and 14px)
+  const candleWidth = Math.min(Math.max(width * 0.65, 10), 14);
+  const centerX = x + width / 2;
+  const candleX = centerX - candleWidth / 2;
+  const wickLength = 4;
+  const wickTopY = y - wickLength;
+  const flameCenterY = wickTopY - 5;
+
+  return (
+    <g className="recharts-candle-bar transition-all duration-200">
+      {/* 1. The Candle Body */}
+      <rect
+        x={candleX}
+        y={y}
+        width={candleWidth}
+        height={height}
+        fill={fill}
+        rx={2.5}
+        ry={2.5}
+      />
+
+      {/* Subtle vertical candle highlight */}
+      <line
+        x1={candleX + 2.5}
+        y1={y + 2}
+        x2={candleX + 2.5}
+        y2={y + height - 2}
+        stroke="rgba(255, 255, 255, 0.25)"
+        strokeWidth={1}
+        strokeLinecap="round"
+      />
+
+      {/* 2. The Wick */}
+      <line
+        x1={centerX}
+        y1={y}
+        x2={centerX}
+        y2={wickTopY}
+        stroke="#a1a1aa"
+        strokeWidth={1.5}
+        strokeLinecap="round"
+      />
+
+      {/* 3. The Flame (Ambient Glow Aura + Outer Amber Flame + Bright Core) */}
+      {/* Ambient Glow Aura */}
+      <circle
+        cx={centerX}
+        cy={flameCenterY}
+        r={7}
+        fill="#f59e0b"
+        opacity={0.35}
+      />
+
+      {/* Outer Flame (#fbbf24 amber glow) */}
+      <path
+        d={`M ${centerX} ${flameCenterY - 6}
+            C ${centerX + 3.5} ${flameCenterY - 2}, ${centerX + 3.5} ${flameCenterY + 3.5}, ${centerX} ${flameCenterY + 3.5}
+            C ${centerX - 3.5} ${flameCenterY + 3.5}, ${centerX - 3.5} ${flameCenterY - 2}, ${centerX} ${flameCenterY - 6} Z`}
+        fill="#fbbf24"
+        style={{ filter: 'drop-shadow(0 0 3px rgba(245, 158, 11, 0.9))' }}
+      />
+
+      {/* Inner Flame (Warm Yellow Core) */}
+      <path
+        d={`M ${centerX} ${flameCenterY - 3.5}
+            C ${centerX + 1.8} ${flameCenterY - 1}, ${centerX + 1.8} ${flameCenterY + 2.5}, ${centerX} ${flameCenterY + 2.5}
+            C ${centerX - 1.8} ${flameCenterY + 2.5}, ${centerX - 1.8} ${flameCenterY - 1}, ${centerX} ${flameCenterY - 3.5} Z`}
+        fill="#fef3c7"
+      />
+    </g>
   );
 };
 
@@ -606,7 +691,17 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
         </div>
       </motion.div>
 
-      {/* 2. TOP METRIC BENTO CARDS WITH INTEGRATED SPARKLINES */}
+      {/* 2. INTERACTIVE BIRTHDAY TREE (GOOGLE SHEET SYNCED BULLETIN CANOPY) */}
+      <motion.div variants={itemVariants}>
+        <BirthdayTree
+          members={members}
+          onOpenGenerator={onOpenGenerator}
+          onSendWhatsApp={onSendWhatsApp}
+          isSendingWhatsApp={isSendingWhatsApp}
+        />
+      </motion.div>
+
+      {/* 3. TOP METRIC BENTO CARDS WITH INTEGRATED SPARKLINES */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
         {/* Card 1: Total Team Members */}
         <motion.div
@@ -1008,7 +1103,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
                     />
                   </AreaChart>
                 ) : (
-                  <BarChart data={annualDensityData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <BarChart data={annualDensityData} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="2 2" vertical={false} stroke="#27272a" />
                     <XAxis
                       dataKey="month"
@@ -1038,8 +1133,20 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
                       }}
                     />
                     <Legend wrapperStyle={{ paddingTop: 8, fontSize: 11, fontFamily: 'monospace' }} />
-                    <Bar name="Team Birthdays" dataKey="birthdays" fill="#10b981" radius={[3, 3, 0, 0]} maxBarSize={24} />
-                    <Bar name="Global Special Days" dataKey="festiveDays" fill="#52525b" radius={[3, 3, 0, 0]} maxBarSize={24} />
+                    <Bar
+                      name="Team Birthdays"
+                      dataKey="birthdays"
+                      fill="#10b981"
+                      shape={<CandleBar />}
+                      maxBarSize={28}
+                    />
+                    <Bar
+                      name="Global Special Days"
+                      dataKey="festiveDays"
+                      fill="#52525b"
+                      shape={<CandleBar />}
+                      maxBarSize={28}
+                    />
                   </BarChart>
                 )}
               </ResponsiveContainer>
@@ -1067,7 +1174,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
         </motion.div>
       </div>
 
-      {/* 4. 30-DAY OUTLOOK TIMELINE & CELEBRANT COMMAND */}
+      {/* 5. 30-DAY OUTLOOK TIMELINE & CELEBRANT COMMAND */}
       <motion.div
         variants={itemVariants}
         className="rounded-2xl bg-zinc-900/60 backdrop-blur-xl p-5 sm:p-6 border border-zinc-800/80 shadow-xl shadow-black/60 space-y-4"
