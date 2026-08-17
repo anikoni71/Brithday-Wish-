@@ -35,6 +35,7 @@ import {
   getUpcomingBirthdayInfo,
   normalizeBirthdayString
 } from '../utils/dateUtils';
+import { formatProfileImageUrl } from '../utils/imageUtils';
 
 interface BirthdayTreeProps {
   members: TeamMember[];
@@ -633,15 +634,24 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
                       {/* Member Center Avatar / Initials Photo Port */}
                       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                         <div
-                          className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs text-white font-mono shadow-inner border border-white/40 ${
+                          className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs text-white font-mono shadow-inner border border-white/40 overflow-hidden ${
                             isToday ? 'bg-amber-400 text-zinc-950 font-black' : 'bg-zinc-900/90'
                           }`}
                         >
-                          {member.name
-                            .split(' ')
-                            .map((n) => n[0])
-                            .slice(0, 2)
-                            .join('')}
+                          {member.imageUrl ? (
+                            <img
+                              src={formatProfileImageUrl(member.imageUrl)}
+                              alt={member.name}
+                              className="w-full h-full object-cover rounded-full"
+                              referrerPolicy="no-referrer"
+                            />
+                          ) : (
+                            member.name
+                              .split(' ')
+                              .map((n) => n[0])
+                              .slice(0, 2)
+                              .join('')
+                          )}
                         </div>
                       </div>
 
@@ -910,14 +920,23 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
 
               <div className="flex items-center gap-4 mt-2">
                 <div
-                  className="w-14 h-14 rounded-2xl flex items-center justify-center text-xl font-bold text-white shadow-xl shrink-0"
+                  className="w-14 h-14 rounded-2xl flex items-center justify-center text-xl font-bold text-white shadow-xl shrink-0 overflow-hidden border border-white/20"
                   style={{ backgroundColor: activeMember.theme?.innerBg || '#10b981' }}
                 >
-                  {activeMember.name
-                    .split(' ')
-                    .map((n) => n[0])
-                    .slice(0, 2)
-                    .join('')}
+                  {activeMember.imageUrl ? (
+                    <img
+                      src={formatProfileImageUrl(activeMember.imageUrl)}
+                      alt={activeMember.name}
+                      className="w-full h-full object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    activeMember.name
+                      .split(' ')
+                      .map((n) => n[0])
+                      .slice(0, 2)
+                      .join('')
+                  )}
                 </div>
 
                 <div className="min-w-0">

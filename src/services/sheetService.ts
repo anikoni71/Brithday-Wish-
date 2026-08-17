@@ -1,6 +1,7 @@
 import { TeamMember, AdminSheetConfig } from '../types';
 import { checkIsTodayBirthday } from '../utils/dateUtils';
 import { REAL_IE_TEAM_ROSTER } from '../data/fallbackData';
+import { formatProfileImageUrl } from '../utils/imageUtils';
 
 export const DEFAULT_GOOGLE_SHEET_CSV_URL =
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vTODUAg2mUYQUTN3P9SPB5Q41Ta_9SufI2gct0GBYDUbPSJX81O1mWHgBjElAIfNfobEbd7Mkii18lt/pub?gid=0&single=true&output=csv";
@@ -249,6 +250,9 @@ export function parseSheetRowsToMembers(rows: string[][]): TeamMember[] {
   );
   const emailIdx = headers.findIndex((h) => h.includes('mail'));
   const waIdx = headers.findIndex((h) => h.includes('whatapp') || h.includes('whatsapp'));
+  const imageIdx = headers.findIndex(
+    (h) => h.includes('image') || h.includes('photo') || h.includes('avatar') || h.includes('picture') || h.includes('img')
+  );
   const wishIdx = headers.findIndex(
     (h) => h.includes('wishing') || h.includes('massage') || h.includes('message')
   );
@@ -301,6 +305,10 @@ export function parseSheetRowsToMembers(rows: string[][]): TeamMember[] {
       waIdx !== -1 && row[waIdx] !== undefined && row[waIdx].trim().length > 0
         ? row[waIdx].trim()
         : mobile;
+    const imageUrl =
+      imageIdx !== -1 && row[imageIdx] !== undefined && row[imageIdx].trim().length > 0
+        ? formatProfileImageUrl(row[imageIdx])
+        : undefined;
     let wishingMessage =
       wishIdx !== -1 && row[wishIdx] !== undefined
         ? row[wishIdx].trim()
@@ -324,6 +332,7 @@ export function parseSheetRowsToMembers(rows: string[][]): TeamMember[] {
       mobile,
       email,
       whatsapp: whatsapp || mobile,
+      imageUrl,
       wishingMessage,
       isBirthdayToday: checkIsTodayBirthday(birthday),
       lastSentYear
@@ -390,6 +399,8 @@ export async function fetchLiveTeamData(targetSheetUrl?: string): Promise<{
               const sl = item.sl || item.SL || `${idx + 1}`;
               const id = item.id || item.ID || '';
               const email = item.email || item.Email || item.ColumnI || '';
+              const imageUrl = item.imageUrl || item.ImageUrl || item.image || item.Image || item.imageURL || item.ImageURL || item.photo || item.Photo || item.avatar || item.Avatar || item['Image URL'] || item['Image_URL'] || '';
+              const formattedImage = formatProfileImageUrl(imageUrl);
               const lastSentYear = item.lastSentYear || item.sentYear || '';
 
               return {
@@ -401,6 +412,7 @@ export async function fetchLiveTeamData(targetSheetUrl?: string): Promise<{
                 mobile: String(whatsapp),
                 email: String(email),
                 whatsapp: String(whatsapp),
+                imageUrl: formattedImage || undefined,
                 wishingMessage: String(wishingMessage),
                 isBirthdayToday: checkIsTodayBirthday(String(birthday)),
                 lastSentYear: String(lastSentYear || '')

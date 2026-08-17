@@ -7,6 +7,7 @@ import {
   getNearbySpecialDayForBirthday,
   MONTH_NAMES,
 } from '../utils/dateUtils';
+import { formatProfileImageUrl } from '../utils/imageUtils';
 import { Search, Filter, Phone, MessageSquare, Send, Sparkles, Check, Copy, User, CheckCircle2, Clock, CheckSquare, Square, ShieldCheck, Radio, X, Calendar, CalendarClock, AlertCircle } from 'lucide-react';
 
 interface RosterTableProps {
@@ -215,6 +216,7 @@ export const RosterTable: React.FC<RosterTableProps> = ({
           <thead className="bg-slate-100/80 text-slate-600 font-bold uppercase tracking-wider border-b border-slate-200 text-[11px]">
             <tr>
               <th className="py-3 px-4 w-12">SL</th>
+              <th className="py-3 px-3 w-14 text-center">PHOTO</th>
               <th className="py-3 px-4">ID</th>
               <th className="py-3 px-4">Name (Col D)</th>
               <th className="py-3 px-4">Designation (Col E)</th>
@@ -229,7 +231,7 @@ export const RosterTable: React.FC<RosterTableProps> = ({
           <tbody className="divide-y divide-slate-200 text-slate-700">
             {filteredMembers.length === 0 ? (
               <tr>
-                <td colSpan={10} className="py-12 text-center text-slate-400">
+                <td colSpan={11} className="py-12 text-center text-slate-400">
                   <div className="max-w-xs mx-auto">
                     <User className="w-8 h-8 text-slate-300 mx-auto mb-2" />
                     <p className="font-semibold text-slate-600 text-sm">No Team Members Found</p>
@@ -250,6 +252,7 @@ export const RosterTable: React.FC<RosterTableProps> = ({
                 const upcomingInfo = getUpcomingBirthdayInfo(member.birthday, 7);
                 const isDueSoon = !isToday && upcomingInfo.isDueSoon;
                 const specialDayMatch = getNearbySpecialDayForBirthday(member.birthday, 3);
+                const formattedImageUrl = formatProfileImageUrl(member.imageUrl);
 
                 return (
                   <tr
@@ -264,6 +267,43 @@ export const RosterTable: React.FC<RosterTableProps> = ({
                   >
                     {/* SL */}
                     <td className="py-3 px-4 font-mono text-slate-500">{member.sl || idx + 1}</td>
+
+                    {/* PHOTO (Avatar Thumbnail) */}
+                    <td className="py-2 px-3 text-center">
+                      <div className="flex items-center justify-center">
+                        {formattedImageUrl ? (
+                          <img
+                            src={formattedImageUrl}
+                            alt={member.name}
+                            className="w-8 h-8 rounded-full object-cover border border-amber-500/40 shadow-sm"
+                            referrerPolicy="no-referrer"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                              const fallbackEl = e.currentTarget.parentElement?.querySelector('.avatar-initials-fallback');
+                              if (fallbackEl) {
+                                (fallbackEl as HTMLElement).classList.remove('hidden');
+                                (fallbackEl as HTMLElement).classList.add('flex');
+                              }
+                            }}
+                          />
+                        ) : null}
+                        <div
+                          className={`avatar-initials-fallback w-8 h-8 rounded-full items-center justify-center text-[10px] font-bold text-amber-900 bg-amber-100 border border-amber-300 shadow-2xs shrink-0 ${
+                            formattedImageUrl ? 'hidden' : 'flex'
+                          }`}
+                        >
+                          {member.name
+                            ? member.name
+                                .split(' ')
+                                .filter(Boolean)
+                                .map((n) => n[0])
+                                .slice(0, 2)
+                                .join('')
+                                .toUpperCase()
+                            : 'IE'}
+                        </div>
+                      </div>
+                    </td>
 
                     {/* ID */}
                     <td className="py-3 px-4 font-mono font-medium text-slate-600">

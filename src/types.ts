@@ -11,6 +11,7 @@ export interface TeamMember {
   mobile: string;
   email: string;
   whatsapp: string; // e.g. "8801829870593"
+  imageUrl?: string; // Image URL from Google Sheet Column
   wishingMessage: string;
   isBirthdayToday: boolean;
   lastSentYear?: string | number; // Year wish was sent (e.g. 2026)

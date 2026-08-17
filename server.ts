@@ -139,6 +139,32 @@ function parseSmartBirthdayDate(dobStr?: string | number): { monthNumber: number
   return null;
 }
 
+// Helper to normalize Google Drive and image URLs for reliable direct rendering
+function formatProfileImageUrl(url?: string): string {
+  if (!url || typeof url !== 'string') return '';
+  const clean = url.trim();
+  if (!clean) return '';
+  // Convert Google Drive view / file links:
+  // e.g. https://drive.google.com/file/d/1A2B3C.../view?usp=sharing -> https://lh3.googleusercontent.com/d/1A2B3C...
+  const driveFileMatch = clean.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/i);
+  if (driveFileMatch && driveFileMatch[1]) {
+    return `https://lh3.googleusercontent.com/d/${driveFileMatch[1]}`;
+  }
+  // e.g. https://drive.google.com/open?id=1A2B3C... -> https://lh3.googleusercontent.com/d/1A2B3C...
+  const driveIdMatch = clean.match(/drive\.google\.com\/(?:open|uc|thumbnail)\?(?:[^&]*&)*id=([a-zA-Z0-9_-]+)/i);
+  if (driveIdMatch && driveIdMatch[1]) {
+    return `https://lh3.googleusercontent.com/d/${driveIdMatch[1]}`;
+  }
+  // Generic Google Drive with id query
+  if (clean.includes('drive.google.com')) {
+    const genericMatch = clean.match(/[?&]id=([a-zA-Z0-9_-]+)/i);
+    if (genericMatch && genericMatch[1]) {
+      return `https://lh3.googleusercontent.com/d/${genericMatch[1]}`;
+    }
+  }
+  return clean;
+}
+
 // Helper function to check if a birthday string matches today's date
 function checkIsTodayBirthday(dobStr: string): boolean {
   const parsed = parseSmartBirthdayDate(dobStr);
@@ -464,6 +490,8 @@ app.get("/api/sheet-data", async (req, res) => {
             const sl = item.sl || item.SL || `${idx + 1}`;
             const id = item.id || item.ID || '';
             const email = item.email || item.Email || item.ColumnI || '';
+            const imageUrl = item.imageUrl || item.ImageUrl || item.image || item.Image || item.imageURL || item.ImageURL || item.photo || item.Photo || item.avatar || item.Avatar || item['Image URL'] || item['Image_URL'] || '';
+            const formattedImage = formatProfileImageUrl(imageUrl);
             const lastSentYear = item.lastSentYear || item.sentYear || '';
 
             return {
@@ -475,6 +503,7 @@ app.get("/api/sheet-data", async (req, res) => {
               mobile: String(whatsapp),
               email: String(email),
               whatsapp: String(whatsapp),
+              imageUrl: formattedImage || undefined,
               wishingMessage: String(wishingMessage),
               isBirthdayToday: checkIsTodayBirthday(String(birthday)),
               lastSentYear: String(lastSentYear || '')
@@ -544,6 +573,9 @@ app.get("/api/sheet-data", async (req, res) => {
     );
     const emailIdx = headers.findIndex((h) => h.includes('mail'));
     const waIdx = headers.findIndex((h) => h.includes('whatapp') || h.includes('whatsapp'));
+    const imageIdx = headers.findIndex(
+      (h) => h.includes('image') || h.includes('photo') || h.includes('avatar') || h.includes('picture') || h.includes('img')
+    );
     const wishIdx = headers.findIndex(
       (h) => h.includes('wishing') || h.includes('massage') || h.includes('message')
     );
@@ -592,6 +624,10 @@ app.get("/api/sheet-data", async (req, res) => {
         waIdx !== -1 && row[waIdx] !== undefined && row[waIdx].trim().length > 0
           ? row[waIdx].trim()
           : mobile;
+      const imageUrl =
+        imageIdx !== -1 && row[imageIdx] !== undefined && row[imageIdx].trim().length > 0
+          ? formatProfileImageUrl(row[imageIdx])
+          : undefined;
       let wishingMessage =
         wishIdx !== -1 && row[wishIdx] !== undefined
           ? row[wishIdx].trim()
@@ -615,6 +651,7 @@ app.get("/api/sheet-data", async (req, res) => {
         mobile,
         email,
         whatsapp,
+        imageUrl,
         wishingMessage,
         isBirthdayToday: checkIsTodayBirthday(birthday),
         lastSentYear: lastSentYear || ''
