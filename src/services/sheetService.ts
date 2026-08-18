@@ -251,7 +251,7 @@ export function parseSheetRowsToMembers(rows: string[][]): TeamMember[] {
   const emailIdx = headers.findIndex((h) => h.includes('mail'));
   const waIdx = headers.findIndex((h) => h.includes('whatapp') || h.includes('whatsapp'));
   const imageIdx = headers.findIndex(
-    (h) => h.includes('image') || h.includes('photo') || h.includes('avatar') || h.includes('picture') || h.includes('img')
+    (h) => h.includes('image') || h.includes('photo') || h.includes('avatar') || h.includes('picture') || h.includes('img') || h.includes('pic') || h.includes('profile')
   );
   const wishIdx = headers.findIndex(
     (h) => h.includes('wishing') || h.includes('massage') || h.includes('message')
@@ -305,10 +305,26 @@ export function parseSheetRowsToMembers(rows: string[][]): TeamMember[] {
       waIdx !== -1 && row[waIdx] !== undefined && row[waIdx].trim().length > 0
         ? row[waIdx].trim()
         : mobile;
-    const imageUrl =
+    let rawImage =
       imageIdx !== -1 && row[imageIdx] !== undefined && row[imageIdx].trim().length > 0
-        ? formatProfileImageUrl(row[imageIdx])
-        : undefined;
+        ? row[imageIdx].trim()
+        : '';
+
+    // If imageIdx was not matched or cell was empty, check if any column contains a Drive or image URL
+    if (!rawImage) {
+      for (let c = 0; c < row.length; c++) {
+        if (c === emailIdx || c === nameIdx || c === desigIdx || c === bdayIdx || c === mobileIdx || c === waIdx || c === wishIdx || c === sentYearIdx) {
+          continue;
+        }
+        const val = row[c]?.trim() || '';
+        if (val.includes('drive.google.com') || val.includes('docs.google.com') || val.includes('lh3.googleusercontent.com') || (val.startsWith('http') && (val.endsWith('.jpg') || val.endsWith('.jpeg') || val.endsWith('.png') || val.endsWith('.webp')))) {
+          rawImage = val;
+          break;
+        }
+      }
+    }
+
+    const imageUrl = rawImage ? formatProfileImageUrl(rawImage) : undefined;
     let wishingMessage =
       wishIdx !== -1 && row[wishIdx] !== undefined
         ? row[wishIdx].trim()

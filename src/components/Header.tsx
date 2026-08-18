@@ -1,10 +1,10 @@
 import React from 'react';
-import { RefreshCw, ExternalLink, Cake, Sparkles, Code2, Send, PhoneCall, Radio, CheckCircle2, Bot, Mail, Bell, Volume2, VolumeX, Globe, ShieldCheck, LayoutDashboard } from 'lucide-react';
+import { RefreshCw, ExternalLink, Cake, Sparkles, Code2, Send, PhoneCall, Radio, CheckCircle2, Bot, Mail, Bell, Volume2, VolumeX, Globe, ShieldCheck, LayoutDashboard, TrendingUp } from 'lucide-react';
 import { AdminSheetConfig } from '../types';
 
 interface HeaderProps {
-  activeTab: 'dashboard' | 'roster' | 'festive' | 'email' | 'generator' | 'script' | 'tester' | 'automation';
-  setActiveTab: (tab: 'dashboard' | 'roster' | 'festive' | 'email' | 'generator' | 'script' | 'tester' | 'automation') => void;
+  activeTab: 'dashboard' | 'roster' | 'festive' | 'email' | 'generator' | 'script' | 'tester' | 'automation' | 'insights';
+  setActiveTab: (tab: 'dashboard' | 'roster' | 'festive' | 'email' | 'generator' | 'script' | 'tester' | 'automation' | 'insights') => void;
   onSync: () => void;
   isSyncing: boolean;
   isRealtimeConnected?: boolean;
@@ -299,6 +299,21 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <Bot className="w-4 h-4 text-emerald-600 animate-pulse" />
             Automation History
+          </button>
+
+          <button
+            onClick={() => setActiveTab('insights')}
+            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-t-lg border-b-2 transition whitespace-nowrap cursor-pointer ${
+              activeTab === 'insights'
+                ? 'border-indigo-600 text-indigo-900 bg-indigo-50/70 font-bold shadow-xs'
+                : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+            }`}
+          >
+            <TrendingUp className={`w-4 h-4 ${activeTab === 'insights' ? 'text-indigo-600' : 'text-slate-500'}`} />
+            Dispatch Insights
+            <span className="ml-1 px-1.5 py-0.2 rounded-full text-[9px] bg-emerald-100 text-emerald-800 border border-emerald-200 font-bold">
+              New
+            </span>
           </button>
 
           <button

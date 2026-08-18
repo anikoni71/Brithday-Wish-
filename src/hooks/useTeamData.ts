@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { TeamMember, EmailLogEntry, AutomationLogEntry, AdminSheetConfig } from '../types';
 import { fetchLiveTeamData } from '../services/sheetService';
 import { getDemoTeamMembers } from '../data/fallbackData';
+import { formatProfileImageUrl } from '../utils/imageUtils';
 
 interface UseTeamDataResult {
   teamMembers: TeamMember[];
@@ -73,7 +74,7 @@ export function useTeamData(
           if (!event.data) return;
           try {
             const parsed = JSON.parse(event.data);
-            if (parsed.type === 'CONFIG_UPDATE' || parsed.type === 'INITIAL_STATE') {
+            if (parsed.type === 'CONFIG_UPDATE' || parsed.type === 'INITIAL_STATE' || parsed.type === 'DATA_UPDATE' || parsed.type === 'SHEET_UPDATE') {
               if (parsed.config) {
                 setAdminConfig((prev) => ({
                   ...prev,
@@ -91,12 +92,17 @@ export function useTeamData(
                 const merged = parsed.fullData.map((m: TeamMember) => {
                   const key = m.id || m.sl;
                   const localSentYear = currentMap[key];
+                  const rawImg = m.imageUrl || (m as any).ImageUrl || (m as any).image || (m as any).Image || (m as any)['Image URL'] || (m as any)['Image_URL'] || '';
+                  const formattedImg = rawImg ? formatProfileImageUrl(rawImg) : undefined;
                   return {
                     ...m,
+                    imageUrl: formattedImg || m.imageUrl,
                     lastSentYear: localSentYear !== undefined && localSentYear !== '' ? localSentYear : m.lastSentYear || ''
                   };
                 });
                 setTeamMembers(merged);
+              } else {
+                refetch(true);
               }
             }
           } catch (_e) {

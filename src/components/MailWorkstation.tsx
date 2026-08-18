@@ -1199,7 +1199,7 @@ function isToday(bdayStr, curMonth, curDay) {
                       </tr>
                     ) : (
                       filteredMembers.map((member) => {
-                        const isToday = member.isBirthdayToday || checkIsTodayBirthday(member.birthday);
+                        const isToday = Boolean(member.isBirthdayToday || checkIsTodayBirthday(member.birthday) || (member as any).isToday);
                         const memberKey = member.id || member.sl;
                         const hasEmail = Boolean(member.email && member.email.trim().length > 0);
                         const isEditingThis = editingEmailId === memberKey;
@@ -1225,12 +1225,21 @@ function isToday(bdayStr, curMonth, curDay) {
                             {/* Team Member */}
                             <td className="py-3 px-4">
                               <div className="flex items-center gap-2.5">
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden ${
                                   isToday
                                     ? 'bg-amber-100 text-amber-800 border border-amber-300 ring-2 ring-amber-400/20'
                                     : 'bg-indigo-50 text-indigo-700 border border-indigo-200'
                                 }`}>
-                                  {member.name.charAt(0).toUpperCase()}
+                                  {isToday && member.imageUrl ? (
+                                    <img
+                                      src={member.imageUrl}
+                                      alt={member.name}
+                                      referrerPolicy="no-referrer"
+                                      className="w-full h-full object-cover rounded-full"
+                                    />
+                                  ) : (
+                                    member.name.charAt(0).toUpperCase()
+                                  )}
                                 </div>
                                 <div className="min-w-0">
                                   <div className="font-bold text-slate-900 truncate">
@@ -1388,7 +1397,7 @@ function isToday(bdayStr, curMonth, curDay) {
           {viewLayout === 'grid' && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredMembers.map((member) => {
-                const isToday = member.isBirthdayToday || checkIsTodayBirthday(member.birthday);
+                const isToday = Boolean(member.isBirthdayToday || checkIsTodayBirthday(member.birthday) || (member as any).isToday);
                 const memberKey = member.id || member.sl;
                 const hasEmail = Boolean(member.email && member.email.trim().length > 0);
                 const isEditingThis = editingEmailId === memberKey;

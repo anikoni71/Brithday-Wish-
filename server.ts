@@ -144,22 +144,25 @@ function formatProfileImageUrl(url?: string): string {
   if (!url || typeof url !== 'string') return '';
   const clean = url.trim();
   if (!clean) return '';
-  // Convert Google Drive view / file links:
-  // e.g. https://drive.google.com/file/d/1A2B3C.../view?usp=sharing -> https://lh3.googleusercontent.com/d/1A2B3C...
-  const driveFileMatch = clean.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/i);
+  // Google Drive format 1: https://drive.google.com/file/d/FILE_ID/...
+  const driveFileMatch = clean.match(/(?:drive|docs)\.google\.com(?:\/[^\/]+)*\/file\/d\/([a-zA-Z0-9_-]+)/i);
   if (driveFileMatch && driveFileMatch[1]) {
     return `https://lh3.googleusercontent.com/d/${driveFileMatch[1]}`;
   }
-  // e.g. https://drive.google.com/open?id=1A2B3C... -> https://lh3.googleusercontent.com/d/1A2B3C...
-  const driveIdMatch = clean.match(/drive\.google\.com\/(?:open|uc|thumbnail)\?(?:[^&]*&)*id=([a-zA-Z0-9_-]+)/i);
+  // Google Drive format 2: https://drive.google.com/open?id=FILE_ID, /uc?id=FILE_ID, etc.
+  const driveIdMatch = clean.match(/(?:drive|docs)\.google\.com(?:\/[^\/]+)*(?:\/open|\/uc|\/thumbnail|\/file|\/edit)?\?(?:[^&]*&)*id=([a-zA-Z0-9_-]+)/i);
   if (driveIdMatch && driveIdMatch[1]) {
     return `https://lh3.googleusercontent.com/d/${driveIdMatch[1]}`;
   }
-  // Generic Google Drive with id query
-  if (clean.includes('drive.google.com')) {
+  // Google Drive format 3: generic Google Drive with id query or /d/ parameter
+  if (clean.includes('drive.google.com') || clean.includes('docs.google.com')) {
     const genericMatch = clean.match(/[?&]id=([a-zA-Z0-9_-]+)/i);
     if (genericMatch && genericMatch[1]) {
       return `https://lh3.googleusercontent.com/d/${genericMatch[1]}`;
+    }
+    const genericDMatch = clean.match(/\/d\/([a-zA-Z0-9_-]+)/i);
+    if (genericDMatch && genericDMatch[1]) {
+      return `https://lh3.googleusercontent.com/d/${genericDMatch[1]}`;
     }
   }
   return clean;
@@ -574,7 +577,7 @@ app.get("/api/sheet-data", async (req, res) => {
     const emailIdx = headers.findIndex((h) => h.includes('mail'));
     const waIdx = headers.findIndex((h) => h.includes('whatapp') || h.includes('whatsapp'));
     const imageIdx = headers.findIndex(
-      (h) => h.includes('image') || h.includes('photo') || h.includes('avatar') || h.includes('picture') || h.includes('img')
+      (h) => h.includes('image') || h.includes('photo') || h.includes('avatar') || h.includes('picture') || h.includes('img') || h.includes('pic') || h.includes('profile')
     );
     const wishIdx = headers.findIndex(
       (h) => h.includes('wishing') || h.includes('massage') || h.includes('message')
@@ -624,10 +627,26 @@ app.get("/api/sheet-data", async (req, res) => {
         waIdx !== -1 && row[waIdx] !== undefined && row[waIdx].trim().length > 0
           ? row[waIdx].trim()
           : mobile;
-      const imageUrl =
+      let rawImage =
         imageIdx !== -1 && row[imageIdx] !== undefined && row[imageIdx].trim().length > 0
-          ? formatProfileImageUrl(row[imageIdx])
-          : undefined;
+          ? row[imageIdx].trim()
+          : '';
+
+      // If imageIdx was not matched or cell was empty, check if any column contains a Drive or image URL
+      if (!rawImage) {
+        for (let c = 0; c < row.length; c++) {
+          if (c === emailIdx || c === nameIdx || c === desigIdx || c === bdayIdx || c === mobileIdx || c === waIdx || c === wishIdx || c === sentYearIdx) {
+            continue;
+          }
+          const val = row[c]?.trim() || '';
+          if (val.includes('drive.google.com') || val.includes('docs.google.com') || val.includes('lh3.googleusercontent.com') || (val.startsWith('http') && (val.endsWith('.jpg') || val.endsWith('.jpeg') || val.endsWith('.png') || val.endsWith('.webp')))) {
+            rawImage = val;
+            break;
+          }
+        }
+      }
+
+      const imageUrl = rawImage ? formatProfileImageUrl(rawImage) : undefined;
       let wishingMessage =
         wishIdx !== -1 && row[wishIdx] !== undefined
           ? row[wishIdx].trim()

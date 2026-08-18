@@ -14,6 +14,7 @@ import { BirthdayDistributionChart } from './components/BirthdayDistributionChar
 import { MailWorkstation } from './components/MailWorkstation';
 import { FestiveCalendarWorkstation } from './components/FestiveCalendarWorkstation';
 import { ExecutiveDashboard } from './components/ExecutiveDashboard';
+import { DispatchInsights } from './components/DispatchInsights';
 import { checkIsTodayBirthday, getUpcomingBirthdayInfo } from './utils/dateUtils';
 import { triggerBirthdayConfetti } from './utils/confetti';
 import { useTeamData } from './hooks/useTeamData';
@@ -35,7 +36,7 @@ interface ToastNotification {
 }
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'roster' | 'festive' | 'email' | 'generator' | 'script' | 'automation' | 'tester'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'insights' | 'roster' | 'festive' | 'email' | 'generator' | 'script' | 'automation' | 'tester'>('dashboard');
   const [autoSyncEnabled, setAutoSyncEnabled] = useState<boolean>(true);
   const [toastNotification, setToastNotification] = useState<ToastNotification | null>(null);
   const [isWishModalOpen, setIsWishModalOpen] = useState<boolean>(false);
@@ -637,6 +638,13 @@ export default function App() {
             isSendingWhatsApp={isSendingWhatsApp}
             onNavigateTab={setActiveTab}
             onOpenAdminPlanning={() => setIsAdminPlanningOpen(true)}
+          />
+        )}
+
+        {activeTab === 'insights' && (
+          <DispatchInsights 
+            automationLogs={automationLogs}
+            emailLogs={emailLogs}
           />
         )}
 
