@@ -11,6 +11,17 @@ const PORT = 3000;
 
 app.use(express.json());
 
+// CORS and preflight request support
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(204);
+  }
+  next();
+});
+
 const GOOGLE_SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTODUAg2mUYQUTN3P9SPB5Q41Ta_9SufI2gct0GBYDUbPSJX81O1mWHgBjElAIfNfobEbd7Mkii18lt/pub?gid=0&single=true&output=csv";
 
 // Helper function to parse CSV robustly
@@ -251,6 +262,64 @@ function normalizePhoneNumber(raw?: string): string {
   if (clean.startsWith('880')) return '+' + clean;
   if (clean.startsWith('01')) return '+88' + clean;
   return '+' + clean;
+}
+
+const ASSISTRO_API_URL = 'https://app.assistro.co/api/v1/wapushplus/single/message';
+const DEFAULT_ASSISTRO_TOKEN = 'pat_FAvA0pxp3PfZt48Lr61JiFKp9MIcow1SmyQzQyKE';
+
+export async function sendAssistroMessage(phone: string, message: string, tokenOverride?: string) {
+  const token = (tokenOverride && tokenOverride.trim().length > 0 && tokenOverride !== 'YOUR_ASSISTRO_TOKEN')
+    ? tokenOverride.trim()
+    : (process.env.WA_API_TOKEN || DEFAULT_ASSISTRO_TOKEN);
+
+  // Format phone: digits only, ensuring country code prefix without '+'
+  let formattedPhone = phone.replace(/[^\d]/g, '');
+  if (formattedPhone.startsWith('01')) {
+    formattedPhone = '88' + formattedPhone;
+  } else if (formattedPhone.length === 10 && formattedPhone.startsWith('1')) {
+    formattedPhone = '880' + formattedPhone;
+  }
+
+  const payload = {
+    msgs: [
+      {
+        number: formattedPhone,
+        message: message
+      }
+    ]
+  };
+
+  const response = await fetch(ASSISTRO_API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + token
+    },
+    body: JSON.stringify(payload)
+  });
+
+  const rawText = await response.text().catch(() => '');
+  let data: any = {};
+  if (rawText && rawText.trim().length > 0) {
+    try {
+      data = JSON.parse(rawText);
+    } catch {
+      data = { message: rawText };
+    }
+  } else if (response.ok) {
+    data = { success: true, message: 'Message dispatched successfully (HTTP 200 OK)' };
+  }
+
+  const isSuccess = response.ok && data.status !== 'error' && data.success !== false;
+
+  return {
+    ok: isSuccess,
+    status: response.status,
+    data,
+    rawText,
+    formattedPhone,
+    tokenUsed: token
+  };
 }
 
 export interface LiveSheetConfig {
@@ -1244,6 +1313,14 @@ app.post("/api/admin-advance-planning-alert", async (req, res) => {
     }
   }
 
+  if (!waSent) {
+    const overrideToken = req.body.waApiToken || req.body.token || activeToken;
+    const assistroResult = await sendAssistroMessage(cleanAdminPhone, waSummary, overrideToken);
+    if (assistroResult.ok) {
+      waSent = true;
+    }
+  }
+
   // Record WhatsApp in Automation Logs
   automationLogsStore.unshift({
     id: `gas-plan-wa-${Date.now()}`,
@@ -1372,76 +1449,41 @@ app.post("/api/dispatch-wish", async (req, res) => {
     }
 
     // Assistro Gateway Direct Dispatch
-    const assistroToken = (activeToken && activeToken.startsWith('pat_')) ? activeToken : (process.env.WA_API_TOKEN || 'pat_GOUOouAvExkrGBgAQYTjRBC73gpBb718fCW5mYBj');
-    const assistroUrl = process.env.WA_API_URL || 'https://app.assistro.co/api/v1/wapushplus/single/message';
-    const targetNumber = cleanPhone.replace(/\D/g, '');
+    const overrideToken = req.body.waApiToken || req.body.token || activeToken;
+    const assistroResult = await sendAssistroMessage(cleanPhone, personalizedMsg, overrideToken);
 
-    if (assistroToken && assistroToken !== 'YOUR_ASSISTRO_TOKEN' && assistroToken !== 'YOUR_TWILIO_AUTH_TOKEN') {
-      try {
-        const assistroRes = await fetch(assistroUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${assistroToken}`
-          },
-          body: JSON.stringify({
-            msgs: [
-              {
-                number: targetNumber,
-                message: personalizedMsg
-              }
-            ]
-          })
-        });
+    if (assistroResult.ok) {
+      const autoLog = {
+        id: `gas-log-${Date.now()}`,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+        triggerSource: "Server Headless Dispatch" as const,
+        recipientName: member.name,
+        recipientPhone: formattedTo,
+        recipientEmail: email,
+        status: "DELIVERED" as const,
+        lifecycleState: "Delivered" as const,
+        channel: "WhatsApp" as const,
+        senderNumber: "+8801625299521",
+        message: personalizedMsg,
+        executionTimeMs: 290,
+        responseCode: 200,
+        details: "Delivered via Assistro WhatsApp Gateway to " + formattedTo
+      };
+      automationLogsStore.unshift(autoLog);
 
-        const rawText = await assistroRes.text().catch(() => '');
-        let resData: any = {};
-        if (rawText && rawText.trim().length > 0) {
-          try {
-            resData = JSON.parse(rawText);
-          } catch {
-            resData = { message: rawText };
-          }
-        } else if (assistroRes.ok) {
-          resData = { success: true, message: 'Message dispatched successfully (HTTP 200 OK)' };
-        }
-
-        if (assistroRes.ok && resData.status !== 'error' && resData.success !== false) {
-          const autoLog = {
-            id: `gas-log-${Date.now()}`,
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-            triggerSource: "Server Headless Dispatch" as const,
-            recipientName: member.name,
-            recipientPhone: formattedTo,
-            recipientEmail: email,
-            status: "DELIVERED" as const,
-            lifecycleState: "Delivered" as const,
-            channel: "WhatsApp" as const,
-            senderNumber: "+8801625299521",
-            message: personalizedMsg,
-            executionTimeMs: 290,
-            responseCode: 200,
-            details: "Delivered via Assistro WhatsApp Gateway to " + formattedTo
-          };
-          automationLogsStore.unshift(autoLog);
-
-          return res.json({
-            success: true,
-            serverDispatched: true,
-            lifecycleState: "Delivered",
-            channel: "WhatsApp",
-            mode: "assistro_gateway",
-            recipientName: member.name,
-            phone: formattedTo,
-            message: personalizedMsg,
-            data: resData
-          });
-        } else {
-          console.warn("Assistro WhatsApp dispatch response indicated error, evaluating email fallback:", resData);
-        }
-      } catch (err) {
-        console.warn("Assistro WhatsApp dispatch error:", err);
-      }
+      return res.json({
+        success: true,
+        serverDispatched: true,
+        lifecycleState: "Delivered",
+        channel: "WhatsApp",
+        mode: "assistro_gateway",
+        recipientName: member.name,
+        phone: formattedTo,
+        message: personalizedMsg,
+        data: assistroResult.data
+      });
+    } else {
+      console.warn("Assistro WhatsApp dispatch response indicated error, evaluating email fallback:", assistroResult.data);
     }
 
     // Background Automated WhatsApp Dispatch
@@ -1678,74 +1720,43 @@ app.post("/api/send-whatsapp", async (req, res) => {
     }
   }
 
-  // 2. If Assistro Token provided
-  const assistroToken = (activeToken && activeToken.startsWith('pat_')) ? activeToken : (process.env.WA_API_TOKEN || 'pat_GOUOouAvExkrGBgAQYTjRBC73gpBb718fCW5mYBj');
-  const assistroUrl = process.env.WA_API_URL || 'https://app.assistro.co/api/v1/wapushplus/single/message';
-  const targetNumber = cleanPhone.replace(/\D/g, '');
+  // 2. Assistro Gateway Dispatch
+  const overrideToken = req.body.waApiToken || req.body.token || activeToken;
+  try {
+    const assistroResult = await sendAssistroMessage(cleanPhone, finalMsg, overrideToken);
 
-  if (assistroToken && assistroToken !== 'YOUR_ASSISTRO_TOKEN' && assistroToken !== 'YOUR_TWILIO_AUTH_TOKEN') {
-    try {
-      const assistroRes = await fetch(assistroUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${assistroToken}`
-        },
-        body: JSON.stringify({
-          msgs: [
-            {
-              number: targetNumber,
-              message: finalMsg
-            }
-          ]
-        })
-      });
-
-      const rawText = await assistroRes.text().catch(() => '');
-      let resData: any = {};
-      if (rawText && rawText.trim().length > 0) {
-        try {
-          resData = JSON.parse(rawText);
-        } catch {
-          resData = { message: rawText };
-        }
-      } else if (assistroRes.ok) {
-        resData = { success: true, message: 'Message dispatched successfully (HTTP 200 OK)' };
-      }
-
-      if (!assistroRes.ok || resData.status === 'error' || resData.success === false) {
-        const errorMsg = resData.error || resData.message || resData.msg || resData.details || rawText || `Assistro API HTTP ${assistroRes.status} error`;
-        return res.status(assistroRes.status >= 400 ? assistroRes.status : 400).json({
-          success: false,
-          serverDispatched: false,
-          lifecycleState: "Failed",
-          error: errorMsg,
-          reason: "Assistro API returned an error.",
-          details: resData,
-          rawResponse: rawText
-        });
-      }
-
-      return res.json({
-        success: true,
-        serverDispatched: true,
-        lifecycleState: "Delivered",
-        channel: "WhatsApp",
-        mode: "assistro_gateway",
-        status: "Delivered",
-        to: formattedTo,
-        from: fromNumber,
-        message: finalMsg,
-        data: resData
-      });
-    } catch (error: any) {
-      return res.status(500).json({
+    if (!assistroResult.ok) {
+      const errorMsg = assistroResult.data.error || assistroResult.data.message || assistroResult.data.msg || assistroResult.data.details || assistroResult.rawText || `Assistro API HTTP ${assistroResult.status} error`;
+      return res.status(assistroResult.status >= 400 ? assistroResult.status : 400).json({
         success: false,
         serverDispatched: false,
         lifecycleState: "Failed",
-        error: error.message || "Internal server error connecting to Assistro Gateway API",
+        error: errorMsg,
+        reason: "Assistro API returned an error.",
+        details: assistroResult.data,
+        rawResponse: assistroResult.rawText
       });
     }
+
+    return res.json({
+      success: true,
+      serverDispatched: true,
+      lifecycleState: "Delivered",
+      channel: "WhatsApp",
+      mode: "assistro_gateway",
+      status: "Delivered",
+      to: formattedTo,
+      from: fromNumber,
+      message: finalMsg,
+      data: assistroResult.data
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      serverDispatched: false,
+      lifecycleState: "Failed",
+      error: error.message || "Internal server error connecting to Assistro Gateway API",
+    });
   }
 
   // 2. Headless Background Automation Mode

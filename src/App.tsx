@@ -325,6 +325,7 @@ export default function App() {
           accountSid: twilioConfig.accountSid,
           authToken: twilioConfig.authToken,
           fromNumber: twilioConfig.whatsappNumber,
+          member: member,
         }),
       });
 
