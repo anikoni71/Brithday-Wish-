@@ -10,13 +10,13 @@ export function getAppsScriptCode(
   adminWhatsApp: string = '+8801625299521',
   adminEmail: string = 'anik.barua@kdsgroup.net',
   sheetName: string = 'Sheet1',
-  waApiUrl: string = 'https://app.assistro.co/api/v1/send-message',
+  waApiUrl: string = 'https://app.assistro.co/api/v1/wapushplus/single/message',
   waApiToken: string = 'pat_GOUOouAvExkrGBgAQYTjRBC73gpBb718fCW5mYBj'
 ): string {
   const cleanAdminPhone = adminWhatsApp.replace('whatsapp:', '').trim() || '+8801625299521';
   const cleanAdminEmail = adminEmail.trim() || 'anik.barua@kdsgroup.net';
   const cleanSheetName = sheetName.trim() || 'Sheet1';
-  const activeWaUrl = waApiUrl.trim() || 'https://app.assistro.co/api/v1/send-message';
+  const activeWaUrl = waApiUrl.trim() || 'https://app.assistro.co/api/v1/wapushplus/single/message';
   const activeWaToken = (waApiToken || authToken || '').trim() || 'pat_GOUOouAvExkrGBgAQYTjRBC73gpBb718fCW5mYBj';
 
   return `/**
@@ -200,22 +200,36 @@ function sendWhatsApp(phone, message) {
   }
   
   try {
-    const payload = {
-      "to": phone,
-      "message": message,
-      "token": CONFIG.WA_API_TOKEN
+    // Strip leading '+' and non-numeric characters (e.g. 8801625299521)
+    var cleanPhone = String(phone || "").replace(/\\D/g, "");
+    if (cleanPhone.startsWith("01")) {
+      cleanPhone = "88" + cleanPhone;
+    } else if (cleanPhone.length === 10 && cleanPhone.startsWith("1")) {
+      cleanPhone = "880" + cleanPhone;
+    }
+
+    var payload = {
+      "msgs": [
+        {
+          "number": cleanPhone,
+          "message": message
+        }
+      ]
     };
     
-    const options = {
+    var options = {
       "method": "post",
       "contentType": "application/json",
+      "headers": {
+        "Authorization": "Bearer " + CONFIG.WA_API_TOKEN
+      },
       "payload": JSON.stringify(payload),
       "muteHttpExceptions": true
     };
     
-    const response = UrlFetchApp.fetch(CONFIG.WA_API_URL, options);
-    const responseCode = response.getResponseCode();
-    const responseText = response.getContentText();
+    var response = UrlFetchApp.fetch(CONFIG.WA_API_URL, options);
+    var responseCode = response.getResponseCode();
+    var responseText = response.getContentText();
     
     // Capture the full body of the response when a non-200 code is received to aid in debugging
     if (responseCode !== 200 && responseCode !== 201) {

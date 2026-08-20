@@ -1367,7 +1367,69 @@ app.post("/api/dispatch-wish", async (req, res) => {
           });
         }
       } catch (err) {
-        console.warn("Twilio WhatsApp direct send failed, evaluating Email fallback...");
+        console.warn("Twilio WhatsApp direct send failed, evaluating Assistro or Email fallback...");
+      }
+    }
+
+    // Assistro Gateway Direct Dispatch
+    const assistroToken = (activeToken && activeToken.startsWith('pat_')) ? activeToken : (process.env.WA_API_TOKEN || 'pat_GOUOouAvExkrGBgAQYTjRBC73gpBb718fCW5mYBj');
+    const assistroUrl = process.env.WA_API_URL || 'https://app.assistro.co/api/v1/wapushplus/single/message';
+    const targetNumber = cleanPhone.replace(/\D/g, '');
+
+    if (assistroToken && assistroToken !== 'YOUR_ASSISTRO_TOKEN' && assistroToken !== 'YOUR_TWILIO_AUTH_TOKEN') {
+      try {
+        const assistroRes = await fetch(assistroUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${assistroToken}`
+          },
+          body: JSON.stringify({
+            msgs: [
+              {
+                number: targetNumber,
+                message: personalizedMsg
+              }
+            ]
+          })
+        });
+
+        const resData = await assistroRes.json().catch(() => ({ message: assistroRes.statusText }));
+        if (assistroRes.ok && resData.status !== 'error' && resData.success !== false) {
+          const autoLog = {
+            id: `gas-log-${Date.now()}`,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+            triggerSource: "Server Headless Dispatch" as const,
+            recipientName: member.name,
+            recipientPhone: formattedTo,
+            recipientEmail: email,
+            status: "DELIVERED" as const,
+            lifecycleState: "Delivered" as const,
+            channel: "WhatsApp" as const,
+            senderNumber: "+8801625299521",
+            message: personalizedMsg,
+            executionTimeMs: 290,
+            responseCode: 200,
+            details: "Delivered via Assistro WhatsApp Gateway to " + formattedTo
+          };
+          automationLogsStore.unshift(autoLog);
+
+          return res.json({
+            success: true,
+            serverDispatched: true,
+            lifecycleState: "Delivered",
+            channel: "WhatsApp",
+            mode: "assistro_gateway",
+            recipientName: member.name,
+            phone: formattedTo,
+            message: personalizedMsg,
+            data: resData
+          });
+        } else {
+          console.warn("Assistro WhatsApp dispatch response indicated error, evaluating email fallback:", resData);
+        }
+      } catch (err) {
+        console.warn("Assistro WhatsApp dispatch error:", err);
       }
     }
 
@@ -1607,16 +1669,24 @@ app.post("/api/send-whatsapp", async (req, res) => {
 
   // 2. If Assistro Token provided
   const assistroToken = (activeToken && activeToken.startsWith('pat_')) ? activeToken : (process.env.WA_API_TOKEN || 'pat_GOUOouAvExkrGBgAQYTjRBC73gpBb718fCW5mYBj');
-  const assistroUrl = process.env.WA_API_URL || 'https://app.assistro.co/api/v1/send-message';
+  const assistroUrl = process.env.WA_API_URL || 'https://app.assistro.co/api/v1/wapushplus/single/message';
+  const targetNumber = cleanPhone.replace(/\D/g, '');
+
   if (assistroToken && assistroToken !== 'YOUR_ASSISTRO_TOKEN' && assistroToken !== 'YOUR_TWILIO_AUTH_TOKEN') {
     try {
       const assistroRes = await fetch(assistroUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${assistroToken}`
+        },
         body: JSON.stringify({
-          to: cleanPhone.startsWith('+') ? cleanPhone : `+${cleanPhone}`,
-          message: finalMsg,
-          token: assistroToken
+          msgs: [
+            {
+              number: targetNumber,
+              message: finalMsg
+            }
+          ]
         })
       });
 
