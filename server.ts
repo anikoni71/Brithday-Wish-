@@ -144,24 +144,38 @@ function formatProfileImageUrl(url?: string): string {
   if (!url || typeof url !== 'string') return '';
   const clean = url.trim();
   if (!clean) return '';
+
+  // Basic verification: if it doesn't look like a URL and doesn't contain drive keywords, reject
+  if (!clean.startsWith('http') && !clean.includes('drive.google.com') && !clean.includes('docs.google.com')) {
+    return '';
+  }
+
   // Google Drive format 1: https://drive.google.com/file/d/FILE_ID/...
   const driveFileMatch = clean.match(/(?:drive|docs)\.google\.com(?:\/[^\/]+)*\/file\/d\/([a-zA-Z0-9_-]+)/i);
   if (driveFileMatch && driveFileMatch[1]) {
-    return `https://lh3.googleusercontent.com/d/${driveFileMatch[1]}`;
+    const fileId = driveFileMatch[1];
+    if (fileId.length >= 10) {
+      return `https://lh3.googleusercontent.com/d/${fileId}`;
+    }
   }
+
   // Google Drive format 2: https://drive.google.com/open?id=FILE_ID, /uc?id=FILE_ID, etc.
   const driveIdMatch = clean.match(/(?:drive|docs)\.google\.com(?:\/[^\/]+)*(?:\/open|\/uc|\/thumbnail|\/file|\/edit)?\?(?:[^&]*&)*id=([a-zA-Z0-9_-]+)/i);
   if (driveIdMatch && driveIdMatch[1]) {
-    return `https://lh3.googleusercontent.com/d/${driveIdMatch[1]}`;
+    const fileId = driveIdMatch[1];
+    if (fileId.length >= 10) {
+      return `https://lh3.googleusercontent.com/d/${fileId}`;
+    }
   }
+
   // Google Drive format 3: generic Google Drive with id query or /d/ parameter
   if (clean.includes('drive.google.com') || clean.includes('docs.google.com')) {
     const genericMatch = clean.match(/[?&]id=([a-zA-Z0-9_-]+)/i);
-    if (genericMatch && genericMatch[1]) {
+    if (genericMatch && genericMatch[1] && genericMatch[1].length >= 10) {
       return `https://lh3.googleusercontent.com/d/${genericMatch[1]}`;
     }
     const genericDMatch = clean.match(/\/d\/([a-zA-Z0-9_-]+)/i);
-    if (genericDMatch && genericDMatch[1]) {
+    if (genericDMatch && genericDMatch[1] && genericDMatch[1].length >= 10) {
       return `https://lh3.googleusercontent.com/d/${genericDMatch[1]}`;
     }
   }
@@ -243,6 +257,8 @@ export interface LiveSheetConfig {
   senderWhatsApp: string; // WhatsApp Wishing Message Sender Number (e.g. "+8801625299521")
   adminEmail: string;     // Admin Notification Email (e.g. "anik.barua@kdsgroup.net")
   adminWhatsApp: string;  // Admin WhatsApp Number (e.g. "+8801625299521")
+  twilioAccountSid?: string; // Dynamic Twilio SID from Sheet
+  twilioAuthToken?: string;  // Dynamic Twilio Token from Sheet
   source: string;
   isAutoDetected: boolean;
   sheetName: string;
@@ -296,9 +312,11 @@ function extractAdminConfigFromSheetServer(rows: string[][], members: any[]): Li
   let detectedSenderNumber = '';
   let detectedWhatsApp = '';
   let detectedEmail = '';
+  let detectedTwilioSid = '';
+  let detectedTwilioToken = '';
   let detectedRole = '';
 
-  // 1. Scan for specific header rows: "Sender Number", "Admin Notification Email", "Admin WhatsApp Number"
+  // 1. Scan for specific header rows: "Sender Number", "Admin Notification Email", "Admin WhatsApp Number", "Twilio SID", "Twilio Token"
   for (let r = 0; r < Math.min(rows.length, 15); r++) {
     const row = rows[r] || [];
     for (let c = 0; c < row.length; c++) {
@@ -329,6 +347,20 @@ function extractAdminConfigFromSheetServer(rows: string[][], members: any[]): Li
         if (nextRowVal && !detectedWhatsApp) {
           detectedWhatsApp = normalizePhoneNumber(nextRowVal);
           detectedRole = 'Google Sheet Config Table';
+        }
+      }
+
+      // Match Twilio Account SID
+      if ((header.includes('twilio') && header.includes('sid')) || header.includes('api_account_sid') || header.includes('account_sid')) {
+        if (nextRowVal && nextRowVal.startsWith('AC') && !detectedTwilioSid) {
+          detectedTwilioSid = nextRowVal;
+        }
+      }
+
+      // Match Twilio Auth Token
+      if ((header.includes('twilio') && header.includes('token')) || header.includes('api_auth_token') || header.includes('auth_token')) {
+        if (nextRowVal && nextRowVal.length > 20 && !detectedTwilioToken) {
+          detectedTwilioToken = nextRowVal;
         }
       }
     }
@@ -416,7 +448,9 @@ function extractAdminConfigFromSheetServer(rows: string[][], members: any[]): Li
     senderWhatsApp: finalSender,
     adminWhatsApp: finalWhatsApp,
     adminEmail: finalEmail,
-    source: detectedWhatsApp || detectedEmail || detectedSenderNumber ? 'google_sheet_meta' : 'google_sheet_default',
+    twilioAccountSid: detectedTwilioSid || currentLiveSheetConfig.twilioAccountSid,
+    twilioAuthToken: detectedTwilioToken || currentLiveSheetConfig.twilioAuthToken,
+    source: detectedWhatsApp || detectedEmail || detectedSenderNumber || detectedTwilioSid ? 'google_sheet_meta' : 'google_sheet_default',
     isAutoDetected: true,
     sheetName: 'Central IE List',
     detectedRole: detectedRole || 'IE Central Management (Sender & Leadership)',
@@ -759,6 +793,10 @@ app.post(["/api/sheet/webhook", "/api/sheet/config-update"], (req, res) => {
     adminEmail,
     adminWhatsAppNumber,
     adminWhatsApp,
+    twilioAccountSid,
+    apiAccountSid,
+    twilioAuthToken,
+    apiAuthToken,
     source = "google_apps_script_webhook",
     event = "onEdit"
   } = req.body || {};
@@ -766,6 +804,8 @@ app.post(["/api/sheet/webhook", "/api/sheet/config-update"], (req, res) => {
   const newSender = senderWhatsApp || senderNumber || '';
   const newEmail = adminEmail || adminNotificationEmail || '';
   const newAdminWA = adminWhatsApp || adminWhatsAppNumber || '';
+  const newTwilioSid = twilioAccountSid || apiAccountSid || '';
+  const newTwilioToken = twilioAuthToken || apiAuthToken || '';
 
   const updatedConfig: Partial<LiveSheetConfig> = {
     source: 'google_sheet_webhook',
@@ -779,6 +819,8 @@ app.post(["/api/sheet/webhook", "/api/sheet/config-update"], (req, res) => {
   if (newSender) updatedConfig.senderWhatsApp = normalizePhoneNumber(newSender);
   if (newEmail && newEmail.includes('@')) updatedConfig.adminEmail = newEmail.trim();
   if (newAdminWA) updatedConfig.adminWhatsApp = normalizePhoneNumber(newAdminWA);
+  if (newTwilioSid) updatedConfig.twilioAccountSid = newTwilioSid.trim();
+  if (newTwilioToken) updatedConfig.twilioAuthToken = newTwilioToken.trim();
 
   currentLiveSheetConfig = { ...currentLiveSheetConfig, ...updatedConfig };
 
@@ -1176,8 +1218,8 @@ app.post("/api/admin-advance-planning-alert", async (req, res) => {
 
   // 1. Dispatch WhatsApp to Admin (+880163529951)
   let waSent = false;
-  const activeSid = accountSid || process.env.TWILIO_ACCOUNT_SID;
-  const activeToken = authToken || process.env.TWILIO_AUTH_TOKEN;
+  const activeSid = accountSid || currentLiveSheetConfig.twilioAccountSid || process.env.TWILIO_ACCOUNT_SID;
+  const activeToken = authToken || currentLiveSheetConfig.twilioAuthToken || process.env.TWILIO_AUTH_TOKEN;
 
   if (activeSid && activeToken && activeSid.startsWith('AC') && activeSid !== 'YOUR_TWILIO_ACCOUNT_SID') {
     try {
@@ -1274,8 +1316,8 @@ app.post("/api/dispatch-wish", async (req, res) => {
   // Channel 1: Primary WhatsApp Dispatch
   if (hasValidPhone) {
     const formattedTo = `whatsapp:+${cleanPhone}`;
-    const activeSid = accountSid || process.env.TWILIO_ACCOUNT_SID;
-    const activeToken = authToken || process.env.TWILIO_AUTH_TOKEN;
+    const activeSid = accountSid || currentLiveSheetConfig.twilioAccountSid || process.env.TWILIO_ACCOUNT_SID;
+    const activeToken = authToken || currentLiveSheetConfig.twilioAuthToken || process.env.TWILIO_AUTH_TOKEN;
 
     if (activeSid && activeToken && activeSid.startsWith('AC') && activeSid !== 'YOUR_TWILIO_ACCOUNT_SID') {
       try {
@@ -1505,8 +1547,8 @@ app.post("/api/send-whatsapp", async (req, res) => {
   }
 
   const formattedTo = `whatsapp:+${cleanPhone}`;
-  const activeSid = accountSid || process.env.TWILIO_ACCOUNT_SID;
-  const activeToken = authToken || process.env.TWILIO_AUTH_TOKEN;
+  const activeSid = accountSid || currentLiveSheetConfig.twilioAccountSid || process.env.TWILIO_ACCOUNT_SID;
+  const activeToken = authToken || currentLiveSheetConfig.twilioAuthToken || process.env.TWILIO_AUTH_TOKEN;
 
   // 1. If Twilio Credentials provided
   if (activeSid && activeToken && activeSid.startsWith('AC') && activeSid !== 'YOUR_TWILIO_ACCOUNT_SID') {
@@ -1559,6 +1601,57 @@ app.post("/api/send-whatsapp", async (req, res) => {
         serverDispatched: false,
         lifecycleState: "Failed",
         error: error.message || "Internal server error connecting to Twilio API",
+      });
+    }
+  }
+
+  // 2. If Assistro Token provided
+  const assistroToken = (activeToken && activeToken.startsWith('pat_')) ? activeToken : (process.env.WA_API_TOKEN || 'pat_GOUOouAvExkrGBgAQYTjRBC73gpBb718fCW5mYBj');
+  const assistroUrl = process.env.WA_API_URL || 'https://app.assistro.co/api/v1/send-message';
+  if (assistroToken && assistroToken !== 'YOUR_ASSISTRO_TOKEN' && assistroToken !== 'YOUR_TWILIO_AUTH_TOKEN') {
+    try {
+      const assistroRes = await fetch(assistroUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: cleanPhone.startsWith('+') ? cleanPhone : `+${cleanPhone}`,
+          message: finalMsg,
+          token: assistroToken
+        })
+      });
+
+      const resData = await assistroRes.json().catch(() => ({ message: assistroRes.statusText }));
+
+      if (!assistroRes.ok || resData.status === 'error' || resData.success === false) {
+        const errorMsg = resData.error || resData.message || resData.msg || resData.details || `Assistro API HTTP ${assistroRes.status} error`;
+        return res.status(assistroRes.status >= 400 ? assistroRes.status : 400).json({
+          success: false,
+          serverDispatched: false,
+          lifecycleState: "Failed",
+          error: errorMsg,
+          reason: "Assistro API returned an error.",
+          details: resData,
+        });
+      }
+
+      return res.json({
+        success: true,
+        serverDispatched: true,
+        lifecycleState: "Delivered",
+        channel: "WhatsApp",
+        mode: "assistro_gateway",
+        status: "Delivered",
+        to: formattedTo,
+        from: fromNumber,
+        message: finalMsg,
+        data: resData
+      });
+    } catch (error: any) {
+      return res.status(500).json({
+        success: false,
+        serverDispatched: false,
+        lifecycleState: "Failed",
+        error: error.message || "Internal server error connecting to Assistro Gateway API",
       });
     }
   }

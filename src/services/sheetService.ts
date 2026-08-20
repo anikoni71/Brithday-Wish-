@@ -18,6 +18,8 @@ export function extractAdminConfigFromSheet(
   let detectedSenderNumber = '';
   let detectedWhatsApp = '';
   let detectedEmail = '';
+  let detectedTwilioSid = '';
+  let detectedTwilioToken = '';
   let detectedRole = '';
 
   const normalizePhone = (numStr: string): string => {
@@ -30,7 +32,7 @@ export function extractAdminConfigFromSheet(
     return '+' + clean;
   };
 
-  // 1. Check for specific table header row: "Sender Number", "Admin Notification Email", "Admin WhatsApp Number"
+  // 1. Check for specific table header row: "Sender Number", "Admin Notification Email", "Admin WhatsApp Number", "Twilio SID", "Twilio Token"
   for (let r = 0; r < Math.min(rows.length, 15); r++) {
     const row = rows[r] || [];
     for (let c = 0; c < row.length; c++) {
@@ -61,6 +63,20 @@ export function extractAdminConfigFromSheet(
         if (nextRowVal && !detectedWhatsApp) {
           detectedWhatsApp = normalizePhone(nextRowVal);
           detectedRole = 'Google Sheet Config Table';
+        }
+      }
+
+      // Match Twilio Account SID
+      if ((header.includes('twilio') && header.includes('sid')) || header.includes('api_account_sid') || header.includes('account_sid')) {
+        if (nextRowVal && nextRowVal.startsWith('AC') && !detectedTwilioSid) {
+          detectedTwilioSid = nextRowVal;
+        }
+      }
+
+      // Match Twilio Auth Token
+      if ((header.includes('twilio') && header.includes('token')) || header.includes('api_auth_token') || header.includes('auth_token')) {
+        if (nextRowVal && nextRowVal.length > 20 && !detectedTwilioToken) {
+          detectedTwilioToken = nextRowVal;
         }
       }
     }
@@ -151,7 +167,9 @@ export function extractAdminConfigFromSheet(
     senderWhatsApp: finalSender,
     adminWhatsApp: finalWhatsApp,
     adminEmail: finalEmail,
-    source: detectedWhatsApp || detectedEmail || detectedSenderNumber ? 'google_sheet_meta' : 'google_sheet_default',
+    twilioAccountSid: detectedTwilioSid,
+    twilioAuthToken: detectedTwilioToken,
+    source: detectedWhatsApp || detectedEmail || detectedSenderNumber || detectedTwilioSid ? 'google_sheet_meta' : 'google_sheet_default',
     isAutoDetected: true,
     sheetName: 'Central IE List',
     detectedRole: detectedRole || 'Central IE Management (Sender & Leadership)',

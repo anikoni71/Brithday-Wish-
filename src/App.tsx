@@ -26,13 +26,14 @@ import {
   areNotificationsEnabled,
 } from './utils/browserNotifications';
 import { playBirthdayAlertChime, playSuccessChime } from './utils/notificationSound';
-import { Sparkles, Calendar, Users, PhoneCall, Code2, CheckCircle2, X, Bot, Mail, RefreshCw, Bell } from 'lucide-react';
+import { Sparkles, Calendar, Users, PhoneCall, Code2, CheckCircle2, X, Bot, Mail, RefreshCw, Bell, AlertCircle } from 'lucide-react';
 
 interface ToastNotification {
   type: 'success' | 'info' | 'error';
   title: string;
   message: string;
   recipientName?: string;
+  errorDetails?: string;
 }
 
 export default function App() {
@@ -108,18 +109,35 @@ export default function App() {
 
   // Automatically keep twilioConfig sender synced with Google Sheet master source
   useEffect(() => {
-    if (adminConfig?.senderWhatsApp) {
-      const formatted = adminConfig.senderWhatsApp.startsWith('whatsapp:')
-        ? adminConfig.senderWhatsApp
-        : `whatsapp:${adminConfig.senderWhatsApp}`;
-      if (twilioConfig.whatsappNumber !== formatted) {
-        setTwilioConfig((prev) => ({
-          ...prev,
-          whatsappNumber: formatted,
-        }));
-      }
+    if (adminConfig) {
+      setTwilioConfig((prev) => {
+        let updated = false;
+        const newConfig = { ...prev };
+
+        if (adminConfig.senderWhatsApp) {
+          const formatted = adminConfig.senderWhatsApp.startsWith('whatsapp:')
+            ? adminConfig.senderWhatsApp
+            : `whatsapp:${adminConfig.senderWhatsApp}`;
+          if (prev.whatsappNumber !== formatted) {
+            newConfig.whatsappNumber = formatted;
+            updated = true;
+          }
+        }
+
+        if (adminConfig.twilioAccountSid && adminConfig.twilioAccountSid !== prev.accountSid) {
+          newConfig.accountSid = adminConfig.twilioAccountSid;
+          updated = true;
+        }
+
+        if (adminConfig.twilioAuthToken && adminConfig.twilioAuthToken !== prev.authToken) {
+          newConfig.authToken = adminConfig.twilioAuthToken;
+          updated = true;
+        }
+
+        return updated ? newConfig : prev;
+      });
     }
-  }, [adminConfig?.senderWhatsApp]);
+  }, [adminConfig]);
 
   // Pre-calculated memoized derived analytics
   const derivedAnalytics = useMemo(() => {
@@ -320,6 +338,7 @@ export default function App() {
               ...m,
               lastSentYear: currentYear,
               serverDispatched: isDispatched,
+              lastDispatchError: !data.success ? (data.error || data.message) : undefined
             };
           }
           return m;
@@ -335,43 +354,43 @@ export default function App() {
           recipientPhone: phone,
           status: data.success ? 'SUCCESS' : 'FAILED',
           message: messageToSend,
-          details: `Headless Server Dispatch executed via +8801625299521.`,
+          details: data.success
+            ? `Headless Server Dispatch executed via Assistro Gateway.`
+            : `Dispatch failed: ${data.error || data.message || 'API error'}`,
           triggerSource: 'Server Headless Dispatch'
         })
       }).then(() => refetchAutomationLogs()).catch(() => {});
 
-      triggerBirthdayConfetti();
-      playSuccessChime(soundEnabled);
+      if (data.success) {
+        triggerBirthdayConfetti();
+        playSuccessChime(soundEnabled);
 
-      setToastNotification({
-        type: 'success',
-        title: 'Wish Dispatched Automatically via +8801625299521 (Background Automation)',
-        message: `Direct background HTTP POST dispatch completed for ${member.name}. Zero manual touch required.`,
-        recipientName: member.name,
-      });
+        setToastNotification({
+          type: 'success',
+          title: 'Wish Dispatched Automatically via +8801625299521 (Background Automation)',
+          message: `Direct background HTTP POST dispatch completed for ${member.name}. Zero manual touch required.`,
+          recipientName: member.name,
+        });
+      } else {
+        const errorDetail = data.error || data.message || 'Assistro WhatsApp Gateway returned an error.';
+        setToastNotification({
+          type: 'error',
+          title: 'WhatsApp Dispatch Failed',
+          message: `${errorDetail} (Recipient: ${member.name})`,
+          recipientName: member.name,
+          errorDetails: errorDetail
+        });
+      }
     } catch (err: any) {
       console.error('Send WhatsApp error:', err);
-      triggerBirthdayConfetti();
-      playSuccessChime(soundEnabled);
-
-      setTeamMembers((prev) =>
-        prev.map((m) => {
-          if ((m.id && m.id === memberKey) || m.sl === memberKey) {
-            return {
-              ...m,
-              lastSentYear: currentYear,
-              serverDispatched: true,
-            };
-          }
-          return m;
-        })
-      );
+      const errMsg = err.message || 'Network exception connecting to WhatsApp service';
 
       setToastNotification({
-        type: 'success',
-        title: 'Wish Dispatched Automatically via +8801625299521 (Background Automation)',
-        message: `Registered direct background dispatch for ${member.name}. Zero manual touch required.`,
+        type: 'error',
+        title: 'WhatsApp Gateway Error',
+        message: `${errMsg} (Recipient: ${member.name})`,
         recipientName: member.name,
+        errorDetails: errMsg
       });
     } finally {
       setIsSendingWhatsApp(false);
@@ -404,27 +423,40 @@ export default function App() {
         type: data.success ? 'success' : 'error',
         recipient: phone,
         message: msg,
-        details: `Manual Test Dispatch via +8801625299521`,
+        details: data.success ? `Manual Test Dispatch via +8801625299521` : `Error: ${data.error || data.message}`,
         source: 'manual',
       };
 
       setManualLogs((prev) => [newManualLog, ...prev]);
-      triggerBirthdayConfetti();
-      playSuccessChime(soundEnabled);
 
-      setToastNotification({
-        type: 'success',
-        title: 'Wish Dispatched Automatically via +8801625299521 (Background Automation)',
-        message: `Direct background HTTP POST test dispatch to ${phone} completed. Zero manual touch required.`,
-        recipientName: phone,
-      });
+      if (data.success) {
+        triggerBirthdayConfetti();
+        playSuccessChime(soundEnabled);
+
+        setToastNotification({
+          type: 'success',
+          title: 'Wish Dispatched Automatically via +8801625299521 (Background Automation)',
+          message: `Direct background HTTP POST test dispatch to ${phone} completed. Zero manual touch required.`,
+          recipientName: phone,
+        });
+      } else {
+        const errorDetail = data.error || data.message || 'Assistro WhatsApp Gateway returned an error.';
+        setToastNotification({
+          type: 'error',
+          title: 'WhatsApp Test Dispatch Failed',
+          message: `${errorDetail} (Recipient: ${phone})`,
+          recipientName: phone,
+          errorDetails: errorDetail
+        });
+      }
     } catch (err: any) {
-      triggerBirthdayConfetti();
+      const errMsg = err.message || 'Network exception connecting to WhatsApp service';
       setToastNotification({
-        type: 'success',
-        title: 'Wish Dispatched Automatically via +8801625299521 (Background Automation)',
-        message: `Recorded background dispatch for ${phone}. Zero manual touch required.`,
+        type: 'error',
+        title: 'WhatsApp Dispatch Error',
+        message: `${errMsg} (Recipient: ${phone})`,
         recipientName: phone,
+        errorDetails: errMsg
       });
     } finally {
       setIsSendingWhatsApp(false);
@@ -460,10 +492,32 @@ export default function App() {
       
       {/* Toast Notification Banner Overlay */}
       {toastNotification && (
-        <div className="fixed top-20 right-4 sm:right-6 z-50 max-w-md w-full bg-slate-900 text-white rounded-2xl p-4 shadow-2xl border border-emerald-500/40 animate-in fade-in slide-in-from-top duration-300">
+        <div
+          className={`fixed top-20 right-4 sm:right-6 z-50 max-w-md w-full bg-slate-900 text-white rounded-2xl p-4 shadow-2xl border animate-in fade-in slide-in-from-top duration-300 ${
+            toastNotification.type === 'error'
+              ? 'border-rose-500/50 shadow-rose-950/30'
+              : toastNotification.type === 'info'
+              ? 'border-sky-500/50 shadow-sky-950/30'
+              : 'border-emerald-500/40 shadow-emerald-950/30'
+          }`}
+        >
           <div className="flex items-start justify-between gap-3">
-            <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
-              <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+            <div
+              className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                toastNotification.type === 'error'
+                  ? 'bg-rose-500/20 text-rose-400'
+                  : toastNotification.type === 'info'
+                  ? 'bg-sky-500/20 text-sky-400'
+                  : 'bg-emerald-500/20 text-emerald-400'
+              }`}
+            >
+              {toastNotification.type === 'error' ? (
+                <AlertCircle className="w-5 h-5 text-rose-400" />
+              ) : toastNotification.type === 'info' ? (
+                <Bell className="w-5 h-5 text-sky-400" />
+              ) : (
+                <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+              )}
             </div>
             <div className="flex-1">
               <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
@@ -472,12 +526,19 @@ export default function App() {
               <p className="text-[11px] text-slate-300 mt-1 leading-relaxed">
                 {toastNotification.message}
               </p>
-              
+
               <div className="mt-2.5 flex items-center gap-2">
-                <span className="px-2.5 py-1 rounded bg-emerald-950/80 text-emerald-300 border border-emerald-500/30 text-[10px] font-mono font-bold inline-flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                  100% Direct API Dispatched (+8801625299521)
-                </span>
+                {toastNotification.type === 'error' ? (
+                  <span className="px-2.5 py-1 rounded bg-rose-950/80 text-rose-300 border border-rose-500/30 text-[10px] font-mono font-bold inline-flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3 text-rose-400" />
+                    Assistro Gateway Response Error
+                  </span>
+                ) : (
+                  <span className="px-2.5 py-1 rounded bg-emerald-950/80 text-emerald-300 border border-emerald-500/30 text-[10px] font-mono font-bold inline-flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                    100% Direct API Dispatched (+8801625299521)
+                  </span>
+                )}
               </div>
             </div>
             <button

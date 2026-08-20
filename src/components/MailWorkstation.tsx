@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { TeamMember, EmailLogEntry, EmailTemplateOption } from '../types';
 import { checkIsTodayBirthday, getBirthMonth, MONTH_NAMES } from '../utils/dateUtils';
 import { triggerBirthdayConfetti } from '../utils/confetti';
@@ -77,6 +78,49 @@ const EMAIL_TEMPLATES: EmailTemplateOption[] = [
     theme: 'elegant',
   },
 ];
+
+// Sub-component for member avatar with animation and error handling
+const MemberAvatar = ({ member, isToday }: { member: TeamMember; isToday: boolean }) => {
+  const [imgError, setImgError] = useState(false);
+  const initials = member.name 
+    ? member.name.split(' ').filter(Boolean).map(n => n[0]).join('').substring(0, 2).toUpperCase() 
+    : '?';
+
+  return (
+    <motion.div 
+      whileHover={{ scale: 1.15, zIndex: 10 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+      className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs shrink-0 relative transition-all duration-300 ${
+        isToday
+          ? 'bg-amber-100 text-amber-800 border-2 border-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.4)] ring-2 ring-amber-400/20'
+          : 'bg-indigo-50 text-indigo-700 border-2 border-indigo-100 hover:border-indigo-400 hover:shadow-[0_0_12px_rgba(129,140,248,0.4)]'
+      }`}
+    >
+      {member.imageUrl && !imgError ? (
+        <img
+          src={member.imageUrl}
+          alt={member.name}
+          referrerPolicy="no-referrer"
+          className="w-full h-full object-cover rounded-full"
+          onError={() => setImgError(true)}
+        />
+      ) : (
+        <span>{initials}</span>
+      )}
+      
+      {isToday && (
+        <motion.div
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[7px] font-black px-1.5 py-0.5 rounded-full border-2 border-white shadow-sm flex items-center justify-center z-20 whitespace-nowrap"
+        >
+          <Cake className="w-1.5 h-1.5 mr-0.5" />
+          HBD
+        </motion.div>
+      )}
+    </motion.div>
+  );
+};
 
 export const MailWorkstation: React.FC<MailWorkstationProps> = ({
   members,
@@ -1224,23 +1268,8 @@ function isToday(bdayStr, curMonth, curDay) {
 
                             {/* Team Member */}
                             <td className="py-3 px-4">
-                              <div className="flex items-center gap-2.5">
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden ${
-                                  isToday
-                                    ? 'bg-amber-100 text-amber-800 border border-amber-300 ring-2 ring-amber-400/20'
-                                    : 'bg-indigo-50 text-indigo-700 border border-indigo-200'
-                                }`}>
-                                  {isToday && member.imageUrl ? (
-                                    <img
-                                      src={member.imageUrl}
-                                      alt={member.name}
-                                      referrerPolicy="no-referrer"
-                                      className="w-full h-full object-cover rounded-full"
-                                    />
-                                  ) : (
-                                    member.name.charAt(0).toUpperCase()
-                                  )}
-                                </div>
+                              <div className="flex items-center gap-3">
+                                <MemberAvatar member={member} isToday={isToday} />
                                 <div className="min-w-0">
                                   <div className="font-bold text-slate-900 truncate">
                                     {member.name}
@@ -1416,20 +1445,23 @@ function isToday(bdayStr, curMonth, curDay) {
                     {/* Card Header */}
                     <div className="p-4 border-b border-slate-100">
                       <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <h4 className="text-sm font-bold text-slate-900 truncate">
-                              {member.name}
-                            </h4>
-                            {member.id && (
-                              <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-slate-100 text-slate-600">
-                                {member.id}
-                              </span>
-                            )}
+                        <div className="flex items-center gap-3 min-w-0">
+                          <MemberAvatar member={member} isToday={isToday} />
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <h4 className="text-sm font-bold text-slate-900 truncate">
+                                {member.name}
+                              </h4>
+                              {member.id && (
+                                <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-slate-100 text-slate-600">
+                                  {member.id}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-slate-500 mt-0.5 truncate">
+                              {member.designation || 'Team Member'}
+                            </p>
                           </div>
-                          <p className="text-xs text-slate-500 mt-0.5 truncate">
-                            {member.designation || 'Team Member'}
-                          </p>
                         </div>
 
                         {/* Birthday Badge */}
