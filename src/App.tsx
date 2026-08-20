@@ -328,7 +328,20 @@ export default function App() {
         }),
       });
 
-      const data = await res.json();
+      const rawText = await res.text().catch(() => '');
+      let data: any = {};
+      if (rawText && rawText.trim().length > 0) {
+        try {
+          data = JSON.parse(rawText);
+        } catch {
+          data = { success: res.ok, message: rawText };
+        }
+      } else if (res.ok) {
+        data = { success: true, serverDispatched: true, message: 'Delivered successfully' };
+      } else {
+        data = { success: false, error: `HTTP ${res.status} error: Empty response` };
+      }
+
       const isDispatched = data.serverDispatched || data.success;
 
       setTeamMembers((prev) =>
@@ -415,7 +428,19 @@ export default function App() {
         }),
       });
 
-      const data = await res.json();
+      const rawText = await res.text().catch(() => '');
+      let data: any = {};
+      if (rawText && rawText.trim().length > 0) {
+        try {
+          data = JSON.parse(rawText);
+        } catch {
+          data = { success: res.ok, message: rawText };
+        }
+      } else if (res.ok) {
+        data = { success: true, serverDispatched: true, message: 'Delivered successfully' };
+      } else {
+        data = { success: false, error: `HTTP ${res.status} error: Empty response` };
+      }
 
       const newManualLog: LogEntry = {
         id: Date.now().toString(),

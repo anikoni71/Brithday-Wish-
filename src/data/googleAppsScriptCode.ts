@@ -237,11 +237,15 @@ function sendWhatsApp(phone, message) {
     }
     
     var responseData = {};
-    try {
-      responseData = JSON.parse(responseText);
-    } catch (parseErr) {
-      Logger.log("⚠️ Could not parse JSON response from Assistro: " + parseErr.toString() + " | Raw text: " + responseText);
-      responseData = { message: responseText };
+    if (responseText && responseText.trim().length > 0) {
+      try {
+        responseData = JSON.parse(responseText);
+      } catch (parseErr) {
+        Logger.log("ℹ️ Assistro response was plain text: " + responseText);
+        responseData = { message: responseText };
+      }
+    } else if (responseCode === 200 || responseCode === 201) {
+      responseData = { success: true, message: "Message dispatched successfully (HTTP 200 OK)" };
     }
     
     if (responseCode === 200 || responseCode === 201) {

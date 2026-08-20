@@ -1394,7 +1394,18 @@ app.post("/api/dispatch-wish", async (req, res) => {
           })
         });
 
-        const resData = await assistroRes.json().catch(() => ({ message: assistroRes.statusText }));
+        const rawText = await assistroRes.text().catch(() => '');
+        let resData: any = {};
+        if (rawText && rawText.trim().length > 0) {
+          try {
+            resData = JSON.parse(rawText);
+          } catch {
+            resData = { message: rawText };
+          }
+        } else if (assistroRes.ok) {
+          resData = { success: true, message: 'Message dispatched successfully (HTTP 200 OK)' };
+        }
+
         if (assistroRes.ok && resData.status !== 'error' && resData.success !== false) {
           const autoLog = {
             id: `gas-log-${Date.now()}`,
@@ -1690,10 +1701,20 @@ app.post("/api/send-whatsapp", async (req, res) => {
         })
       });
 
-      const resData = await assistroRes.json().catch(() => ({ message: assistroRes.statusText }));
+      const rawText = await assistroRes.text().catch(() => '');
+      let resData: any = {};
+      if (rawText && rawText.trim().length > 0) {
+        try {
+          resData = JSON.parse(rawText);
+        } catch {
+          resData = { message: rawText };
+        }
+      } else if (assistroRes.ok) {
+        resData = { success: true, message: 'Message dispatched successfully (HTTP 200 OK)' };
+      }
 
       if (!assistroRes.ok || resData.status === 'error' || resData.success === false) {
-        const errorMsg = resData.error || resData.message || resData.msg || resData.details || `Assistro API HTTP ${assistroRes.status} error`;
+        const errorMsg = resData.error || resData.message || resData.msg || resData.details || rawText || `Assistro API HTTP ${assistroRes.status} error`;
         return res.status(assistroRes.status >= 400 ? assistroRes.status : 400).json({
           success: false,
           serverDispatched: false,
@@ -1701,6 +1722,7 @@ app.post("/api/send-whatsapp", async (req, res) => {
           error: errorMsg,
           reason: "Assistro API returned an error.",
           details: resData,
+          rawResponse: rawText
         });
       }
 
