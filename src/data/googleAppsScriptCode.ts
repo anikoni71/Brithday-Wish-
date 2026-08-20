@@ -110,9 +110,9 @@ function sendAdminUpcomingBirthdayAlerts() {
   }
 
   if (upcomingCelebrants.length > 0) {
-    const adminMessage = \`🔔 *IE Team Admin Alert: Upcoming Birthdays!*\n\n\${upcomingCelebrants.join("\\n\\n")}\n\n📝 Please verify their contact numbers in the Google Sheet before the 8:00 AM automated dispatch.\`;
+    const adminMessage = \`🔔 *IE TEAM ADMIN ALERT: 1-3 DAYS ADVANCE PLANNING CHECKLIST*\\n\\n\` + \n                         \`This is an automated alert to help you prepare for upcoming birthdays:\\n\\n\` + \n                         \`\${upcomingCelebrants.join("\\\\n\\\\n")}\\n\\n\` + \n                         \`📝 *Admin Checklist*:\\n\` + \n                         \`1. Verify Column J (WhatsApp) for all above members.\\n\` + \n                         \`2. Review Column K (Personalized Wish) if you want to override the default.\\n\` + \n                         \`3. Ensure Column H (Email) is present for fallback delivery.\\n\\n\` + \n                         \`The system will attempt Zero-Touch dispatch at 8:00 AM on the respective days.\`;
     sendWhatsApp(CONFIG.ADMIN_WHATSAPP, adminMessage);
-    MailApp.sendEmail({ to: CONFIG.ADMIN_EMAIL, subject: "🔔 Upcoming IE Team Birthdays - Action Required", body: adminMessage.replace(/\\*/g, "") });
+    MailApp.sendEmail({ to: CONFIG.ADMIN_EMAIL, subject: "🔔 IE Team Advance Planning Checklist: 1-3 Days Birthday Alert", body: adminMessage.replace(/\\*/g, "") });
   }
 }
 
