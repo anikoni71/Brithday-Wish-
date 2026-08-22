@@ -141,6 +141,7 @@ export const MailWorkstation: React.FC<MailWorkstationProps> = ({
   const [selectedMonthFilter, setSelectedMonthFilter] = useState<number | null>(null);
   const [showEmbeddedGraph, setShowEmbeddedGraph] = useState<boolean>(true);
   const [viewLayout, setViewLayout] = useState<'table' | 'grid'>('table');
+  const [includeFestiveCard, setIncludeFestiveCard] = useState<boolean>(true);
   const [sentEmailMap, setSentEmailMap] = useState<Record<string, boolean>>(() => {
     const saved = localStorage.getItem('birthday_sent_email_map');
     if (saved) {
@@ -349,10 +350,30 @@ export const MailWorkstation: React.FC<MailWorkstationProps> = ({
     };
   };
 
+  // Email validation helper
+  const isEmailValid = (email?: string) => {
+    if (!email) return false;
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+  };
+
   // Generate customized wishing HTML email template
-  const generateEmailHtml = (member: TeamMember, templateId: string) => {
+  const generateEmailHtml = (member: TeamMember, templateId: string, includeCard: boolean = false) => {
     const defaultWish = member.wishingMessage || `Happy Birthday, ${member.name}! Wishing you a wonderful year ahead filled with good health and success.`;
     const designation = member.designation || 'Valued Team Member';
+
+    const festiveCardHtml = includeCard ? `
+      <div style="margin: 25px 0; text-align: center; background: #fdf2f8; border: 2px dashed #ec4899; border-radius: 16px; padding: 10px; overflow: hidden;">
+        <div style="background: #ffffff; border-radius: 12px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+          <img src="https://images.unsplash.com/photo-1530103862676-fa8c9d34b3b3?auto=format&fit=crop&q=80&w=800" 
+               alt="Festive Birthday E-Card" 
+               style="width: 100%; height: auto; border-radius: 8px; margin-bottom: 15px; border: 1px solid #f1f5f9;" />
+          <div style="font-family: 'Georgia', serif; color: #db2777; font-size: 18px; font-weight: bold; font-style: italic;">
+            ✨ A Special Festive E-Card for You ✨
+          </div>
+        </div>
+      </div>
+    ` : '';
 
     if (templateId === 'festive_party') {
       return `
@@ -379,6 +400,9 @@ export const MailWorkstation: React.FC<MailWorkstationProps> = ({
             <div class="body">
               <p>Dear <strong>${member.name}</strong>,</p>
               <p>On behalf of the entire <strong>IE Central Team</strong>, we are thrilled to celebrate your special birthday today!</p>
+              
+              ${festiveCardHtml}
+
               <div class="highlight-box">
                 "${defaultWish}"
               </div>
@@ -424,6 +448,9 @@ export const MailWorkstation: React.FC<MailWorkstationProps> = ({
             <p style="color: #334155; font-size: 15px; line-height: 1.6;">
               The IE Central Team wishes you a very happy and joyous birthday! May your year ahead be abundant in professional milestones and personal happiness.
             </p>
+
+            ${festiveCardHtml}
+
             <div class="message">
               "${defaultWish}"
             </div>
@@ -463,6 +490,8 @@ export const MailWorkstation: React.FC<MailWorkstationProps> = ({
             <p>Dear <strong>${member.name}</strong>,</p>
             <p>We are delighted to celebrate your birthday today and recognize your valuable contributions to our department.</p>
             
+            ${festiveCardHtml}
+
             <div class="wish-card">
               "${defaultWish}"
             </div>
@@ -493,7 +522,7 @@ export const MailWorkstation: React.FC<MailWorkstationProps> = ({
 
     const template = EMAIL_TEMPLATES.find((t) => t.id === selectedTemplate) || EMAIL_TEMPLATES[0];
     const subject = template.subject.replace('{name}', member.name);
-    const htmlBody = generateEmailHtml(member, selectedTemplate);
+    const htmlBody = generateEmailHtml(member, selectedTemplate, includeFestiveCard);
     const textBody = member.wishingMessage || `Happy Birthday, ${member.name}! Wishing you a great day from the IE Central Team.`;
 
     const memberKey = member.id || member.sl;
@@ -510,6 +539,7 @@ export const MailWorkstation: React.FC<MailWorkstationProps> = ({
           htmlBody,
           textBody,
           mode: 'DIRECT_DISPATCH',
+          includeFestiveCard,
         }),
       });
 
@@ -549,7 +579,7 @@ export const MailWorkstation: React.FC<MailWorkstationProps> = ({
       const res = await fetch('/api/email-auto-dispatch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ members }),
+        body: JSON.stringify({ members, includeFestiveCard }),
       });
 
       const data = await res.json();
@@ -1005,19 +1035,34 @@ function isToday(bdayStr, curMonth, curDay) {
         </div>
 
         {/* Template Theme Selector */}
-        <div className="flex items-center gap-2">
-          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Mail Theme:</span>
-          <select
-            value={selectedTemplate}
-            onChange={(e) => setSelectedTemplate(e.target.value)}
-            className="text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
-          >
-            {EMAIL_TEMPLATES.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
-              </option>
-            ))}
-          </select>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 border border-indigo-200 rounded-xl cursor-pointer hover:bg-indigo-100 transition shadow-2xs"
+               onClick={() => setIncludeFestiveCard(!includeFestiveCard)}>
+            <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center border transition-all ${
+              includeFestiveCard ? 'bg-indigo-600 border-indigo-600 shadow-[0_0_8px_rgba(79,70,229,0.4)]' : 'bg-white border-indigo-300'
+            }`}>
+              {includeFestiveCard && <Check className="w-2.5 h-2.5 text-white stroke-[3px]" />}
+            </div>
+            <span className="text-[10px] font-bold text-indigo-900 uppercase tracking-tight">Include Festive E-card</span>
+            <Gift className={`w-3.5 h-3.5 ${includeFestiveCard ? 'text-rose-500' : 'text-slate-400'}`} />
+          </div>
+
+          <div className="h-6 w-px bg-slate-200"></div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Mail Theme:</span>
+            <select
+              value={selectedTemplate}
+              onChange={(e) => setSelectedTemplate(e.target.value)}
+              className="text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+            >
+              {EMAIL_TEMPLATES.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
@@ -1271,8 +1316,16 @@ function isToday(bdayStr, curMonth, curDay) {
                               <div className="flex items-center gap-3">
                                 <MemberAvatar member={member} isToday={isToday} />
                                 <div className="min-w-0">
-                                  <div className="font-bold text-slate-900 truncate">
-                                    {member.name}
+                                  <div className="flex items-center gap-1.5">
+                                    <div className="font-bold text-slate-900 truncate">
+                                      {member.name}
+                                    </div>
+                                    {!isEmailValid(member.email) && (
+                                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-rose-50 text-rose-600 border border-rose-100 text-[9px] font-bold uppercase tracking-tighter" title="Missing or invalid email address">
+                                        <AlertTriangle className="w-2.5 h-2.5" />
+                                        Email Missing
+                                      </span>
+                                    )}
                                   </div>
                                   <div className="text-[11px] text-slate-500 truncate">
                                     {member.designation || 'Team Member'}
@@ -1455,6 +1508,12 @@ function isToday(bdayStr, curMonth, curDay) {
                               {member.id && (
                                 <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-slate-100 text-slate-600">
                                   {member.id}
+                                </span>
+                              )}
+                              {!isEmailValid(member.email) && (
+                                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-rose-50 text-rose-600 border border-rose-100 text-[9px] font-bold uppercase tracking-tighter">
+                                  <AlertTriangle className="w-2.5 h-2.5" />
+                                  Email Warning
                                 </span>
                               )}
                             </div>
@@ -1875,7 +1934,7 @@ function isToday(bdayStr, curMonth, curDay) {
             <div className="p-4 max-h-[440px] overflow-y-auto bg-slate-100">
               <div
                 dangerouslySetInnerHTML={{
-                  __html: generateEmailHtml(previewMember, selectedTemplate),
+                  __html: generateEmailHtml(previewMember, selectedTemplate, includeFestiveCard),
                 }}
               />
             </div>

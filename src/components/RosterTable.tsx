@@ -148,12 +148,12 @@ export const RosterTable: React.FC<RosterTableProps> = ({
             onClick={() => handleSetFilterType('due_soon')}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 ${
               filterType === 'due_soon'
-                ? 'bg-amber-600 text-white shadow-xs font-bold'
-                : 'bg-amber-50/80 border border-amber-200 text-amber-900 hover:bg-amber-100'
+                ? 'bg-indigo-600 text-white shadow-xs font-bold'
+                : 'bg-indigo-50/80 border border-indigo-200 text-indigo-900 hover:bg-indigo-100'
             }`}
           >
-            <Clock className="w-3.5 h-3.5" />
-            Due Soon (7 Days) ({dueSoonCount})
+            <CalendarClock className="w-3.5 h-3.5" />
+            Upcoming (7 Days) ({dueSoonCount})
           </button>
 
           <button
@@ -320,9 +320,9 @@ export const RosterTable: React.FC<RosterTableProps> = ({
                           </span>
                         )}
                         {isDueSoon && (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] bg-amber-100 text-amber-900 border border-amber-300 font-bold inline-flex items-center gap-1 shadow-2xs">
-                            <Clock className="w-2.5 h-2.5 text-amber-600" />
-                            Due Soon ({upcomingInfo.daysRemaining === 1 ? 'Tomorrow' : `in ${upcomingInfo.daysRemaining}d`})
+                          <span className="px-2 py-0.5 rounded-full text-[10px] bg-indigo-50 text-indigo-700 border border-indigo-200 font-bold inline-flex items-center gap-1 shadow-2xs">
+                            <CalendarClock className="w-2.5 h-2.5 text-indigo-500" />
+                            Upcoming ({upcomingInfo.daysRemaining === 1 ? 'Tomorrow' : `in ${upcomingInfo.daysRemaining}d`})
                           </span>
                         )}
                       </div>
@@ -389,9 +389,9 @@ export const RosterTable: React.FC<RosterTableProps> = ({
                             Birthday Today (Pending)
                           </span>
                         ) : isDueSoon ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200 shadow-2xs">
-                            <Clock className="w-3.5 h-3.5 text-amber-600" />
-                            Due Soon ({upcomingInfo.daysRemaining === 1 ? 'Tomorrow' : `in ${upcomingInfo.daysRemaining}d`})
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-indigo-50 text-indigo-800 border border-indigo-200 shadow-2xs">
+                            <CalendarClock className="w-3.5 h-3.5 text-indigo-600" />
+                            Upcoming ({upcomingInfo.daysRemaining === 1 ? 'Tomorrow' : `in ${upcomingInfo.daysRemaining}d`})
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">

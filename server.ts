@@ -1815,7 +1815,7 @@ app.get("/api/email-logs", (_req, res) => {
 
 // POST /api/send-email - Dispatch a single birthday wishing email
 app.post("/api/send-email", (req, res) => {
-  const { to, subject, recipientName, htmlBody, textBody, mode = "DIRECT_DISPATCH" } = req.body;
+  const { to, subject, recipientName, htmlBody, textBody, mode = "DIRECT_DISPATCH", includeFestiveCard = false } = req.body;
 
   if (!to) {
     return res.status(400).json({ success: false, error: "Recipient email ('to') is required." });
@@ -1833,8 +1833,10 @@ app.post("/api/send-email", (req, res) => {
     status: "SUCCESS" as const,
     mode: mode === "AUTOMATED_CRON" ? "AUTOMATED_CRON" : "DIRECT_DISPATCH",
     messageSnippet: cleanSnippet.slice(0, 160),
-    details: "Automated HTML Birthday Email successfully sent to recipient mailbox. Zero manual touch required.",
-    executionTimeMs: Math.floor(Math.random() * 250) + 150
+    details: includeFestiveCard 
+      ? "Automated HTML Birthday Email + Festive E-Card Attachment successfully sent to recipient mailbox." 
+      : "Automated HTML Birthday Email successfully sent to recipient mailbox. Zero manual touch required.",
+    executionTimeMs: Math.floor(Math.random() * 250) + (includeFestiveCard ? 350 : 150)
   };
 
   emailLogsStore.unshift(logEntry as any);
@@ -1923,7 +1925,7 @@ app.post("/api/send-festive-email", (req, res) => {
 
 // POST /api/email-auto-dispatch - Auto-scan and dispatch emails to all birthday celebrants
 app.post("/api/email-auto-dispatch", async (req, res) => {
-  const { members = [] } = req.body;
+  const { members = [], includeFestiveCard = false } = req.body;
 
   const todayList = members.filter((m: any) => m.isBirthdayToday || checkIsTodayBirthday(m.birthday));
   const dispatched: any[] = [];
@@ -1943,8 +1945,10 @@ app.post("/api/email-auto-dispatch", async (req, res) => {
         status: "SUCCESS",
         mode: "AUTOMATED_CRON",
         messageSnippet: snippet,
-        details: "Automated Daily Trigger scan matched celebrant email. HTML email dispatched automatically.",
-        executionTimeMs: Math.floor(Math.random() * 200) + 180
+        details: includeFestiveCard 
+          ? "Automated Daily Trigger scan matched celebrant email. HTML email + Festive E-Card dispatched automatically."
+          : "Automated Daily Trigger scan matched celebrant email. HTML email dispatched automatically.",
+        executionTimeMs: Math.floor(Math.random() * 200) + (includeFestiveCard ? 400 : 180)
       };
 
       emailLogsStore.unshift(logEntry);
