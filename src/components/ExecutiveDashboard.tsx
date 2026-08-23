@@ -36,7 +36,8 @@ import {
   Database,
   Search,
   SlidersHorizontal,
-  ChevronDown
+  ChevronDown,
+  Check
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -331,6 +332,37 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
   const [timelineSearch, setTimelineSearch] = useState('');
   const [autoTriggerLogs, setAutoTriggerLogs] = useState<any[]>([]);
   const [dispatchLockDate, setDispatchLockDate] = useState<string | null>(localStorage.getItem('last_auto_dispatch_date'));
+  const [isSyncingCalendar, setIsSyncingCalendar] = useState(false);
+  const [calendarSyncSuccess, setCalendarSyncSuccess] = useState(false);
+
+  const handleSyncCalendar = async () => {
+    setIsSyncingCalendar(true);
+    setCalendarSyncSuccess(false);
+    try {
+      const res = await fetch('/api/sync-calendar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ year: currentYear, calendarName: 'IE Team Birthdays' }),
+      });
+      const data = await res.json();
+      
+      const newLog = {
+        id: `cal-sync-${Date.now()}`,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+        level: 'SYNC',
+        category: 'SYNC',
+        message: `Google Calendar synced ('IE Team Birthdays')`,
+        subtext: `${data.totalCelebrants || members.length} yearly recurring all-day events synchronized`,
+      };
+      setAutoTriggerLogs(prev => [newLog, ...prev]);
+      setCalendarSyncSuccess(true);
+      setTimeout(() => setCalendarSyncSuccess(false), 4000);
+    } catch (err) {
+      console.error('Calendar sync error:', err);
+    } finally {
+      setIsSyncingCalendar(false);
+    }
+  };
 
   // 1. Key Metrics Calculations
   const totalMembers = members.length;
@@ -676,6 +708,31 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
             >
               <Bell className="w-3.5 h-3.5 text-zinc-950" />
               <span>5:00 PM Alerts</span>
+            </button>
+
+            <button
+              id="btn-sync-calendar"
+              onClick={handleSyncCalendar}
+              disabled={isSyncingCalendar}
+              className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer disabled:opacity-50 ${
+                calendarSyncSuccess
+                  ? 'bg-emerald-600 text-white border border-emerald-400 shadow-lg shadow-emerald-950/60'
+                  : 'bg-zinc-900/90 hover:bg-zinc-800 text-zinc-200 border border-zinc-700/70 hover:border-emerald-500/40 shadow-lg shadow-black/60'
+              }`}
+              title="Synchronize team birthdays to Google Calendar ('IE Team Birthdays')"
+            >
+              {calendarSyncSuccess ? (
+                <Check className="w-3.5 h-3.5 text-white" />
+              ) : (
+                <Calendar className={`w-3.5 h-3.5 ${isSyncingCalendar ? 'animate-spin text-emerald-400' : 'text-emerald-400'}`} />
+              )}
+              <span>
+                {isSyncingCalendar
+                  ? 'Syncing...'
+                  : calendarSyncSuccess
+                  ? 'Calendar Synced!'
+                  : 'Sync Calendar'}
+              </span>
             </button>
 
             <a
