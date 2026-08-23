@@ -1,6 +1,6 @@
 /**
  * Utility functions for normalizing and formatting profile image URLs,
- * including automatic Google Drive share link conversion to direct CDN images.
+ * including automatic Google Drive share link conversion to high-definition CDN images.
  */
 
 export function formatProfileImageUrl(url?: string): string {
@@ -19,7 +19,7 @@ export function formatProfileImageUrl(url?: string): string {
     const fileId = driveFileMatch[1];
     // Google Drive IDs are typically 28-33 chars, but let's be safe and check for a minimum length
     if (fileId.length >= 10) {
-      return `https://lh3.googleusercontent.com/d/${fileId}`;
+      return `https://lh3.googleusercontent.com/d/${fileId}=s1200`;
     }
   }
 
@@ -28,7 +28,7 @@ export function formatProfileImageUrl(url?: string): string {
   if (driveIdMatch && driveIdMatch[1]) {
     const fileId = driveIdMatch[1];
     if (fileId.length >= 10) {
-      return `https://lh3.googleusercontent.com/d/${fileId}`;
+      return `https://lh3.googleusercontent.com/d/${fileId}=s1200`;
     }
   }
 
@@ -36,12 +36,43 @@ export function formatProfileImageUrl(url?: string): string {
   if (clean.includes('drive.google.com') || clean.includes('docs.google.com')) {
     const genericIdMatch = clean.match(/[?&]id=([a-zA-Z0-9_-]+)/i);
     if (genericIdMatch && genericIdMatch[1] && genericIdMatch[1].length >= 10) {
-      return `https://lh3.googleusercontent.com/d/${genericIdMatch[1]}`;
+      return `https://lh3.googleusercontent.com/d/${genericIdMatch[1]}=s1200`;
     }
     const genericDMatch = clean.match(/\/d\/([a-zA-Z0-9_-]+)/i);
     if (genericDMatch && genericDMatch[1] && genericDMatch[1].length >= 10) {
-      return `https://lh3.googleusercontent.com/d/${genericDMatch[1]}`;
+      return `https://lh3.googleusercontent.com/d/${genericDMatch[1]}=s1200`;
     }
+  }
+
+  // Google UserContent / Google Photos: Ensure high-res scale parameter (=s1200)
+  if (clean.includes('googleusercontent.com')) {
+    if (/=[sw]\d+[^&?#]*/i.test(clean)) {
+      return clean.replace(/=[sw]\d+[^&?#]*/i, '=s1200');
+    }
+    if (clean.includes('/d/') && !clean.includes('=')) {
+      return `${clean}=s1200`;
+    }
+    if (!clean.includes('=')) {
+      return `${clean}=s1200`;
+    }
+  }
+
+  // Dropbox Direct High-Res Link
+  if (clean.includes('dropbox.com')) {
+    return clean.replace(/[?&]dl=0/i, '').replace(/\?$/, '') + (clean.includes('?') ? '&raw=1' : '?raw=1');
+  }
+
+  // GitHub Avatars High-Res
+  if (clean.includes('avatars.githubusercontent.com') || clean.includes('github.com')) {
+    if (clean.includes('s=')) {
+      return clean.replace(/([?&])s=\d+/i, '$1s=800');
+    }
+    return clean + (clean.includes('?') ? '&s=800' : '?s=800');
+  }
+
+  // Unsplash High-Res
+  if (clean.includes('unsplash.com')) {
+    return clean.replace(/([?&])w=\d+/i, '$1w=800').replace(/([?&])q=\d+/i, '$1q=90');
   }
 
   return clean;

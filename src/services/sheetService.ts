@@ -260,6 +260,7 @@ export function parseSheetRowsToMembers(rows: string[][]): TeamMember[] {
   const idIdx = headers.findIndex((h) => h === 'id' || h.includes('id'));
   const nameIdx = headers.findIndex((h) => h === 'name' || h.includes('name'));
   const desigIdx = headers.findIndex((h) => h.includes('designation') || h.includes('desig'));
+  const deptIdx = headers.findIndex((h) => h.includes('department') || h.includes('dept') || h.includes('section') || h.includes('team') || h.includes('unit'));
   const bdayIdx = headers.findIndex(
     (h) => h.includes('birthday') || h.includes('birth') || h.includes('dob')
   );
@@ -307,6 +308,10 @@ export function parseSheetRowsToMembers(rows: string[][]): TeamMember[] {
       desigIdx !== -1 && row[desigIdx] !== undefined
         ? row[desigIdx].trim()
         : 'Team Member';
+    const department =
+      deptIdx !== -1 && row[deptIdx] !== undefined
+        ? row[deptIdx].trim()
+        : '';
     const birthday =
       bdayIdx !== -1 && row[bdayIdx] !== undefined
         ? row[bdayIdx].trim()
@@ -362,6 +367,7 @@ export function parseSheetRowsToMembers(rows: string[][]): TeamMember[] {
       id,
       name,
       designation: designation || 'Team Member',
+      department: department || undefined,
       birthday,
       mobile,
       email,
@@ -427,6 +433,7 @@ export async function fetchLiveTeamData(targetSheetUrl?: string): Promise<{
             const parsed = list.map((item: any, idx: number) => {
               const name = item.name || item.Name || item.ColumnD || item.colD || '';
               const designation = item.designation || item.Designation || item.ColumnE || '';
+              const department = item.department || item.Department || item.ColumnF || item.dept || item.Dept || '';
               const birthday = item.birthday || item.Birthday || item.ColumnG || item.dob || '';
               const whatsapp = item.whatsapp || item.WhatsApp || item.ColumnJ || item.mobile || item.Mobile || '';
               const wishingMessage = item.wishingMessage || item.message || item.ColumnK || `Happy Birthday, ${name}! Wishing you a great day from the IE Central Team. 🎉`;
@@ -442,6 +449,7 @@ export async function fetchLiveTeamData(targetSheetUrl?: string): Promise<{
                 id: String(id),
                 name: String(name),
                 designation: String(designation || 'Team Member'),
+                department: department ? String(department) : undefined,
                 birthday: String(birthday),
                 mobile: String(whatsapp),
                 email: String(email),

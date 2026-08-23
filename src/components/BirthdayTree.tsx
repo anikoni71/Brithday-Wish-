@@ -634,16 +634,21 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
                       {/* Member Center Avatar / Initials Photo Port */}
                       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                         <div
-                          className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs text-white font-mono shadow-inner border border-white/40 overflow-hidden ${
-                            isToday ? 'bg-amber-400 text-zinc-950 font-black' : 'bg-zinc-900/90'
+                          className={`w-[46px] h-[46px] rounded-full flex items-center justify-center font-bold text-xs text-white font-mono shadow-md border-2 border-white overflow-hidden transition-transform duration-200 group-hover:scale-105 transform-gpu [backface-visibility:hidden] ${
+                            isToday ? 'bg-amber-400 text-zinc-950 font-black ring-2 ring-amber-300' : 'bg-zinc-900'
                           }`}
                         >
                           {member.imageUrl ? (
                             <img
                               src={formatProfileImageUrl(member.imageUrl)}
                               alt={member.name}
-                              className="w-full h-full object-cover rounded-full"
+                              className="w-full h-full object-cover object-center aspect-square rounded-full block select-none pointer-events-auto [image-rendering:-webkit-optimize-contrast] [image-rendering:high-quality] [transform:translateZ(0)] [backface-visibility:hidden]"
+                              loading="eager"
+                              decoding="sync"
                               referrerPolicy="no-referrer"
+                              onError={(e) => {
+                                (e.currentTarget as HTMLElement).style.display = 'none';
+                              }}
                             />
                           ) : (
                             member.name
@@ -790,10 +795,24 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
                           >
                             <div className="flex items-center gap-2 min-w-0">
                               <div
-                                className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white font-mono shrink-0"
+                                className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white font-mono shrink-0 overflow-hidden border border-white/30 shadow-sm bg-zinc-900"
                                 style={{ backgroundColor: theme.innerBg }}
                               >
-                                {mem.name[0]}
+                                {mem.imageUrl ? (
+                                  <img
+                                    src={formatProfileImageUrl(mem.imageUrl)}
+                                    alt={mem.name}
+                                    className="w-full h-full object-cover object-center aspect-square rounded-full block select-none [image-rendering:-webkit-optimize-contrast] [image-rendering:high-quality] [transform:translateZ(0)]"
+                                    loading="eager"
+                                    decoding="sync"
+                                    referrerPolicy="no-referrer"
+                                    onError={(e) => {
+                                      (e.currentTarget as HTMLElement).style.display = 'none';
+                                    }}
+                                  />
+                                ) : (
+                                  mem.name[0]
+                                )}
                               </div>
                               <div className="min-w-0">
                                 <p className="text-xs font-semibold truncate text-white">{mem.name}</p>
@@ -823,14 +842,28 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex items-center gap-2 min-w-0">
                               <div
-                                className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold text-white font-mono shrink-0 shadow-md"
+                                className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold text-white font-mono shrink-0 shadow-md overflow-hidden border border-white/30 bg-zinc-900"
                                 style={{ backgroundColor: theme.innerBg }}
                               >
-                                {mem.name
-                                  .split(' ')
-                                  .map((n) => n[0])
-                                  .slice(0, 2)
-                                  .join('')}
+                                {mem.imageUrl ? (
+                                  <img
+                                    src={formatProfileImageUrl(mem.imageUrl)}
+                                    alt={mem.name}
+                                    className="w-full h-full object-cover object-center aspect-square rounded-lg block select-none [image-rendering:-webkit-optimize-contrast] [image-rendering:high-quality] [transform:translateZ(0)]"
+                                    loading="eager"
+                                    decoding="sync"
+                                    referrerPolicy="no-referrer"
+                                    onError={(e) => {
+                                      (e.currentTarget as HTMLElement).style.display = 'none';
+                                    }}
+                                  />
+                                ) : (
+                                  mem.name
+                                    .split(' ')
+                                    .map((n) => n[0])
+                                    .slice(0, 2)
+                                    .join('')
+                                )}
                               </div>
                               <div className="min-w-0">
                                 <p className="text-xs font-bold truncate text-white">{mem.name}</p>
@@ -920,15 +953,20 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
 
               <div className="flex items-center gap-4 mt-2">
                 <div
-                  className="w-14 h-14 rounded-2xl flex items-center justify-center text-xl font-bold text-white shadow-xl shrink-0 overflow-hidden border border-white/20"
+                  className="w-16 h-16 rounded-2xl flex items-center justify-center text-xl font-bold text-white shadow-xl shrink-0 overflow-hidden border-2 border-white/30 bg-zinc-900"
                   style={{ backgroundColor: activeMember.theme?.innerBg || '#10b981' }}
                 >
                   {activeMember.imageUrl ? (
                     <img
                       src={formatProfileImageUrl(activeMember.imageUrl)}
                       alt={activeMember.name}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover object-center aspect-square rounded-2xl block select-none [image-rendering:-webkit-optimize-contrast] [image-rendering:high-quality] [transform:translateZ(0)]"
+                      loading="eager"
+                      decoding="sync"
                       referrerPolicy="no-referrer"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLElement).style.display = 'none';
+                      }}
                     />
                   ) : (
                     activeMember.name
