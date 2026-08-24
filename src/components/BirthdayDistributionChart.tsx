@@ -167,8 +167,8 @@ export const BirthdayDistributionChart: React.FC<BirthdayDistributionChartProps>
 
     const svgElement = d3.select(svgRef.current);
     const containerWidth = containerRef.current.clientWidth || 750;
-    const height = 290;
-    const margin = { top: 38, right: 24, bottom: 48, left: 38 };
+    const height = 310;
+    const margin = { top: 56, right: 22, bottom: 48, left: 38 };
     const width = containerWidth;
     const innerWidth = Math.max(100, width - margin.left - margin.right);
     const innerHeight = Math.max(50, height - margin.top - margin.bottom);
@@ -178,13 +178,12 @@ export const BirthdayDistributionChart: React.FC<BirthdayDistributionChartProps>
       .attr('width', '100%')
       .attr('height', height);
 
-    const barRadius = 7;
     const allMonthShortNames = MONTH_NAMES.map((m) => m.short);
     const xScale = d3
       .scaleBand<string>()
       .domain(allMonthShortNames)
       .range([0, innerWidth])
-      .padding(0.30);
+      .padding(0.28);
 
     const maxCount = d3.max(monthData, (d) => d.count) || 1;
     const yDomainMax = Math.max(maxCount + 1, 4);
@@ -204,74 +203,166 @@ export const BirthdayDistributionChart: React.FC<BirthdayDistributionChartProps>
       // Defs setup
       const defs = svgElement.append('defs');
 
-      // Filter for bar glow
-      const barGlow = defs
+      // Add Candle Flame CSS animation styles into defs
+      defs.append('style').attr('id', 'candle-flame-styles').text(`
+        @keyframes candleFlicker {
+          0% {
+            transform: scale(1, 1) rotate(0deg) translateY(0);
+            filter: drop-shadow(0 0 3.5px rgba(251, 191, 36, 0.85));
+          }
+          20% {
+            transform: scale(1.08, 0.92) rotate(-2.5deg) translateY(-0.6px);
+            filter: drop-shadow(0 0 5.5px rgba(245, 158, 11, 0.95));
+          }
+          40% {
+            transform: scale(0.92, 1.08) rotate(2deg) translateY(-1.2px);
+            filter: drop-shadow(0 0 3px rgba(251, 191, 36, 0.8));
+          }
+          60% {
+            transform: scale(1.05, 0.95) rotate(-1.5deg) translateY(-0.4px);
+            filter: drop-shadow(0 0 5px rgba(245, 158, 11, 0.9));
+          }
+          80% {
+            transform: scale(0.95, 1.05) rotate(1.8deg) translateY(-0.9px);
+            filter: drop-shadow(0 0 4px rgba(251, 191, 36, 0.85));
+          }
+          100% {
+            transform: scale(1, 1) rotate(0deg) translateY(0);
+            filter: drop-shadow(0 0 3.5px rgba(251, 191, 36, 0.85));
+          }
+        }
+
+        @keyframes candleHaloPulse {
+          0%, 100% {
+            transform: scale(1);
+            opacity: 0.8;
+          }
+          50% {
+            transform: scale(1.18);
+            opacity: 0.98;
+          }
+        }
+
+        .candle-flame-outer, .candle-flame-inner {
+          transform-origin: 0px 0px;
+          animation: candleFlicker 1.35s ease-in-out infinite;
+          animation-delay: var(--flame-delay, 0s);
+        }
+
+        .candle-halo {
+          transform-origin: 0px -9px;
+          animation: candleHaloPulse 1.6s ease-in-out infinite;
+          animation-delay: var(--flame-delay, 0s);
+        }
+      `);
+
+      // Candle Glow Filter
+      const candleGlow = defs
         .append('filter')
-        .attr('id', 'bday-bar-glow')
-        .attr('x', '-20%')
-        .attr('y', '-20%')
-        .attr('width', '140%')
-        .attr('height', '140%');
-      barGlow.append('feDropShadow')
+        .attr('id', 'bday-candle-glow')
+        .attr('x', '-30%')
+        .attr('y', '-30%')
+        .attr('width', '160%')
+        .attr('height', '160%');
+      candleGlow.append('feDropShadow')
         .attr('dx', '0')
         .attr('dy', '4')
         .attr('stdDeviation', '4')
-        .attr('flood-opacity', '0.22')
-        .attr('flood-color', '#1e40af');
+        .attr('flood-opacity', '0.25')
+        .attr('flood-color', '#047857');
 
-      // Current Month Bar Glow
+      // Current Month Candle Glow
       const currentMonthGlow = defs
         .append('filter')
-        .attr('id', 'bday-current-glow')
-        .attr('x', '-25%')
-        .attr('y', '-25%')
-        .attr('width', '150%')
-        .attr('height', '150%');
+        .attr('id', 'bday-current-candle-glow')
+        .attr('x', '-35%')
+        .attr('y', '-35%')
+        .attr('width', '170%')
+        .attr('height', '170%');
       currentMonthGlow.append('feDropShadow')
         .attr('dx', '0')
         .attr('dy', '4')
-        .attr('stdDeviation', '5')
-        .attr('flood-opacity', '0.35')
-        .attr('flood-color', '#059669');
+        .attr('stdDeviation', '6')
+        .attr('flood-opacity', '0.4')
+        .attr('flood-color', '#10b981');
 
-      // Default primary bar gradient
-      const defaultGrad = defs
+      // Candle Cylinder Teal/Emerald Gradient (matching attached image)
+      const emeraldGrad = defs
         .append('linearGradient')
-        .attr('id', 'bday-bar-default')
+        .attr('id', 'candle-pillar-emerald')
         .attr('x1', '0%').attr('y1', '0%')
-        .attr('x2', '0%').attr('y2', '100%');
-      defaultGrad.append('stop').attr('offset', '0%').attr('stop-color', '#60a5fa');
-      defaultGrad.append('stop').attr('offset', '40%').attr('stop-color', '#3b82f6');
-      defaultGrad.append('stop').attr('offset', '100%').attr('stop-color', '#1d4ed8');
+        .attr('x2', '100%').attr('y2', '0%');
+      emeraldGrad.append('stop').attr('offset', '0%').attr('stop-color', '#059669');
+      emeraldGrad.append('stop').attr('offset', '18%').attr('stop-color', '#10b981');
+      emeraldGrad.append('stop').attr('offset', '50%').attr('stop-color', '#34d399');
+      emeraldGrad.append('stop').attr('offset', '82%').attr('stop-color', '#10b981');
+      emeraldGrad.append('stop').attr('offset', '100%').attr('stop-color', '#059669');
 
-      // Current month gradient
+      // Current Month Candle Gradient
       const currentGrad = defs
         .append('linearGradient')
-        .attr('id', 'bday-bar-current')
+        .attr('id', 'candle-pillar-current')
         .attr('x1', '0%').attr('y1', '0%')
-        .attr('x2', '0%').attr('y2', '100%');
-      currentGrad.append('stop').attr('offset', '0%').attr('stop-color', '#34d399');
-      currentGrad.append('stop').attr('offset', '40%').attr('stop-color', '#10b981');
+        .attr('x2', '100%').attr('y2', '0%');
+      currentGrad.append('stop').attr('offset', '0%').attr('stop-color', '#047857');
+      currentGrad.append('stop').attr('offset', '20%').attr('stop-color', '#059669');
+      currentGrad.append('stop').attr('offset', '50%').attr('stop-color', '#6ee7b7');
+      currentGrad.append('stop').attr('offset', '80%').attr('stop-color', '#10b981');
       currentGrad.append('stop').attr('offset', '100%').attr('stop-color', '#047857');
 
-      // Selected gradient
+      // Selected Candle Gradient
       const selectedGrad = defs
         .append('linearGradient')
-        .attr('id', 'bday-bar-selected')
+        .attr('id', 'candle-pillar-selected')
         .attr('x1', '0%').attr('y1', '0%')
-        .attr('x2', '0%').attr('y2', '100%');
-      selectedGrad.append('stop').attr('offset', '0%').attr('stop-color', '#fbbf24');
-      selectedGrad.append('stop').attr('offset', '40%').attr('stop-color', '#f59e0b');
+        .attr('x2', '100%').attr('y2', '0%');
+      selectedGrad.append('stop').attr('offset', '0%').attr('stop-color', '#b45309');
+      selectedGrad.append('stop').attr('offset', '20%').attr('stop-color', '#d97706');
+      selectedGrad.append('stop').attr('offset', '50%').attr('stop-color', '#fde68a');
+      selectedGrad.append('stop').attr('offset', '80%').attr('stop-color', '#f59e0b');
       selectedGrad.append('stop').attr('offset', '100%').attr('stop-color', '#b45309');
 
       // Zero count bar background
       const zeroGrad = defs
         .append('linearGradient')
-        .attr('id', 'bday-bar-zero')
+        .attr('id', 'candle-pillar-zero')
+        .attr('x1', '0%').attr('y1', '0%')
+        .attr('x2', '100%').attr('y2', '0%');
+      zeroGrad.append('stop').attr('offset', '0%').attr('stop-color', '#cbd5e1');
+      zeroGrad.append('stop').attr('offset', '50%').attr('stop-color', '#e2e8f0');
+      zeroGrad.append('stop').attr('offset', '100%').attr('stop-color', '#cbd5e1');
+
+      // Candle Flame Halo (Warm Amber Glow)
+      const haloGrad = defs
+        .append('radialGradient')
+        .attr('id', 'candle-halo-glow')
+        .attr('cx', '50%').attr('cy', '50%').attr('r', '50%');
+      haloGrad.append('stop').attr('offset', '0%').attr('stop-color', '#fbbf24').attr('stop-opacity', '0.85');
+      haloGrad.append('stop').attr('offset', '35%').attr('stop-color', '#f59e0b').attr('stop-opacity', '0.55');
+      haloGrad.append('stop').attr('offset', '70%').attr('stop-color', '#d97706').attr('stop-opacity', '0.18');
+      haloGrad.append('stop').attr('offset', '100%').attr('stop-color', '#d97706').attr('stop-opacity', '0');
+
+      // Candle Flame Outer Teardrop Gradient
+      const flameOuterGrad = defs
+        .append('linearGradient')
+        .attr('id', 'candle-flame-outer-grad')
         .attr('x1', '0%').attr('y1', '0%')
         .attr('x2', '0%').attr('y2', '100%');
-      zeroGrad.append('stop').attr('offset', '0%').attr('stop-color', '#e2e8f0');
-      zeroGrad.append('stop').attr('offset', '100%').attr('stop-color', '#cbd5e1');
+      flameOuterGrad.append('stop').attr('offset', '0%').attr('stop-color', '#ffffff');
+      flameOuterGrad.append('stop').attr('offset', '20%').attr('stop-color', '#fef08a');
+      flameOuterGrad.append('stop').attr('offset', '55%').attr('stop-color', '#fbbf24');
+      flameOuterGrad.append('stop').attr('offset', '80%').attr('stop-color', '#f97316');
+      flameOuterGrad.append('stop').attr('offset', '100%').attr('stop-color', '#ea580c');
+
+      // Candle Flame Inner Core Gradient
+      const flameInnerGrad = defs
+        .append('linearGradient')
+        .attr('id', 'candle-flame-inner-grad')
+        .attr('x1', '0%').attr('y1', '0%')
+        .attr('x2', '0%').attr('y2', '100%');
+      flameInnerGrad.append('stop').attr('offset', '0%').attr('stop-color', '#ffffff');
+      flameInnerGrad.append('stop').attr('offset', '65%').attr('stop-color', '#ffffff');
+      flameInnerGrad.append('stop').attr('offset', '100%').attr('stop-color', '#fef08a');
 
       g = svgElement
         .append('g')
@@ -347,6 +438,11 @@ export const BirthdayDistributionChart: React.FC<BirthdayDistributionChartProps>
       .attr('font-weight', '600')
       .attr('fill', '#94a3b8');
 
+    // Candle Pillar Width & Geometry calculation
+    const bandwidth = xScale.bandwidth();
+    const candleWidth = Math.max(14, Math.min(bandwidth * 0.52, 24));
+    const candleRadius = Math.min(candleWidth / 2, 7);
+
     // Data-Join for Bars
     const barsContainer = g.select('.bars-container');
     const barGroups = barsContainer
@@ -388,21 +484,68 @@ export const BirthdayDistributionChart: React.FC<BirthdayDistributionChartProps>
         }
       });
 
+    // 1. Hover Backdrop Rect
     barGroupsEnter
       .append('rect')
       .attr('class', 'hover-bg')
       .attr('y', 0)
       .attr('rx', 8);
 
+    // 2. Candle Body Rect (smooth cylindrical pill)
     barGroupsEnter
-      .append('path')
-      .attr('class', 'bar-path')
-      .attr('d', (d: MonthData) => {
-        const bx = xScale(d.shortName) || 0;
-        const bw = xScale.bandwidth();
-        return topRoundedRectPath(bx, innerHeight, bw, 0, barRadius);
-      });
+      .append('rect')
+      .attr('class', 'candle-pillar')
+      .attr('rx', candleRadius)
+      .attr('ry', candleRadius);
 
+    // 3. Specular Vertical Highlight Strip (left 3D shine matching attached image)
+    barGroupsEnter
+      .append('rect')
+      .attr('class', 'candle-highlight')
+      .attr('rx', 1)
+      .attr('ry', 1)
+      .attr('fill', 'rgba(255, 255, 255, 0.48)')
+      .attr('pointer-events', 'none');
+
+    // 4. Candle Wick (gray stick at top center)
+    barGroupsEnter
+      .append('line')
+      .attr('class', 'candle-wick')
+      .attr('stroke', '#64748b')
+      .attr('stroke-width', 2)
+      .attr('stroke-linecap', 'round')
+      .attr('pointer-events', 'none');
+
+    // 5. Candle Flame Group (halo + animated teardrop flames)
+    const flameGroup = barGroupsEnter
+      .append('g')
+      .attr('class', 'candle-flame-group')
+      .attr('pointer-events', 'none');
+
+    // Halo Glow
+    flameGroup
+      .append('circle')
+      .attr('class', 'candle-halo')
+      .attr('cx', 0)
+      .attr('cy', -9)
+      .attr('r', 13)
+      .attr('fill', 'url(#candle-halo-glow)');
+
+    // Outer Teardrop Flame
+    flameGroup
+      .append('path')
+      .attr('class', 'candle-flame-outer')
+      .attr('d', 'M 0 0 C -4 -4, -6 -10, 0 -17 C 6 -10, 4 -4, 0 0 Z')
+      .attr('fill', 'url(#candle-flame-outer-grad)');
+
+    // Inner Bright Core Flame
+    flameGroup
+      .append('path')
+      .attr('class', 'candle-flame-inner')
+      .attr('d', 'M 0 -1.5 C -2 -4, -2.5 -7.5, 0 -12 C 2.5 -7.5, 2 -4, 0 -1.5 Z')
+      .attr('fill', 'url(#candle-flame-inner-grad)');
+
+    // 6. Bar Count Text Label
     barGroupsEnter
       .append('text')
       .attr('class', 'bar-label')
@@ -417,8 +560,8 @@ export const BirthdayDistributionChart: React.FC<BirthdayDistributionChartProps>
     // Update hover backgrounds
     allBarGroups
       .select<SVGRectElement>('.hover-bg')
-      .attr('x', (d: MonthData) => (xScale(d.shortName) || 0) - 3)
-      .attr('width', xScale.bandwidth() + 6)
+      .attr('x', (d: MonthData) => (xScale(d.shortName) || 0) - 2)
+      .attr('width', xScale.bandwidth() + 4)
       .attr('height', innerHeight)
       .attr('fill', (d: MonthData) => {
         if (d.monthIndex === activeMonthFilter) return 'rgba(245, 158, 11, 0.09)';
@@ -426,50 +569,77 @@ export const BirthdayDistributionChart: React.FC<BirthdayDistributionChartProps>
         return 'transparent';
       });
 
-    // Smooth transition morphing bar paths without re-creating DOM nodes
+    // Smooth transition morphing candle heights without re-creating DOM nodes
     const isFirstRun = !isInitializedRef.current;
     const transitionDuration = isFirstRun ? 650 : 450;
 
+    // Update Candle Pillars
     allBarGroups
-      .select<SVGPathElement>('.bar-path')
+      .select<SVGRectElement>('.candle-pillar')
+      .attr('x', (d: MonthData) => (xScale(d.shortName) || 0) + (xScale.bandwidth() - candleWidth) / 2)
+      .attr('width', candleWidth)
+      .attr('rx', candleRadius)
+      .attr('ry', candleRadius)
       .attr('fill', (d: MonthData) => {
-        if (d.monthIndex === activeMonthFilter) return 'url(#bday-bar-selected)';
-        if (d.isCurrentMonth) return 'url(#bday-bar-current)';
-        if (d.count === 0) return 'url(#bday-bar-zero)';
-        return 'url(#bday-bar-default)';
+        if (d.monthIndex === activeMonthFilter) return 'url(#candle-pillar-selected)';
+        if (d.isCurrentMonth) return 'url(#candle-pillar-current)';
+        if (d.count === 0) return 'url(#candle-pillar-zero)';
+        return 'url(#candle-pillar-emerald)';
       })
       .attr('filter', (d: MonthData) => {
         if (d.count === 0) return null;
-        if (d.isCurrentMonth) return 'url(#bday-current-glow)';
-        return 'url(#bday-bar-glow)';
+        if (d.isCurrentMonth) return 'url(#bday-current-candle-glow)';
+        return 'url(#bday-candle-glow)';
       })
       .attr('stroke', (d: MonthData) => {
-        if (d.monthIndex === activeMonthFilter) return '#b45309';
+        if (d.monthIndex === activeMonthFilter) return '#d97706';
         if (d.isCurrentMonth) return '#059669';
         if (d.count === 0) return '#cbd5e1';
-        return '#2563eb';
+        return '#047857';
       })
       .attr('stroke-width', (d: MonthData) => (d.count === 0 ? 1 : 1.2))
-      .attr('stroke-dasharray', (d: MonthData) => (d.count === 0 ? '2 2' : 'none'))
       .transition()
       .duration(transitionDuration)
       .ease(d3.easeCubicOut)
-      .attrTween('d', function (d: MonthData) {
-        const currentPath = d3.select(this).attr('d');
-        const bx = xScale(d.shortName) || 0;
-        const bw = xScale.bandwidth();
-        const targetHeight = d.count > 0 ? innerHeight - yScale(d.count) : 5;
-        const targetY = d.count > 0 ? yScale(d.count) : innerHeight - 5;
-        const endPath = topRoundedRectPath(bx, targetY, bw, targetHeight, barRadius);
+      .attr('y', (d: MonthData) => (d.count > 0 ? yScale(d.count) : innerHeight - 4))
+      .attr('height', (d: MonthData) => (d.count > 0 ? innerHeight - yScale(d.count) : 4));
 
-        if (!currentPath || isFirstRun) {
-          return function (t: number) {
-            const curH = targetHeight * t;
-            const curY = innerHeight - curH;
-            return topRoundedRectPath(bx, curY, bw, curH, barRadius);
-          };
-        }
-        return (d3 as any).interpolatePath ? (d3 as any).interpolatePath(currentPath, endPath) : () => endPath;
+    // Update Specular Highlight Stripes
+    allBarGroups
+      .select<SVGRectElement>('.candle-highlight')
+      .attr('x', (d: MonthData) => (xScale(d.shortName) || 0) + (xScale.bandwidth() - candleWidth) / 2 + 2.5)
+      .attr('width', 2)
+      .attr('opacity', (d: MonthData) => (d.count > 0 ? 1 : 0))
+      .transition()
+      .duration(transitionDuration)
+      .ease(d3.easeCubicOut)
+      .attr('y', (d: MonthData) => (d.count > 0 ? yScale(d.count) + 3.5 : innerHeight - 3))
+      .attr('height', (d: MonthData) => (d.count > 0 ? Math.max(0, innerHeight - yScale(d.count) - 7) : 0));
+
+    // Update Candle Wicks
+    allBarGroups
+      .select<SVGLineElement>('.candle-wick')
+      .attr('x1', (d: MonthData) => (xScale(d.shortName) || 0) + xScale.bandwidth() / 2)
+      .attr('x2', (d: MonthData) => (xScale(d.shortName) || 0) + xScale.bandwidth() / 2)
+      .attr('opacity', (d: MonthData) => (d.count > 0 ? 1 : 0))
+      .transition()
+      .duration(transitionDuration)
+      .ease(d3.easeCubicOut)
+      .attr('y1', (d: MonthData) => (d.count > 0 ? yScale(d.count) : innerHeight))
+      .attr('y2', (d: MonthData) => (d.count > 0 ? yScale(d.count) - 6 : innerHeight));
+
+    // Update Candle Flame Group Positions & Staggered Animation Delays
+    allBarGroups
+      .select<SVGGElement>('.candle-flame-group')
+      .attr('opacity', (d: MonthData) => (d.count > 0 ? 1 : 0))
+      .attr('style', (d: MonthData) => `--flame-delay: ${((d.monthIndex * 0.23) % 1.6).toFixed(2)}s;`)
+      .transition()
+      .duration(transitionDuration)
+      .ease(d3.easeCubicOut)
+      .attr('transform', (d: MonthData) => {
+        const cx = (xScale(d.shortName) || 0) + xScale.bandwidth() / 2;
+        const cy = d.count > 0 ? yScale(d.count) - 6 : innerHeight - 6;
+        return `translate(${cx}, ${cy})`;
       });
 
     // Morph label positions
@@ -480,14 +650,14 @@ export const BirthdayDistributionChart: React.FC<BirthdayDistributionChartProps>
         if (d.monthIndex === activeMonthFilter) return '#b45309';
         if (d.isCurrentMonth) return '#047857';
         if (d.count === 0) return '#94a3b8';
-        return '#1e40af';
+        return '#047857';
       })
       .text((d: MonthData) => d.count)
       .transition()
       .duration(transitionDuration)
       .ease(d3.easeCubicOut)
       .attr('opacity', 1)
-      .attr('y', (d: MonthData) => (d.count > 0 ? yScale(d.count) - 8 : innerHeight - 9));
+      .attr('y', (d: MonthData) => (d.count > 0 ? yScale(d.count) - 26 : innerHeight - 8));
 
     // Update current month bottom dot
     const currentMonthObj = monthData[currentMonthIndex];
@@ -631,8 +801,8 @@ export const BirthdayDistributionChart: React.FC<BirthdayDistributionChartProps>
             </div>
 
             {/* SVG Container */}
-            <div ref={containerRef} className="w-full relative min-h-[290px] select-none">
-              <svg ref={svgRef} className="w-full h-[290px] overflow-visible" />
+            <div ref={containerRef} className="w-full relative min-h-[310px] select-none">
+              <svg ref={svgRef} className="w-full h-[310px] overflow-visible" />
 
               {/* Interactive Floating Tooltip */}
               {hoveredMonth && tooltipPos && (

@@ -732,6 +732,7 @@ export default function App() {
           <DispatchInsights 
             automationLogs={automationLogs}
             emailLogs={emailLogs}
+            members={teamMembers}
           />
         )}
 

@@ -602,9 +602,9 @@ export const FestiveCalendarWorkstation: React.FC<FestiveCalendarWorkstationProp
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-                {onlineSearchResults.map((res) => (
+                {onlineSearchResults.map((res, resIdx) => (
                   <div
-                    key={res.id}
+                    key={`online-res-${res.id}-${resIdx}`}
                     className="p-2.5 rounded-xl bg-slate-900/90 border border-amber-500/40 flex items-start justify-between gap-3 text-xs"
                   >
                     <div className="flex items-start gap-2.5">
@@ -702,14 +702,14 @@ export const FestiveCalendarWorkstation: React.FC<FestiveCalendarWorkstationProp
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {upcomingSpecialDays.map((item) => {
+            {upcomingSpecialDays.map((item, idx) => {
               const matches = celebrantsBySpecialDay[item.id] || [];
               const hasCelebrants = matches.length > 0;
               const isImminent = item.daysRemaining <= 7;
 
               return (
                 <div
-                  key={item.id}
+                  key={`festive-upcoming-${item.id}-${idx}`}
                   className={`p-3.5 rounded-2xl border transition relative ${
                     isImminent
                       ? 'bg-amber-50/50 border-amber-300 shadow-xs'
@@ -941,14 +941,14 @@ export const FestiveCalendarWorkstation: React.FC<FestiveCalendarWorkstationProp
               </button>
             </div>
           ) : (
-            filteredSpecialDays.map((sd) => {
+            filteredSpecialDays.map((sd, sdIdx) => {
               const celebrants = celebrantsBySpecialDay[sd.id] || [];
               const hasExactMatch = celebrants.some((c) => c.relationship === 'exact');
               const hasCelebrants = celebrants.length > 0;
 
               return (
                 <div
-                  key={sd.id}
+                  key={`festive-grid-${sd.id}-${sdIdx}`}
                   className={`bg-white rounded-3xl p-6 border transition shadow-xs hover:shadow-md flex flex-col justify-between space-y-5 ${
                     hasExactMatch
                       ? 'border-amber-300 ring-2 ring-amber-400/20'
@@ -1017,12 +1017,12 @@ export const FestiveCalendarWorkstation: React.FC<FestiveCalendarWorkstationProp
 
                     {hasCelebrants ? (
                       <div className="space-y-3">
-                        {celebrants.map((item) => {
+                        {celebrants.map((item, cIdx) => {
                           const isCopied = copiedId === `${sd.id}_${item.member.id || item.member.sl}`;
 
                           return (
                             <div
-                              key={item.member.id || item.member.sl}
+                              key={`${sd.id}_${item.member.id || item.member.sl || 'c'}_${cIdx}`}
                               className={`p-3.5 rounded-2xl border transition ${
                                 item.relationship === 'exact'
                                   ? 'bg-gradient-to-r from-amber-50 to-orange-50/50 border-amber-300 shadow-2xs'
@@ -1174,13 +1174,13 @@ export const FestiveCalendarWorkstation: React.FC<FestiveCalendarWorkstationProp
           </div>
 
           <div className="relative border-l-2 border-slate-200 ml-4 space-y-8 pl-6 sm:pl-8">
-            {filteredSpecialDays.map((sd) => {
+            {filteredSpecialDays.map((sd, sdIdx) => {
               const celebrants = celebrantsBySpecialDay[sd.id] || [];
               const hasExactMatch = celebrants.some((c) => c.relationship === 'exact');
               const hasCelebrants = celebrants.length > 0;
 
               return (
-                <div key={sd.id} className="relative group">
+                <div key={`festive-timeline-${sd.id}-${sdIdx}`} className="relative group">
                   {/* Timeline Dot Icon */}
                   <div
                     className={`absolute -left-[35px] sm:-left-[43px] top-1 w-8 h-8 rounded-xl flex items-center justify-center text-base border-2 shadow-xs ${
@@ -1226,9 +1226,9 @@ export const FestiveCalendarWorkstation: React.FC<FestiveCalendarWorkstationProp
                           Honored Celebrants on this Day:
                         </span>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          {celebrants.map((c) => (
+                          {celebrants.map((c, cIdx) => (
                             <div
-                              key={c.member.id || c.member.sl}
+                              key={`${sd.id}_breakdown_${c.member.id || c.member.sl || 'c'}_${cIdx}`}
                               className="bg-white p-3 rounded-xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5"
                             >
                               <div>
@@ -1319,13 +1319,13 @@ export const FestiveCalendarWorkstation: React.FC<FestiveCalendarWorkstationProp
                         No major national holidays registered
                       </p>
                     ) : (
-                      daysInThisMonth.map((sd) => {
+                      daysInThisMonth.map((sd, sdIdx) => {
                         const matches = celebrantsBySpecialDay[sd.id] || [];
                         const hasExact = matches.some((m) => m.relationship === 'exact');
 
                         return (
                           <div
-                            key={sd.id}
+                            key={`month-${month.index}-sd-${sd.id}-${sdIdx}`}
                             className={`p-2.5 rounded-xl border text-xs flex items-center justify-between gap-2 ${
                               hasExact
                                 ? 'bg-amber-50 border-amber-300'
@@ -1372,9 +1372,9 @@ export const FestiveCalendarWorkstation: React.FC<FestiveCalendarWorkstationProp
                   </div>
 
                   <div className="flex flex-wrap gap-1">
-                    {celebrantsInMonth.slice(0, 4).map((m) => (
+                    {celebrantsInMonth.slice(0, 4).map((m, mIdx) => (
                       <span
-                        key={m.id || m.sl}
+                        key={`cal_month_${month.index}_${m.id || m.sl || 'm'}_${mIdx}`}
                         className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[10px] font-semibold border border-slate-200"
                       >
                         {m.name.split(' ')[0]} ({m.birthday})

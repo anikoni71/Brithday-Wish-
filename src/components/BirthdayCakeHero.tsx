@@ -113,9 +113,9 @@ export const BirthdayCakeHero: React.FC<BirthdayCakeHeroProps> = ({
           {/* Celebrants Chip Carousel if Today */}
           {hasTodayCelebrants && (
             <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 pt-1">
-              {todayBirthdays.map((member) => (
+              {todayBirthdays.map((member, idx) => (
                 <div
-                  key={member.id || member.sl}
+                  key={`${member.id || member.sl || member.name}-${idx}`}
                   className="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/20 backdrop-blur-md text-white text-xs transition"
                 >
                   <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-amber-400 to-rose-400 text-slate-950 font-bold flex items-center justify-center text-xs shadow-md">

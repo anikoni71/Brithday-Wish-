@@ -772,7 +772,7 @@ export const AdminAdvanceAlertModal: React.FC<AdminAdvanceAlertModalProps> = ({
                 </div>
               ) : (
                 <div className="relative pl-4 sm:pl-6 border-l-2 border-slate-200 space-y-4 my-2">
-                  {filteredTimeline.map((item) => {
+                  {filteredTimeline.map((item, idx) => {
                     const isToday = item.daysRemaining === 0;
                     const isTomorrow = item.daysRemaining === 1;
 
@@ -781,7 +781,7 @@ export const AdminAdvanceAlertModal: React.FC<AdminAdvanceAlertModalProps> = ({
                       const spec = item.coincidentSpecialDay;
 
                       return (
-                        <div key={item.id} className="relative group">
+                        <div key={`timeline-${item.id}-${idx}`} className="relative group">
                           {/* Timeline node dot */}
                           <div className={`absolute -left-[23px] sm:-left-[31px] top-4 w-4 h-4 rounded-full border-2 bg-white flex items-center justify-center ${
                             isToday ? 'border-amber-500 bg-amber-500' : 'border-indigo-500'
@@ -892,7 +892,7 @@ export const AdminAdvanceAlertModal: React.FC<AdminAdvanceAlertModalProps> = ({
                       const nearMembers = item.nearbyCelebrants || [];
 
                       return (
-                        <div key={item.id} className="relative group">
+                        <div key={`timeline-${item.id}-${idx}`} className="relative group">
                           {/* Timeline node dot for holiday */}
                           <div className="absolute -left-[23px] sm:-left-[31px] top-4 w-4 h-4 rounded-full border-2 border-emerald-500 bg-emerald-500 flex items-center justify-center shadow-xs">
                             <div className="w-1.5 h-1.5 rounded-full bg-white" />
@@ -947,9 +947,9 @@ export const AdminAdvanceAlertModal: React.FC<AdminAdvanceAlertModalProps> = ({
                                     {nearMembers.length} Team Celebrant{nearMembers.length > 1 ? 's' : ''} in this Holiday Window:
                                   </span>
                                   <div className="flex flex-wrap gap-1">
-                                    {nearMembers.map((nm) => (
+                                    {nearMembers.map((nm, nmIdx) => (
                                       <span
-                                        key={nm.id || nm.sl}
+                                        key={`holiday_${item.id}_${nm.id || nm.sl || nm.name}_${nmIdx}`}
                                         className="px-2 py-0.5 rounded bg-white/10 text-[10px] font-medium text-amber-200 border border-white/10"
                                       >
                                         🎂 {nm.name} ({nm.birthday})
@@ -1002,7 +1002,7 @@ export const AdminAdvanceAlertModal: React.FC<AdminAdvanceAlertModalProps> = ({
                     const specialDayMatch = getNearbySpecialDayForBirthday(item.birthday, 4);
 
                     return (
-                      <div key={item.id || idx} className="p-4 space-y-2.5 hover:bg-slate-50/50 transition">
+                      <div key={`planning-${item.id || item.sl || 'item'}-${idx}`} className="p-4 space-y-2.5 hover:bg-slate-50/50 transition">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="w-5 h-5 rounded-full bg-slate-100 text-slate-700 text-[10px] font-bold flex items-center justify-center">

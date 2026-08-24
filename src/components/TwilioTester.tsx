@@ -169,9 +169,9 @@ export const TwilioTester: React.FC<TwilioTesterProps> = ({
           {logs.length === 0 ? (
             <p className="text-slate-500 italic py-4 text-center">No dispatch logs recorded yet.</p>
           ) : (
-            logs.map((log) => (
+            logs.map((log, idx) => (
               <div
-                key={log.id}
+                key={log.id ? `${log.id}-${idx}` : `log-${idx}`}
                 className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800 flex flex-col gap-1 text-slate-300"
               >
                 <div className="flex items-center justify-between">

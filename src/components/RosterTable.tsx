@@ -215,7 +215,7 @@ export const RosterTable: React.FC<RosterTableProps> = ({
 
   // Render Member Table Row (reused across Flat Table and Department Table)
   const renderMemberRow = (member: TeamMember, idx: number, showDeptBadge = true) => {
-    const key = member.id || member.sl || `member-${idx}`;
+    const key = `${member.id || member.sl || 'member'}-${idx}`;
     const cleanPhone = member.whatsapp || member.mobile;
 
     const isEditing = editingId === (member.id || member.sl);

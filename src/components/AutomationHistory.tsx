@@ -281,8 +281,8 @@ export const AutomationHistory: React.FC<AutomationHistoryProps> = ({
                   </td>
                 </tr>
               ) : (
-                filteredLogs.map((log) => (
-                  <tr key={log.id} className="hover:bg-slate-50/80 transition">
+                filteredLogs.map((log, lIdx) => (
+                  <tr key={log.id ? `${log.id}-${lIdx}` : `auto-log-${lIdx}`} className="hover:bg-slate-50/80 transition">
                     
                     {/* Timestamp */}
                     <td className="py-3 px-4 font-mono text-[11px] text-slate-500 whitespace-nowrap">

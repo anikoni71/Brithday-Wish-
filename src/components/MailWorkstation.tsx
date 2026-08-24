@@ -1287,11 +1287,11 @@ function isToday(bdayStr, curMonth, curDay) {
                         </td>
                       </tr>
                     ) : (
-                      filteredMembers.map((member) => {
+                      filteredMembers.map((member, idx) => {
                         const isToday = Boolean(member.isBirthdayToday || checkIsTodayBirthday(member.birthday) || (member as any).isToday);
-                        const memberKey = member.id || member.sl;
+                        const memberKey = `${member.id || member.sl || 'mail'}-${idx}`;
                         const hasEmail = Boolean(member.email && member.email.trim().length > 0);
-                        const isEditingThis = editingEmailId === memberKey;
+                        const isEditingThis = editingEmailId === (member.id || member.sl);
                         const statusInfo = getMemberStatusInfo(member);
                         const StatusIcon = statusInfo.icon;
 
@@ -1478,11 +1478,11 @@ function isToday(bdayStr, curMonth, curDay) {
           {/* CARDS GRID VIEW WITH COLOR-CODED STATUS BADGES */}
           {viewLayout === 'grid' && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredMembers.map((member) => {
+              {filteredMembers.map((member, idx) => {
                 const isToday = Boolean(member.isBirthdayToday || checkIsTodayBirthday(member.birthday) || (member as any).isToday);
-                const memberKey = member.id || member.sl;
+                const memberKey = `${member.id || member.sl || 'mail-card'}-${idx}`;
                 const hasEmail = Boolean(member.email && member.email.trim().length > 0);
-                const isEditingThis = editingEmailId === memberKey;
+                const isEditingThis = editingEmailId === (member.id || member.sl);
                 const statusInfo = getMemberStatusInfo(member);
                 const StatusIcon = statusInfo.icon;
 
@@ -1798,8 +1798,8 @@ function isToday(bdayStr, curMonth, curDay) {
             ) : (
               emailLogs
                 .filter((l) => logStatusFilter === 'ALL' || l.status === logStatusFilter)
-                .map((log) => (
-                <div key={log.id} className="p-4 hover:bg-slate-50/80 transition flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
+                .map((log, lIdx) => (
+                <div key={log.id ? `${log.id}-${lIdx}` : `email-log-${lIdx}`} className="p-4 hover:bg-slate-50/80 transition flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-bold text-slate-900">{log.recipientName}</span>

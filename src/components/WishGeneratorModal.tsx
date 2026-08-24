@@ -158,8 +158,8 @@ export const WishGeneratorModal: React.FC<WishGeneratorModalProps> = ({
               onChange={handleMemberSelect}
               className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 bg-slate-50 focus:bg-white focus:border-emerald-600 focus:outline-hidden font-medium text-slate-800"
             >
-              {teamMembers.map(m => (
-                <option key={m.id || m.sl || m.name} value={m.id || m.sl || m.name}>
+              {teamMembers.map((m, mIdx) => (
+                <option key={m.id ? `${m.id}-${mIdx}` : (m.sl ? `${m.sl}-${mIdx}` : `m-${mIdx}`)} value={m.id || m.sl || m.name}>
                   {m.name} ({m.designation || 'Team Member'}) {m.isBirthdayToday ? '🎂 Today!' : ''}
                 </option>
               ))}

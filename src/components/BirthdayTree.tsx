@@ -582,7 +582,7 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
 
               return (
                 <motion.div
-                  key={member.id || member.sl || idx}
+                  key={`tree-ornament-${member.id || member.sl || 'm'}-${idx}`}
                   initial={{ scale: 0, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ delay: idx * 0.02, duration: 0.4, type: 'spring' }}
@@ -781,11 +781,11 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
                 {/* Celebrants in Month */}
                 <div className="mt-3 space-y-2 max-h-56 overflow-y-auto pr-1">
                   {group.length > 0 ? (
-                    group.map((mem) => {
+                    group.map((mem, memIdx) => {
                       if (cardDetailLevel === 'compact') {
                         return (
                           <div
-                            key={mem.id || mem.sl}
+                            key={`month-${m.short}-compact-${mem.id || mem.sl || 'mem'}-${memIdx}`}
                             onClick={() => setActiveMember(mem)}
                             className={`p-2 rounded-xl border flex items-center justify-between gap-2 cursor-pointer transition ${
                               mem.isToday
@@ -831,7 +831,7 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
                       // Full details card view
                       return (
                         <div
-                          key={mem.id || mem.sl}
+                          key={`month-${m.short}-full-${mem.id || mem.sl || 'mem'}-${memIdx}`}
                           onClick={() => setActiveMember(mem)}
                           className={`p-3 rounded-2xl border transition-all duration-200 cursor-pointer ${
                             mem.isToday

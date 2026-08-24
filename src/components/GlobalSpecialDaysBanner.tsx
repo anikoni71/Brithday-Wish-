@@ -101,13 +101,13 @@ export const GlobalSpecialDaysBanner: React.FC<GlobalSpecialDaysBannerProps> = (
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {upcomingSpecialDays.map((event) => {
+          {upcomingSpecialDays.map((event, eventIdx) => {
             const nearMembers = celebrantsBySpecialDay[event.id] || [];
             const isNear = event.daysRemaining <= 7;
 
             return (
               <div
-                key={event.id}
+                key={`banner-upcoming-${event.id}-${eventIdx}`}
                 onClick={() => setActiveSpecialDay(activeSpecialDay?.id === event.id ? null : event)}
                 className={`p-3.5 rounded-xl border transition cursor-pointer relative bg-white ${
                   isNear
@@ -172,8 +172,8 @@ export const GlobalSpecialDaysBanner: React.FC<GlobalSpecialDaysBannerProps> = (
                           Birthdays Near this Holiday:
                         </p>
                         <div className="flex flex-wrap gap-1 mt-1">
-                          {nearMembers.map((nm) => (
-                            <span key={nm.id || nm.sl} className="px-1.5 py-0.5 rounded bg-slate-800 text-[10px] text-slate-200 border border-slate-700">
+                          {nearMembers.map((nm, nmIdx) => (
+                            <span key={`banner_${event.id}_${nm.id || nm.sl || nm.name}_${nmIdx}`} className="px-1.5 py-0.5 rounded bg-slate-800 text-[10px] text-slate-200 border border-slate-700">
                               {nm.name} ({nm.birthday})
                             </span>
                           ))}
@@ -220,12 +220,12 @@ export const GlobalSpecialDaysBanner: React.FC<GlobalSpecialDaysBannerProps> = (
 
           {/* Special Days Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {filteredFullList.map((sd) => {
+            {filteredFullList.map((sd, sdIdx) => {
               const nearMembers = celebrantsBySpecialDay[sd.id] || [];
 
               return (
                 <div
-                  key={sd.id}
+                  key={`banner-full-${sd.id}-${sdIdx}`}
                   className="p-3 rounded-xl border border-slate-200 hover:border-slate-300 bg-slate-50/50 hover:bg-white transition flex flex-col justify-between"
                 >
                   <div>

@@ -1297,13 +1297,13 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
         {/* Celebrant Cards Grid / Horizontal Timeline Stream */}
         {upcoming30DaysCelebrants.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-            {upcoming30DaysCelebrants.map((item) => {
+            {upcoming30DaysCelebrants.map((item, idx) => {
               const fullMember = members.find((m) => m.id === item.id || m.sl === item.sl);
               const isToday = item.daysRemaining === 0;
 
               return (
                 <div
-                  key={item.id || item.sl}
+                  key={`exec-30d-${item.id || item.sl || item.name}-${idx}`}
                   className={`p-3.5 rounded-xl border transition-all duration-200 backdrop-blur-md flex flex-col justify-between gap-3 ${
                     isToday
                       ? 'bg-zinc-950/90 border-emerald-500/60 shadow-lg shadow-emerald-500/5'
@@ -1445,8 +1445,8 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
 
           {/* Terminal Console Box */}
           <div className="bg-zinc-950 rounded-xl p-3.5 border border-zinc-800/80 font-mono text-xs space-y-2.5 max-h-64 overflow-y-auto">
-            {systemActivityLogs.map((log) => (
-              <div key={log.id} className="flex items-start gap-2.5 text-zinc-300 leading-tight">
+            {systemActivityLogs.map((log, lIdx) => (
+              <div key={log.id ? `${log.id}-${lIdx}` : `sys-log-${lIdx}`} className="flex items-start gap-2.5 text-zinc-300 leading-tight">
                 <span className="text-zinc-500 shrink-0 text-[10px]">[{log.time}]</span>
                 <span
                   className={`px-1 rounded text-[9px] font-bold shrink-0 ${

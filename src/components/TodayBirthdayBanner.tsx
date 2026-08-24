@@ -75,10 +75,10 @@ export const TodayBirthdayBanner: React.FC<TodayBirthdayBannerProps> = ({
 
           {/* Member Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {todayBirthdays.map((member) => {
+            {todayBirthdays.map((member, idx) => {
               return (
                 <div
-                  key={member.id || member.sl || member.name}
+                  key={`${member.id || member.sl || member.name}-${idx}`}
                   className="bg-slate-800/90 border border-slate-700/80 rounded-xl p-4 flex flex-col justify-between hover:border-emerald-500/50 transition"
                 >
                   <div>
