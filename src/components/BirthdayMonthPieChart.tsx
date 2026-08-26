@@ -1,7 +1,8 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useRef } from 'react';
 import * as d3 from 'd3';
 import { MonthData } from './BirthdayDistributionChart';
-import { PieChart, Check, Cake } from 'lucide-react';
+import { Check, Lightbulb, Sparkles } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface BirthdayMonthPieChartProps {
   monthData: MonthData[];
@@ -17,6 +18,8 @@ export const BirthdayMonthPieChart: React.FC<BirthdayMonthPieChartProps> = ({
   onSelectMonth,
 }) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Filter months that actually have at least 1 celebrant for the pie slices
   const activeMonthsWithData = useMemo(() => {
@@ -103,17 +106,39 @@ export const BirthdayMonthPieChart: React.FC<BirthdayMonthPieChartProps> = ({
 
   const featuredPct = featuredMonth && totalCelebrants > 0 ? Math.round((featuredMonth.count / totalCelebrants) * 100) : 0;
 
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      setMousePos({
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+      });
+    }
+  };
+
+  const hoveredMonthData = useMemo(() => {
+    return hoveredIndex !== null ? monthData.find(m => m.monthIndex === hoveredIndex) : null;
+  }, [hoveredIndex, monthData]);
+
   return (
-    <div className="bg-[#fbf7f2] rounded-2xl border border-amber-200/80 p-4 flex flex-col justify-between h-full shadow-xs relative overflow-hidden">
+    <motion.div 
+      ref={containerRef}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      onMouseMove={handleMouseMove}
+      className="bg-[#fbf7f2] rounded-2xl border border-amber-200/80 p-4 flex flex-col justify-between h-full shadow-xs relative overflow-hidden"
+    >
       {/* Decorative Warm Cake Card Ambient Background */}
       <div className="absolute top-0 right-0 w-32 h-32 bg-amber-100/40 rounded-full blur-2xl pointer-events-none" />
 
       {/* Header */}
       <div className="flex items-center justify-between border-b border-amber-200/60 pb-3 mb-2 z-10">
         <div className="flex items-center gap-2">
-          <span className="p-1.5 bg-[#451a03] text-amber-100 rounded-lg shadow-xs">
-            <Cake className="w-4 h-4" />
-          </span>
+          <div className="relative p-1.5 bg-teal-500 text-white rounded-lg shadow-sm border border-teal-400/30">
+            <Lightbulb className="w-4 h-4" />
+            <Sparkles className="w-2 h-2 absolute -top-0.5 -right-0.5 text-amber-200 animate-pulse" />
+          </div>
           <div>
             <h4 className="text-xs font-bold text-[#381c0e] tracking-tight flex items-center gap-1.5">
               <span>Month-Wise Share</span>
@@ -198,13 +223,9 @@ export const BirthdayMonthPieChart: React.FC<BirthdayMonthPieChartProps> = ({
                       transform: scale(1.2) rotate(45deg);
                     }
                   }
-                  @keyframes calloutLineGlow {
-                    0%, 100% {
-                      stroke-dashoffset: 0;
-                    }
-                    50% {
-                      stroke-dashoffset: 6;
-                    }
+                  @keyframes cakeEntrance {
+                    from { transform: scale(0.8) translateY(30px); opacity: 0; }
+                    to { transform: scale(1) translateY(0); opacity: 1; }
                   }
                   .floating-cake-slice {
                     animation: cakeSliceFloat 3.6s ease-in-out infinite;
@@ -212,6 +233,9 @@ export const BirthdayMonthPieChart: React.FC<BirthdayMonthPieChartProps> = ({
                   .slice-shadow-anim {
                     transform-origin: 44px 62px;
                     animation: sliceShadowBreathe 3.6s ease-in-out infinite;
+                  }
+                  .cake-main-group {
+                    animation: cakeEntrance 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
                   }
                   .cherry-anim-0 { animation: cherryGleam 2.8s ease-in-out infinite; animation-delay: 0s; transform-box: fill-box; transform-origin: center; }
                   .cherry-anim-1 { animation: cherryGleam 2.8s ease-in-out infinite; animation-delay: 0.4s; transform-box: fill-box; transform-origin: center; }
@@ -292,223 +316,225 @@ export const BirthdayMonthPieChart: React.FC<BirthdayMonthPieChartProps> = ({
               </defs>
 
               {/* 3D CAKE SHADOW AT BASE */}
-              <ellipse
-                cx={cakeCx + 2}
-                cy={cakeCy + cakeHeight + 4}
-                rx={rx + 8}
-                ry={ry + 4}
-                fill="rgba(69, 26, 3, 0.16)"
-                filter="blur(3px)"
-              />
-
-              {/* Celebratory Twinkling Sparkles */}
-              <g className="cake-ambient-sparkles pointer-events-none">
-                <path
-                  d="M 45 65 Q 45 72 38 72 Q 45 72 45 79 Q 45 72 52 72 Q 45 72 45 65 Z"
-                  fill="#f59e0b"
-                  className="sparkle-1"
+              <g className="cake-main-group">
+                <ellipse
+                  cx={cakeCx + 2}
+                  cy={cakeCy + cakeHeight + 4}
+                  rx={rx + 8}
+                  ry={ry + 4}
+                  fill="rgba(69, 26, 3, 0.16)"
+                  filter="blur(3px)"
                 />
-                <path
-                  d="M 215 170 Q 215 175 210 175 Q 215 175 215 180 Q 215 175 220 175 Q 215 175 215 170 Z"
-                  fill="#fbbf24"
-                  className="sparkle-2"
-                />
-                <path
-                  d="M 125 78 Q 125 82 121 82 Q 125 82 125 86 Q 125 82 129 82 Q 125 82 125 78 Z"
-                  fill="#fcd34d"
-                  className="sparkle-3"
-                />
-              </g>
 
-              {/* 1. FRONT CYLINDER BASE WALLS (FOR EACH VISIBLE SLICE) */}
-              <g className="cake-side-walls">
-                {pieSlices.map((slice) => {
-                  const m = slice.data;
-                  const isSelected = activeMonthFilter === m.monthIndex;
-                  const isHovered = hoveredIndex === m.monthIndex;
-                  const sidePath = getSideWallPath(slice.startAngle, slice.endAngle);
+                {/* Celebratory Twinkling Sparkles */}
+                <g className="cake-ambient-sparkles pointer-events-none">
+                  <path
+                    d="M 45 65 Q 45 72 38 72 Q 45 72 45 79 Q 45 72 52 72 Q 45 72 45 65 Z"
+                    fill="#f59e0b"
+                    className="sparkle-1"
+                  />
+                  <path
+                    d="M 215 170 Q 215 175 210 175 Q 215 175 215 180 Q 215 175 220 175 Q 215 175 215 170 Z"
+                    fill="#fbbf24"
+                    className="sparkle-2"
+                  />
+                  <path
+                    d="M 125 78 Q 125 82 121 82 Q 125 82 125 86 Q 125 82 129 82 Q 125 82 125 78 Z"
+                    fill="#fcd34d"
+                    className="sparkle-3"
+                  />
+                </g>
 
-                  if (!sidePath) return null;
+                {/* 1. FRONT CYLINDER BASE WALLS (FOR EACH VISIBLE SLICE) */}
+                <g className="cake-side-walls">
+                  {pieSlices.map((slice) => {
+                    const m = slice.data;
+                    const isSelected = activeMonthFilter === m.monthIndex;
+                    const isHovered = hoveredIndex === m.monthIndex;
+                    const sidePath = getSideWallPath(slice.startAngle, slice.endAngle);
 
-                  return (
-                    <path
-                      key={`side-${m.shortName}`}
-                      d={sidePath}
-                      fill="url(#cake-side-wall)"
-                      stroke="#1e0c05"
-                      strokeWidth="0.8"
-                      className="transition-all duration-200 cursor-pointer hover:brightness-110"
-                      opacity={isSelected || isHovered ? 1 : 0.95}
-                      onMouseEnter={() => setHoveredIndex(m.monthIndex)}
-                      onMouseLeave={() => setHoveredIndex(null)}
-                      onClick={() => {
-                        const newFilter = activeMonthFilter === m.monthIndex ? null : m.monthIndex;
-                        if (onSelectMonth) onSelectMonth(newFilter);
-                      }}
-                    />
-                  );
-                })}
-              </g>
+                    if (!sidePath) return null;
 
-              {/* 2. TOP CAKE SLICES */}
-              <g className="cake-top-slices">
-                {pieSlices.map((slice) => {
-                  const m = slice.data;
-                  const isSelected = activeMonthFilter === m.monthIndex;
-                  const isHovered = hoveredIndex === m.monthIndex;
-                  const topPath = getTopSlicePath(slice.startAngle, slice.endAngle);
-
-                  return (
-                    <path
-                      key={`top-${m.shortName}`}
-                      d={topPath}
-                      fill={isSelected || isHovered ? 'url(#cake-top-selected)' : 'url(#cake-top-glaze)'}
-                      stroke={isSelected ? '#f59e0b' : '#2b1308'}
-                      strokeWidth={isSelected ? '2' : '1'}
-                      className="cursor-pointer transition-all duration-200 hover:brightness-110"
-                      onMouseEnter={() => setHoveredIndex(m.monthIndex)}
-                      onMouseLeave={() => setHoveredIndex(null)}
-                      onClick={() => {
-                        const newFilter = activeMonthFilter === m.monthIndex ? null : m.monthIndex;
-                        if (onSelectMonth) onSelectMonth(newFilter);
-                      }}
-                    />
-                  );
-                })}
-              </g>
-
-              {/* 3. CENTER WHIPPED CREAM FLOWER / ROSETTE */}
-              <g className="center-rosette rosette-animated" transform={`translate(${cakeCx}, ${cakeCy})`}>
-                {/* 5 Petals */}
-                {[0, 72, 144, 216, 288].map((deg, pIdx) => {
-                  const rad = (deg * Math.PI) / 180;
-                  const px = Math.cos(rad) * 6.5;
-                  const py = Math.sin(rad) * 4.2;
-                  return (
-                    <ellipse
-                      key={`petal-${pIdx}`}
-                      cx={px}
-                      cy={py}
-                      rx={4.8}
-                      ry={3.5}
-                      fill="url(#cream-petal-grad)"
-                      stroke="#cbd5e1"
-                      strokeWidth="0.5"
-                    />
-                  );
-                })}
-                {/* Center Cherry Berry */}
-                <ellipse cx={0} cy={0} rx={3.2} ry={2.5} fill="url(#cherry-red-grad)" />
-                <ellipse cx={-0.8} cy={-0.6} rx={0.9} ry={0.6} fill="#ffffff" opacity={0.8} />
-              </g>
-
-              {/* 4. GLOSSY CHERRIES ON EACH SLICE WITH CALLOUT POINTERS */}
-              <g className="cake-cherries-and-callouts">
-                {pieSlices.map((slice, i) => {
-                  const m = slice.data;
-                  const isSelected = activeMonthFilter === m.monthIndex;
-                  const isHovered = hoveredIndex === m.monthIndex;
-                  const midAngle = (slice.startAngle + slice.endAngle) / 2;
-                  const pct = totalCelebrants > 0 ? Math.round((m.count / totalCelebrants) * 100) : 0;
-
-                  // Cherry position on cake top ellipse
-                  const cherryPos = getEllipsePoint(midAngle, rx * 0.68, ry * 0.68, cakeCx, cakeCy);
-
-                  // Callout label endpoint calculation (left or right side depending on angle)
-                  const isLeftSide = Math.sin(midAngle - Math.PI / 2) < 0;
-                  const trigAngle = midAngle - Math.PI / 2;
-
-                  // Determine callout line target
-                  let calloutX = isLeftSide ? 34 : 205;
-                  let calloutY = cherryPos.y;
-
-                  // Spread out callouts vertically for clarity
-                  if (trigAngle < -Math.PI / 3) {
-                    calloutY = Math.max(18, cherryPos.y - 32);
-                    calloutX = 60;
-                  } else if (trigAngle > Math.PI / 3 && trigAngle < (2 * Math.PI) / 3) {
-                    calloutY = cherryPos.y + 40;
-                    calloutX = isLeftSide ? 42 : 190;
-                  }
-
-                  return (
-                    <g
-                      key={`cherry-callout-${m.shortName}`}
-                      className="cursor-pointer group"
-                      onMouseEnter={() => setHoveredIndex(m.monthIndex)}
-                      onMouseLeave={() => setHoveredIndex(null)}
-                      onClick={() => {
-                        const newFilter = activeMonthFilter === m.monthIndex ? null : m.monthIndex;
-                        if (onSelectMonth) onSelectMonth(newFilter);
-                      }}
-                    >
-                      {/* Callout Leader Line */}
-                      <polyline
-                        points={`${cherryPos.x},${cherryPos.y} ${calloutX + (isLeftSide ? 20 : -20)},${calloutY} ${calloutX},${calloutY}`}
-                        fill="none"
-                        stroke={isSelected || isHovered ? '#b45309' : '#381c0e'}
-                        strokeWidth={isSelected || isHovered ? '1.8' : '1.1'}
-                        opacity={isSelected || isHovered ? 1 : 0.85}
-                        className="transition-all duration-200"
+                    return (
+                      <path
+                        key={`side-${m.shortName}`}
+                        d={sidePath}
+                        fill="url(#cake-side-wall)"
+                        stroke="#1e0c05"
+                        strokeWidth="0.8"
+                        className="transition-all duration-200 cursor-pointer hover:brightness-110"
+                        opacity={isSelected || isHovered ? 1 : 0.95}
+                        onMouseEnter={() => setHoveredIndex(m.monthIndex)}
+                        onMouseLeave={() => setHoveredIndex(null)}
+                        onClick={() => {
+                          const newFilter = activeMonthFilter === m.monthIndex ? null : m.monthIndex;
+                          if (onSelectMonth) onSelectMonth(newFilter);
+                        }}
                       />
+                    );
+                  })}
+                </g>
 
-                      {/* Small anchor dot on cherry */}
-                      <circle
-                        cx={cherryPos.x}
-                        cy={cherryPos.y}
-                        r={1.8}
-                        fill={isSelected || isHovered ? '#f59e0b' : '#381c0e'}
+                {/* 2. TOP CAKE SLICES */}
+                <g className="cake-top-slices">
+                  {pieSlices.map((slice) => {
+                    const m = slice.data;
+                    const isSelected = activeMonthFilter === m.monthIndex;
+                    const isHovered = hoveredIndex === m.monthIndex;
+                    const topPath = getTopSlicePath(slice.startAngle, slice.endAngle);
+
+                    return (
+                      <path
+                        key={`top-${m.shortName}`}
+                        d={topPath}
+                        fill={isSelected || isHovered ? 'url(#cake-top-selected)' : 'url(#cake-top-glaze)'}
+                        stroke={isSelected ? '#f59e0b' : '#2b1308'}
+                        strokeWidth={isSelected ? '2' : '1'}
+                        className="cursor-pointer transition-all duration-200 hover:brightness-110"
+                        onMouseEnter={() => setHoveredIndex(m.monthIndex)}
+                        onMouseLeave={() => setHoveredIndex(null)}
+                        onClick={() => {
+                          const newFilter = activeMonthFilter === m.monthIndex ? null : m.monthIndex;
+                          if (onSelectMonth) onSelectMonth(newFilter);
+                        }}
                       />
+                    );
+                  })}
+                </g>
 
-                      {/* Callout Percentage Number */}
-                      <text
-                        x={isLeftSide ? calloutX - 4 : calloutX + 4}
-                        y={calloutY + 4}
-                        textAnchor={isLeftSide ? 'end' : 'start'}
-                        fill={isSelected ? '#92400e' : isHovered ? '#b45309' : '#2b1409'}
-                        fontFamily="serif"
-                        fontSize={pct >= 30 ? '19' : pct >= 20 ? '16' : '13'}
-                        fontWeight="900"
-                        className="transition-all duration-200 select-none group-hover:scale-105"
-                      >
-                        {pct}
-                        <tspan fontSize="10" fontWeight="600" dx="1">
-                          %
-                        </tspan>
-                      </text>
-
-                      {/* Cherry Shadow on cake */}
+                {/* 3. CENTER WHIPPED CREAM FLOWER / ROSETTE */}
+                <g className="center-rosette rosette-animated" transform={`translate(${cakeCx}, ${cakeCy})`}>
+                  {/* 5 Petals */}
+                  {[0, 72, 144, 216, 288].map((deg, pIdx) => {
+                    const rad = (deg * Math.PI) / 180;
+                    const px = Math.cos(rad) * 6.5;
+                    const py = Math.sin(rad) * 4.2;
+                    return (
                       <ellipse
-                        cx={cherryPos.x + 1}
-                        cy={cherryPos.y + 3}
-                        rx={5}
-                        ry={2.5}
-                        fill="rgba(0,0,0,0.35)"
+                        key={`petal-${pIdx}`}
+                        cx={px}
+                        cy={py}
+                        rx={4.8}
+                        ry={3.5}
+                        fill="url(#cream-petal-grad)"
+                        stroke="#cbd5e1"
+                        strokeWidth="0.5"
                       />
+                    );
+                  })}
+                  {/* Center Cherry Berry */}
+                  <ellipse cx={0} cy={0} rx={3.2} ry={2.5} fill="url(#cherry-red-grad)" />
+                  <ellipse cx={-0.8} cy={-0.6} rx={0.9} ry={0.6} fill="#ffffff" opacity={0.8} />
+                </g>
 
-                      {/* Cherry Body with animation class */}
-                      <circle
-                        cx={cherryPos.x}
-                        cy={cherryPos.y}
-                        r={isHovered || isSelected ? 7.2 : 5.8}
-                        fill="url(#cherry-red-grad)"
-                        stroke="#7f1d1d"
-                        strokeWidth="0.6"
-                        className={`transition-all duration-200 cherry-anim-${i % 6}`}
-                      />
+                {/* 4. GLOSSY CHERRIES ON EACH SLICE WITH CALLOUT POINTERS */}
+                <g className="cake-cherries-and-callouts">
+                  {pieSlices.map((slice, i) => {
+                    const m = slice.data;
+                    const isSelected = activeMonthFilter === m.monthIndex;
+                    const isHovered = hoveredIndex === m.monthIndex;
+                    const midAngle = (slice.startAngle + slice.endAngle) / 2;
+                    const pct = totalCelebrants > 0 ? Math.round((m.count / totalCelebrants) * 100) : 0;
 
-                      {/* Specular White Highlight Dot */}
-                      <circle
-                        cx={cherryPos.x - 1.8}
-                        cy={cherryPos.y - 1.8}
-                        r={1.6}
-                        fill="#ffffff"
-                        opacity={0.88}
-                        className="pointer-events-none"
-                      />
-                    </g>
-                  );
-                })}
+                    // Cherry position on cake top ellipse
+                    const cherryPos = getEllipsePoint(midAngle, rx * 0.68, ry * 0.68, cakeCx, cakeCy);
+
+                    // Callout label endpoint calculation (left or right side depending on angle)
+                    const isLeftSide = Math.sin(midAngle - Math.PI / 2) < 0;
+                    const trigAngle = midAngle - Math.PI / 2;
+
+                    // Determine callout line target
+                    let calloutX = isLeftSide ? 34 : 205;
+                    let calloutY = cherryPos.y;
+
+                    // Spread out callouts vertically for clarity
+                    if (trigAngle < -Math.PI / 3) {
+                      calloutY = Math.max(18, cherryPos.y - 32);
+                      calloutX = 60;
+                    } else if (trigAngle > Math.PI / 3 && trigAngle < (2 * Math.PI) / 3) {
+                      calloutY = cherryPos.y + 40;
+                      calloutX = isLeftSide ? 42 : 190;
+                    }
+
+                    return (
+                      <g
+                        key={`cherry-callout-${m.shortName}`}
+                        className="cursor-pointer group"
+                        onMouseEnter={() => setHoveredIndex(m.monthIndex)}
+                        onMouseLeave={() => setHoveredIndex(null)}
+                        onClick={() => {
+                          const newFilter = activeMonthFilter === m.monthIndex ? null : m.monthIndex;
+                          if (onSelectMonth) onSelectMonth(newFilter);
+                        }}
+                      >
+                        {/* Callout Leader Line */}
+                        <polyline
+                          points={`${cherryPos.x},${cherryPos.y} ${calloutX + (isLeftSide ? 20 : -20)},${calloutY} ${calloutX},${calloutY}`}
+                          fill="none"
+                          stroke={isSelected || isHovered ? '#b45309' : '#381c0e'}
+                          strokeWidth={isSelected || isHovered ? '1.8' : '1.1'}
+                          opacity={isSelected || isHovered ? 1 : 0.85}
+                          className="transition-all duration-200"
+                        />
+
+                        {/* Small anchor dot on cherry */}
+                        <circle
+                          cx={cherryPos.x}
+                          cy={cherryPos.y}
+                          r={1.8}
+                          fill={isSelected || isHovered ? '#f59e0b' : '#381c0e'}
+                        />
+
+                        {/* Callout Percentage Number */}
+                        <text
+                          x={isLeftSide ? calloutX - 4 : calloutX + 4}
+                          y={calloutY + 4}
+                          textAnchor={isLeftSide ? 'end' : 'start'}
+                          fill={isSelected ? '#92400e' : isHovered ? '#b45309' : '#2b1409'}
+                          fontFamily="serif"
+                          fontSize={pct >= 30 ? '19' : pct >= 20 ? '16' : '13'}
+                          fontWeight="900"
+                          className="transition-all duration-200 select-none group-hover:scale-105"
+                        >
+                          {pct}
+                          <tspan fontSize="10" fontWeight="600" dx="1">
+                            %
+                          </tspan>
+                        </text>
+
+                        {/* Cherry Shadow on cake */}
+                        <ellipse
+                          cx={cherryPos.x + 1}
+                          cy={cherryPos.y + 3}
+                          rx={5}
+                          ry={2.5}
+                          fill="rgba(0,0,0,0.35)"
+                        />
+
+                        {/* Cherry Body with animation class */}
+                        <circle
+                          cx={cherryPos.x}
+                          cy={cherryPos.y}
+                          r={isHovered || isSelected ? 7.2 : 5.8}
+                          fill="url(#cherry-red-grad)"
+                          stroke="#7f1d1d"
+                          strokeWidth="0.6"
+                          className={`transition-all duration-200 cherry-anim-${i % 6}`}
+                        />
+
+                        {/* Specular White Highlight Dot */}
+                        <circle
+                          cx={cherryPos.x - 1.8}
+                          cy={cherryPos.y - 1.8}
+                          r={1.6}
+                          fill="#ffffff"
+                          opacity={0.88}
+                          className="pointer-events-none"
+                        />
+                      </g>
+                    );
+                  })}
+                </g>
               </g>
 
               {/* 5. SEPARATED FEATURED SLICE SHOWING 3-LAYER SPONGE CAKE (Top Right) WITH FLOAT ANIMATION */}
@@ -522,6 +548,21 @@ export const BirthdayMonthPieChart: React.FC<BirthdayMonthPieChartProps> = ({
                   onMouseEnter={() => setHoveredIndex(featuredMonth.monthIndex)}
                   onMouseLeave={() => setHoveredIndex(null)}
                 >
+                  {/* Month Label Above the Slice */}
+                  <g transform="translate(46, -10)">
+                    <path d="M -38 -8 L 38 -8 L 38 8 L -38 8 Z" fill="#451a03" rx="4" />
+                    <text
+                      textAnchor="middle"
+                      fill="#fef3c7"
+                      fontSize="9"
+                      fontWeight="900"
+                      dy="3"
+                      className="select-none uppercase tracking-widest font-serif"
+                    >
+                      {featuredMonth.fullName}
+                    </text>
+                  </g>
+
                   {/* Shadow beneath cut slice with breathe animation */}
                   <ellipse
                     cx="44"
@@ -641,6 +682,34 @@ export const BirthdayMonthPieChart: React.FC<BirthdayMonthPieChartProps> = ({
         )}
       </div>
 
+      {/* Custom Styled Tooltip */}
+      <AnimatePresence>
+        {hoveredMonthData && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 10 }}
+            className="absolute z-[100] pointer-events-none bg-[#451a03] text-amber-50 px-3 py-2 rounded-xl shadow-xl border border-amber-400/30 flex flex-col items-center gap-1 min-w-[110px]"
+            style={{
+              left: mousePos.x,
+              top: mousePos.y - 75,
+              transform: 'translateX(-50%)'
+            }}
+          >
+            <div className="text-[10px] font-bold uppercase tracking-widest text-amber-300/80 leading-none">
+              {hoveredMonthData.fullName}
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-lg font-black font-mono leading-none">{hoveredMonthData.count}</span>
+              <span className="text-[10px] font-bold bg-amber-500/20 px-1.5 py-0.5 rounded border border-amber-500/30">
+                {totalCelebrants > 0 ? Math.round((hoveredMonthData.count / totalCelebrants) * 100) : 0}%
+              </span>
+            </div>
+            <div className="absolute bottom-[-6px] left-1/2 -translate-x-1/2 w-3 h-3 bg-[#451a03] rotate-45 border-r border-b border-amber-400/30" />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Month Breakdown Proportional Legend Grid */}
       <div className="mt-2 pt-2 border-t border-amber-200/70 z-10">
         <div className="text-[10px] font-bold text-amber-950 mb-1.5 flex items-center justify-between">
@@ -693,7 +762,7 @@ export const BirthdayMonthPieChart: React.FC<BirthdayMonthPieChartProps> = ({
           })}
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

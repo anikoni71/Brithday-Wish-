@@ -729,7 +729,20 @@ function isToday(bdayStr, curMonth, curDay) {
           </div>
 
           {/* Quick Action Button */}
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-4 flex-wrap">
+            <label className="flex items-center gap-2 cursor-pointer bg-slate-800/50 px-3 py-2 rounded-xl border border-slate-700 transition hover:bg-slate-800">
+              <input
+                type="checkbox"
+                checked={includeFestiveCard}
+                onChange={(e) => setIncludeFestiveCard(e.target.checked)}
+                className="w-4 h-4 rounded border-slate-600 text-indigo-500 focus:ring-indigo-500 bg-slate-700"
+              />
+              <span className="text-[11px] font-bold text-slate-300 select-none flex items-center gap-1.5">
+                <Gift className="w-3.5 h-3.5 text-indigo-400" />
+                Attach Festive E-card
+              </span>
+            </label>
+
             <button
               onClick={handleAutoDispatchToday}
               disabled={isAutoSending || todayMembers.length === 0}

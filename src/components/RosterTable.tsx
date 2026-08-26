@@ -288,14 +288,15 @@ export const RosterTable: React.FC<RosterTableProps> = ({
           <div className="flex items-center gap-1.5 flex-wrap">
             <span>{member.name}</span>
             {isToday && (
-              <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-amber-500 text-white font-bold animate-pulse shadow-2xs inline-flex items-center gap-0.5">
-                🎂 Today!
+              <span className="px-2 py-0.5 rounded-full text-[10px] bg-amber-50 text-amber-600 border border-amber-200 font-black animate-pulse shadow-xs flex items-center gap-1">
+                <div className="w-1.5 h-1.5 rounded-full bg-amber-600 animate-ping"></div>
+                Today
               </span>
             )}
-            {isDueSoon && (
-              <span className="px-2 py-0.5 rounded-full text-[10px] bg-indigo-50 text-indigo-700 border border-indigo-200 font-bold inline-flex items-center gap-1 shadow-2xs">
-                <CalendarClock className="w-2.5 h-2.5 text-indigo-500" />
-                Upcoming ({upcomingInfo.daysRemaining === 1 ? 'Tomorrow' : `in ${upcomingInfo.daysRemaining}d`})
+            {isDueSoon && upcomingInfo.daysRemaining <= 3 && (
+              <span className="px-2 py-0.5 rounded-full text-[10px] bg-blue-50 text-blue-600 border border-blue-200 font-bold inline-flex items-center gap-1 shadow-xs">
+                <CalendarClock className="w-2.5 h-2.5 text-blue-500" />
+                Upcoming
               </span>
             )}
           </div>
