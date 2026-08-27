@@ -391,6 +391,7 @@ export async function fetchLiveTeamData(targetSheetUrl?: string): Promise<{
   source: string;
   data: TeamMember[];
   adminConfig?: AdminSheetConfig;
+  error?: string | null;
 }> {
   const finalUrl = targetSheetUrl || DEFAULT_GOOGLE_SHEET_CSV_URL;
 
@@ -405,7 +406,8 @@ export async function fetchLiveTeamData(targetSheetUrl?: string): Promise<{
           success: true,
           source: json.source || 'server_proxy',
           data: json.data,
-          adminConfig: json.adminConfig
+          adminConfig: json.adminConfig,
+          error: json.error || null
         };
       }
     }

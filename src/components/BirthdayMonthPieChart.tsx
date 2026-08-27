@@ -352,8 +352,17 @@ export const BirthdayMonthPieChart: React.FC<BirthdayMonthPieChartProps> = ({
                     const isSelected = activeMonthFilter === m.monthIndex;
                     const isHovered = hoveredIndex === m.monthIndex;
                     const sidePath = getSideWallPath(slice.startAngle, slice.endAngle);
+                    
+                    const isAnyFocused = hoveredIndex !== null || activeMonthFilter !== null;
+                    const isThisFocused = isHovered || isSelected;
 
                     if (!sidePath) return null;
+
+                    // Calculate offset for "grow" effect
+                    const midAngle = (slice.startAngle + slice.endAngle) / 2;
+                    const offset = isThisFocused ? 6 : 0;
+                    const tx = Math.cos(midAngle - Math.PI / 2) * offset;
+                    const ty = Math.sin(midAngle - Math.PI / 2) * offset;
 
                     return (
                       <path
@@ -362,8 +371,12 @@ export const BirthdayMonthPieChart: React.FC<BirthdayMonthPieChartProps> = ({
                         fill="url(#cake-side-wall)"
                         stroke="#1e0c05"
                         strokeWidth="0.8"
-                        className="transition-all duration-200 cursor-pointer hover:brightness-110"
-                        opacity={isSelected || isHovered ? 1 : 0.95}
+                        style={{ 
+                          transform: `translate(${tx}px, ${ty}px)`,
+                          transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                          opacity: isAnyFocused && !isThisFocused ? 0.4 : 1
+                        }}
+                        className="cursor-pointer hover:brightness-110"
                         onMouseEnter={() => setHoveredIndex(m.monthIndex)}
                         onMouseLeave={() => setHoveredIndex(null)}
                         onClick={() => {
@@ -383,14 +396,28 @@ export const BirthdayMonthPieChart: React.FC<BirthdayMonthPieChartProps> = ({
                     const isHovered = hoveredIndex === m.monthIndex;
                     const topPath = getTopSlicePath(slice.startAngle, slice.endAngle);
 
+                    const isAnyFocused = hoveredIndex !== null || activeMonthFilter !== null;
+                    const isThisFocused = isHovered || isSelected;
+
+                    // Calculate offset for "grow" effect
+                    const midAngle = (slice.startAngle + slice.endAngle) / 2;
+                    const offset = isThisFocused ? 6 : 0;
+                    const tx = Math.cos(midAngle - Math.PI / 2) * offset;
+                    const ty = Math.sin(midAngle - Math.PI / 2) * offset;
+
                     return (
                       <path
                         key={`top-${m.shortName}`}
                         d={topPath}
-                        fill={isSelected || isHovered ? 'url(#cake-top-selected)' : 'url(#cake-top-glaze)'}
+                        fill={isThisFocused ? 'url(#cake-top-selected)' : 'url(#cake-top-glaze)'}
                         stroke={isSelected ? '#f59e0b' : '#2b1308'}
                         strokeWidth={isSelected ? '2' : '1'}
-                        className="cursor-pointer transition-all duration-200 hover:brightness-110"
+                        style={{ 
+                          transform: `translate(${tx}px, ${ty}px)`,
+                          transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                          opacity: isAnyFocused && !isThisFocused ? 0.4 : 1
+                        }}
+                        className="cursor-pointer hover:brightness-110"
                         onMouseEnter={() => setHoveredIndex(m.monthIndex)}
                         onMouseLeave={() => setHoveredIndex(null)}
                         onClick={() => {
@@ -402,29 +429,56 @@ export const BirthdayMonthPieChart: React.FC<BirthdayMonthPieChartProps> = ({
                   })}
                 </g>
 
-                {/* 3. CENTER WHIPPED CREAM FLOWER / ROSETTE */}
-                <g className="center-rosette rosette-animated" transform={`translate(${cakeCx}, ${cakeCy})`}>
-                  {/* 5 Petals */}
-                  {[0, 72, 144, 216, 288].map((deg, pIdx) => {
-                    const rad = (deg * Math.PI) / 180;
-                    const px = Math.cos(rad) * 6.5;
-                    const py = Math.sin(rad) * 4.2;
-                    return (
-                      <ellipse
-                        key={`petal-${pIdx}`}
-                        cx={px}
-                        cy={py}
-                        rx={4.8}
-                        ry={3.5}
-                        fill="url(#cream-petal-grad)"
-                        stroke="#cbd5e1"
-                        strokeWidth="0.5"
+                {/* 3. CENTER WHIPPED CREAM FLOWER / ROSETTE & MONTH VIEW OVERLAY */}
+                <g transform={`translate(${cakeCx}, ${cakeCy})`}>
+                  {/* Dynamic Month View Overlay Text */}
+                  {featuredMonth && (
+                    <g transform="translate(0, -22)" className="pointer-events-none">
+                      <rect
+                        x="-45"
+                        y="-7"
+                        width="90"
+                        height="14"
+                        rx="7"
+                        fill="rgba(69, 26, 3, 0.85)"
+                        className="transition-all duration-300"
                       />
-                    );
-                  })}
-                  {/* Center Cherry Berry */}
-                  <ellipse cx={0} cy={0} rx={3.2} ry={2.5} fill="url(#cherry-red-grad)" />
-                  <ellipse cx={-0.8} cy={-0.6} rx={0.9} ry={0.6} fill="#ffffff" opacity={0.8} />
+                      <text
+                        textAnchor="middle"
+                        dy="3.5"
+                        fill="#fef3c7"
+                        fontSize="7.5"
+                        fontWeight="900"
+                        className="uppercase tracking-[0.15em] font-serif select-none"
+                      >
+                        🎂 {featuredMonth.fullName} View
+                      </text>
+                    </g>
+                  )}
+
+                  <g className="center-rosette rosette-animated">
+                    {/* 5 Petals */}
+                    {[0, 72, 144, 216, 288].map((deg, pIdx) => {
+                      const rad = (deg * Math.PI) / 180;
+                      const px = Math.cos(rad) * 6.5;
+                      const py = Math.sin(rad) * 4.2;
+                      return (
+                        <ellipse
+                          key={`petal-${pIdx}`}
+                          cx={px}
+                          cy={py}
+                          rx={4.8}
+                          ry={3.5}
+                          fill="url(#cream-petal-grad)"
+                          stroke="#cbd5e1"
+                          strokeWidth="0.5"
+                        />
+                      );
+                    })}
+                    {/* Center Cherry Berry */}
+                    <ellipse cx={0} cy={0} rx={3.2} ry={2.5} fill="url(#cherry-red-grad)" />
+                    <ellipse cx={-0.8} cy={-0.6} rx={0.9} ry={0.6} fill="#ffffff" opacity={0.8} />
+                  </g>
                 </g>
 
                 {/* 4. GLOSSY CHERRIES ON EACH SLICE WITH CALLOUT POINTERS */}

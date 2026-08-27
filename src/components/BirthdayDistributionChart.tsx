@@ -161,8 +161,8 @@ export const BirthdayDistributionChart: React.FC<BirthdayDistributionChartProps>
     return monthData.map((m) => `${m.shortName}:${m.count}`).join('|') + `_w:${chartWidth}_filter:${activeMonthFilter}`;
   }, [monthData, chartWidth, activeMonthFilter]);
 
-  // D3 Chart Lifecycle using useLayoutEffect to eliminate DOM flicker & support smooth morph transitions
-  useLayoutEffect(() => {
+  // D3 Chart Lifecycle using useEffect to ensure safe rendering scope
+  useEffect(() => {
     if (!svgRef.current || !containerRef.current) return;
 
     const svgElement = d3.select(svgRef.current);
@@ -253,6 +253,38 @@ export const BirthdayDistributionChart: React.FC<BirthdayDistributionChartProps>
           transform-origin: 0px -9px;
           animation: candleHaloPulse 1.6s ease-in-out infinite;
           animation-delay: var(--flame-delay, 0s);
+        }
+
+        /* Performance optimized CSS transitions for SVG elements */
+        .candle-pillar, .candle-highlight, .candle-wick, .candle-flame-group, .bar-label {
+          transition: all 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        @keyframes barFadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        .bar-group {
+          animation: barFadeIn 0.5s ease-out forwards;
+          animation-delay: var(--stagger-delay, 0s);
+          opacity: 0;
+        }
+
+        .bar-group.is-hovered .candle-pillar,
+        .bar-group.is-active .candle-pillar {
+          filter: brightness(1.1) drop-shadow(0 0 8px rgba(16, 185, 129, 0.3));
+          transform: scaleY(1.03);
+          transform-origin: bottom;
+        }
+
+        .bar-group.is-hovered .candle-flame-group,
+        .bar-group.is-active .candle-flame-group {
+          transform: translate(var(--flame-x), calc(var(--flame-y) - 3px)) scale(1.1) !important;
+        }
+
+        .grid-line {
+          transition: transform 0.4s ease-out, opacity 0.4s ease-out;
         }
       `);
 
@@ -387,9 +419,8 @@ export const BirthdayDistributionChart: React.FC<BirthdayDistributionChartProps>
     gridLines
       .enter()
       .append('line')
+      .attr('class', 'grid-line')
       .merge(gridLines)
-      .transition()
-      .duration(400)
       .attr('x1', 0)
       .attr('x2', innerWidth)
       .attr('y1', (d) => yScale(d))
@@ -410,15 +441,13 @@ export const BirthdayDistributionChart: React.FC<BirthdayDistributionChartProps>
       .selectAll<SVGTextElement, string>('.tick text')
       .attr('dy', '14px')
       .attr('font-size', '12px')
-      .attr('font-weight', (d: string) => {
+      .attr('class', (d: string) => {
         const monthIdx = MONTH_NAMES.findIndex((m) => m.short === d);
-        return monthIdx === currentMonthIndex || monthIdx === activeMonthFilter ? '800' : '600';
-      })
-      .attr('fill', (d: string) => {
-        const monthIdx = MONTH_NAMES.findIndex((m) => m.short === d);
-        if (monthIdx === activeMonthFilter) return '#b45309';
-        if (monthIdx === currentMonthIndex) return '#047857';
-        return '#64748b';
+        let classes = 'month-tick-label transition-colors duration-300 ';
+        if (monthIdx === activeMonthFilter) classes += 'font-extrabold fill-amber-700';
+        else if (monthIdx === currentMonthIndex) classes += 'font-bold fill-emerald-700';
+        else classes += 'font-semibold fill-slate-500';
+        return classes;
       });
 
     // Render Y Axis
@@ -455,11 +484,13 @@ export const BirthdayDistributionChart: React.FC<BirthdayDistributionChartProps>
       .enter()
       .append('g')
       .attr('class', 'bar-group')
-      .attr('cursor', 'pointer');
+      .attr('cursor', 'pointer')
+      .style('--stagger-delay', (d: MonthData) => `${d.monthIndex * 0.05}s`);
 
     // Attach mouse interactions on enter selection
     barGroupsEnter
       .on('mouseenter', function (event: MouseEvent, d: MonthData) {
+        d3.select(this).classed('is-hovered', true);
         setHoveredMonth(d);
         if (containerRef.current) {
           const [x, y] = d3.pointer(event, containerRef.current);
@@ -473,6 +504,7 @@ export const BirthdayDistributionChart: React.FC<BirthdayDistributionChartProps>
         }
       })
       .on('mouseleave', function () {
+        d3.select(this).classed('is-hovered', false);
         setHoveredMonth(null);
         setTooltipPos(null);
       })
@@ -487,21 +519,21 @@ export const BirthdayDistributionChart: React.FC<BirthdayDistributionChartProps>
     // 1. Hover Backdrop Rect
     barGroupsEnter
       .append('rect')
-      .attr('class', 'hover-bg')
+      .attr('class', 'hover-bg transition-all duration-300')
       .attr('y', 0)
       .attr('rx', 8);
 
     // 2. Candle Body Rect (smooth cylindrical pill)
     barGroupsEnter
       .append('rect')
-      .attr('class', 'candle-pillar')
+      .attr('class', 'candle-pillar transition-all duration-500')
       .attr('rx', candleRadius)
       .attr('ry', candleRadius);
 
     // 3. Specular Vertical Highlight Strip (left 3D shine matching attached image)
     barGroupsEnter
       .append('rect')
-      .attr('class', 'candle-highlight')
+      .attr('class', 'candle-highlight transition-all duration-500')
       .attr('rx', 1)
       .attr('ry', 1)
       .attr('fill', 'rgba(255, 255, 255, 0.48)')
@@ -510,7 +542,7 @@ export const BirthdayDistributionChart: React.FC<BirthdayDistributionChartProps>
     // 4. Candle Wick (gray stick at top center)
     barGroupsEnter
       .append('line')
-      .attr('class', 'candle-wick')
+      .attr('class', 'candle-wick transition-all duration-500')
       .attr('stroke', '#64748b')
       .attr('stroke-width', 2)
       .attr('stroke-linecap', 'round')
@@ -519,7 +551,7 @@ export const BirthdayDistributionChart: React.FC<BirthdayDistributionChartProps>
     // 5. Candle Flame Group (halo + animated teardrop flames)
     const flameGroup = barGroupsEnter
       .append('g')
-      .attr('class', 'candle-flame-group')
+      .attr('class', 'candle-flame-group transition-all duration-500')
       .attr('pointer-events', 'none');
 
     // Halo Glow
@@ -548,7 +580,7 @@ export const BirthdayDistributionChart: React.FC<BirthdayDistributionChartProps>
     // 6. Bar Count Text Label
     barGroupsEnter
       .append('text')
-      .attr('class', 'bar-label')
+      .attr('class', 'bar-label transition-all duration-500')
       .attr('text-anchor', 'middle')
       .attr('font-size', '12px')
       .attr('font-family', 'ui-monospace, monospace')
@@ -556,6 +588,12 @@ export const BirthdayDistributionChart: React.FC<BirthdayDistributionChartProps>
       .attr('opacity', 0);
 
     const allBarGroups = barGroupsEnter.merge(barGroups);
+
+    // Apply state classes for CSS styling
+    allBarGroups
+      .classed('is-active', (d: MonthData) => d.monthIndex === activeMonthFilter)
+      .classed('is-current', (d: MonthData) => d.isCurrentMonth)
+      .classed('is-zero', (d: MonthData) => d.count === 0);
 
     // Update hover backgrounds
     allBarGroups
@@ -568,10 +606,6 @@ export const BirthdayDistributionChart: React.FC<BirthdayDistributionChartProps>
         if (d.isCurrentMonth) return 'rgba(16, 185, 129, 0.08)';
         return 'transparent';
       });
-
-    // Smooth transition morphing candle heights without re-creating DOM nodes
-    const isFirstRun = !isInitializedRef.current;
-    const transitionDuration = isFirstRun ? 650 : 450;
 
     // Update Candle Pillars
     allBarGroups
@@ -598,9 +632,6 @@ export const BirthdayDistributionChart: React.FC<BirthdayDistributionChartProps>
         return '#047857';
       })
       .attr('stroke-width', (d: MonthData) => (d.count === 0 ? 1 : 1.2))
-      .transition()
-      .duration(transitionDuration)
-      .ease(d3.easeCubicOut)
       .attr('y', (d: MonthData) => (d.count > 0 ? yScale(d.count) : innerHeight - 4))
       .attr('height', (d: MonthData) => (d.count > 0 ? innerHeight - yScale(d.count) : 4));
 
@@ -610,9 +641,6 @@ export const BirthdayDistributionChart: React.FC<BirthdayDistributionChartProps>
       .attr('x', (d: MonthData) => (xScale(d.shortName) || 0) + (xScale.bandwidth() - candleWidth) / 2 + 2.5)
       .attr('width', 2)
       .attr('opacity', (d: MonthData) => (d.count > 0 ? 1 : 0))
-      .transition()
-      .duration(transitionDuration)
-      .ease(d3.easeCubicOut)
       .attr('y', (d: MonthData) => (d.count > 0 ? yScale(d.count) + 3.5 : innerHeight - 3))
       .attr('height', (d: MonthData) => (d.count > 0 ? Math.max(0, innerHeight - yScale(d.count) - 7) : 0));
 
@@ -622,9 +650,6 @@ export const BirthdayDistributionChart: React.FC<BirthdayDistributionChartProps>
       .attr('x1', (d: MonthData) => (xScale(d.shortName) || 0) + xScale.bandwidth() / 2)
       .attr('x2', (d: MonthData) => (xScale(d.shortName) || 0) + xScale.bandwidth() / 2)
       .attr('opacity', (d: MonthData) => (d.count > 0 ? 1 : 0))
-      .transition()
-      .duration(transitionDuration)
-      .ease(d3.easeCubicOut)
       .attr('y1', (d: MonthData) => (d.count > 0 ? yScale(d.count) : innerHeight))
       .attr('y2', (d: MonthData) => (d.count > 0 ? yScale(d.count) - 6 : innerHeight));
 
@@ -632,10 +657,11 @@ export const BirthdayDistributionChart: React.FC<BirthdayDistributionChartProps>
     allBarGroups
       .select<SVGGElement>('.candle-flame-group')
       .attr('opacity', (d: MonthData) => (d.count > 0 ? 1 : 0))
-      .attr('style', (d: MonthData) => `--flame-delay: ${((d.monthIndex * 0.23) % 1.6).toFixed(2)}s;`)
-      .transition()
-      .duration(transitionDuration)
-      .ease(d3.easeCubicOut)
+      .attr('style', (d: MonthData) => {
+        const cx = (xScale(d.shortName) || 0) + xScale.bandwidth() / 2;
+        const cy = d.count > 0 ? yScale(d.count) - 6 : innerHeight - 6;
+        return `--flame-delay: ${((d.monthIndex * 0.23) % 1.6).toFixed(2)}s; --flame-x: ${cx}px; --flame-y: ${cy}px;`;
+      })
       .attr('transform', (d: MonthData) => {
         const cx = (xScale(d.shortName) || 0) + xScale.bandwidth() / 2;
         const cy = d.count > 0 ? yScale(d.count) - 6 : innerHeight - 6;
@@ -653,9 +679,6 @@ export const BirthdayDistributionChart: React.FC<BirthdayDistributionChartProps>
         return '#047857';
       })
       .text((d: MonthData) => d.count)
-      .transition()
-      .duration(transitionDuration)
-      .ease(d3.easeCubicOut)
       .attr('opacity', 1)
       .attr('y', (d: MonthData) => (d.count > 0 ? yScale(d.count) - 26 : innerHeight - 8));
 
@@ -664,8 +687,6 @@ export const BirthdayDistributionChart: React.FC<BirthdayDistributionChartProps>
     if (currentMonthObj && xScale(currentMonthObj.shortName) !== undefined) {
       const cx = (xScale(currentMonthObj.shortName) || 0) + xScale.bandwidth() / 2;
       g.select<SVGCircleElement>('.current-month-indicator')
-        .transition()
-        .duration(400)
         .attr('cx', cx)
         .attr('cy', innerHeight + 28)
         .attr('r', 3.5)
@@ -674,6 +695,26 @@ export const BirthdayDistributionChart: React.FC<BirthdayDistributionChartProps>
 
     isInitializedRef.current = true;
     prevDataSignatureRef.current = dataSignature;
+
+    return () => {
+      // Exhaustive D3 Cleanup: Prevents memory leaks and ghost rendering artifacts
+      if (svgRef.current) {
+        const svg = d3.select(svgRef.current);
+        
+        // 1. Explicitly nullify all event listeners on interactive nodes
+        svg.selectAll('.bar-group')
+          .on('mouseenter', null)
+          .on('mousemove', null)
+          .on('mouseleave', null)
+          .on('click', null);
+
+        // 2. Terminate all active transitions (prevents background calculations)
+        svg.selectAll('*').interrupt();
+        
+        // 3. Purge all structural elements from the SVG root to ensure a clean state
+        svg.selectAll('*').remove();
+      }
+    };
   }, [dataSignature, currentMonthIndex, activeMonthFilter, onSelectMonth, chartWidth]);
 
   const handleMonthPillClick = (monthIdx: number) => {

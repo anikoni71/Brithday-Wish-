@@ -1,5 +1,5 @@
 import React from 'react';
-import { RefreshCw, ExternalLink, Cake, Sparkles, Code2, Send, PhoneCall, Radio, CheckCircle2, Bot, Mail, Bell, Volume2, VolumeX, Globe, ShieldCheck, LayoutDashboard, TrendingUp } from 'lucide-react';
+import { RefreshCw, ExternalLink, Cake, Sparkles, Code2, Send, PhoneCall, Radio, CheckCircle2, Bot, Mail, Bell, Volume2, VolumeX, Globe, ShieldCheck, LayoutDashboard, TrendingUp, Lightbulb, Settings, Hand, AlertCircle } from 'lucide-react';
 import { AdminSheetConfig } from '../types';
 
 interface HeaderProps {
@@ -7,6 +7,7 @@ interface HeaderProps {
   setActiveTab: (tab: 'dashboard' | 'roster' | 'festive' | 'email' | 'generator' | 'script' | 'tester' | 'automation' | 'insights') => void;
   onSync: () => void;
   isSyncing: boolean;
+  error?: string | null;
   isRealtimeConnected?: boolean;
   lastSynced: string | null;
   todayCount: number;
@@ -28,6 +29,7 @@ export const Header: React.FC<HeaderProps> = ({
   setActiveTab,
   onSync,
   isSyncing,
+  error = null,
   isRealtimeConnected = true,
   lastSynced,
   todayCount,
@@ -52,12 +54,53 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {error && (
+          <div className="bg-rose-50 border-b border-rose-200 px-4 py-2 flex items-center justify-between">
+            <div className="flex items-center gap-2 text-rose-800 text-[11px] font-bold">
+              <span className="flex h-2 w-2 rounded-full bg-rose-500 animate-ping" />
+              ⚠️ {error}
+            </div>
+            <button 
+              onClick={onSync}
+              className="text-[10px] font-bold text-rose-700 hover:text-rose-900 underline uppercase tracking-wider cursor-pointer"
+            >
+              Force Retry Sync
+            </button>
+          </div>
+        )}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between py-4 gap-4">
           
           {/* Brand Identity */}
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white shadow-md shadow-emerald-600/20">
-              <Cake className="w-6 h-6" />
+            <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white shadow-md shadow-emerald-600/20 relative group overflow-hidden">
+              {/* 1. Hands (Prominent base from reference) */}
+              <div className="absolute bottom-0 w-full flex justify-center items-end opacity-90 z-20 pb-0.5">
+                <Hand className="w-5 h-5 -rotate-[30deg] translate-x-1.5" />
+                <Hand className="w-5 h-5 rotate-[30deg] -translate-x-1.5 scale-x-[-1]" />
+              </div>
+              
+              {/* 2. Lightbulb (Centerpiece) */}
+              <div className="relative z-10 translate-y-1">
+                <Lightbulb className="w-6 h-6 text-white fill-white/20 relative z-10 drop-shadow-[0_0_12px_rgba(255,255,255,0.8)]" />
+                <div className="absolute inset-0 bg-white/30 blur-md rounded-full animate-pulse -z-0" />
+              </div>
+
+              {/* 3. Gear Bloom (Above the lightbulb) */}
+              <div className="absolute top-0 inset-x-0 h-6 flex justify-center items-start opacity-50 z-10 pt-1">
+                <div className="relative w-full h-full">
+                  <Settings className="w-4 h-4 absolute top-0 left-1 animate-spin-slow" style={{ animationDuration: '10s' }} />
+                  <Settings className="w-3 h-3 absolute top-1 right-2 animate-spin-slow" style={{ animationDuration: '15s', animationDirection: 'reverse' }} />
+                  <Settings className="w-5 h-5 absolute -top-1 left-1/2 -translate-x-1/2 animate-spin-slow opacity-60" style={{ animationDuration: '12s' }} />
+                </div>
+              </div>
+
+              {/* 4. Festive Cake (The crowning element at the very top) */}
+              <div className="absolute top-0.5 left-1/2 -translate-x-1/2 z-30">
+                <Cake className="w-3.5 h-3.5 text-amber-200 animate-bounce drop-shadow-sm" />
+              </div>
+
+              {/* Finishing Touches: Small Sparkles */}
+              <Sparkles className="w-2 h-2 absolute top-2 right-1 text-white/50 animate-pulse" />
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
@@ -100,9 +143,9 @@ export const Header: React.FC<HeaderProps> = ({
                 </button>
 
                 {/* Google Sheet Direct Source Tag */}
-                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-teal-50 text-teal-900 border border-teal-300 text-[11px] font-bold shadow-2xs" title={`Single Source of Truth: Google Sheet (${adminConfig?.sheetName || 'Central IE List'})\nAdmin WA: ${adminConfig?.adminWhatsApp || '+8801625299521'}\nAdmin Email: ${adminConfig?.adminEmail || 'anik.barua@kdsgroup.net'}`}>
-                  <CheckCircle2 className="w-3 h-3 text-teal-700" />
-                  Sheet Synced ({adminConfig?.sheetName || 'Central IE List'})
+                <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md border text-[11px] font-bold shadow-2xs ${error ? 'bg-rose-50 text-rose-900 border-rose-300' : 'bg-teal-50 text-teal-900 border-teal-300'}`} title={error ? `Error: ${error}` : `Single Source of Truth: Google Sheet (${adminConfig?.sheetName || 'Central IE List'})\nAdmin WA: ${adminConfig?.adminWhatsApp || '+8801625299521'}\nAdmin Email: ${adminConfig?.adminEmail || 'anik.barua@kdsgroup.net'}`}>
+                  {error ? <AlertCircle className="w-3 h-3 text-rose-700" /> : <CheckCircle2 className="w-3 h-3 text-teal-700" />}
+                  {error ? 'Sync Error' : 'Sheet Synced'} ({adminConfig?.sheetName || 'Central IE List'})
                 </span>
               </div>
             </div>

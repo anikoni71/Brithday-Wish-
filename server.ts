@@ -567,15 +567,45 @@ app.get("/api/sheet-data", async (req, res) => {
   try {
     const targetUrl = (req.query.sheetUrl as string) || process.env.GOOGLE_SHEET_CSV_URL || GOOGLE_SHEET_CSV_URL;
 
-    const response = await fetch(targetUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-        'Accept': 'text/csv, application/json, text/plain, */*'
-      }
-    });
+    let response: Response | null = null;
+    let retries = 3;
+    let lastError: any = null;
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch sheet: HTTP ${response.status} ${response.statusText}`);
+    while (retries > 0) {
+      try {
+        response = await fetch(targetUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+            'Accept': 'text/csv, application/json, text/plain, */*'
+          }
+        });
+        
+        if (response.ok) break;
+        
+        // If we get a 502 or 503, wait and retry
+        if (response.status === 502 || response.status === 503 || response.status === 429) {
+          retries--;
+          if (retries > 0) {
+            console.log(`[Sheet Sync] Received ${response.status}. Retrying... (${retries} attempts left)`);
+            await new Promise(resolve => setTimeout(resolve, 1000 * (3 - retries))); // Exponential backoff-ish
+            continue;
+          }
+        }
+        
+        throw new Error(`Failed to fetch sheet: HTTP ${response.status} ${response.statusText}`);
+      } catch (err: any) {
+        lastError = err;
+        retries--;
+        if (retries > 0) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          continue;
+        }
+        throw err;
+      }
+    }
+
+    if (!response || !response.ok) {
+      throw lastError || new Error(`Failed to fetch sheet after multiple attempts.`);
     }
 
     const contentType = response.headers.get('content-type') || '';

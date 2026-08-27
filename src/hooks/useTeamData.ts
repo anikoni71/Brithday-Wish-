@@ -172,11 +172,17 @@ export function useTeamData(
         if (result.adminConfig) {
           setAdminConfig(result.adminConfig);
         }
+        if (result.error) {
+          setError(result.error);
+        }
         setLastSynced(new Date().toLocaleTimeString());
       } else {
         setTeamMembers((prev) => (prev.length > 0 ? prev : getDemoTeamMembers()));
         if (result.adminConfig) {
           setAdminConfig(result.adminConfig);
+        }
+        if (result.error) {
+          setError(result.error);
         }
         setLastSynced(new Date().toLocaleTimeString());
       }

@@ -100,6 +100,7 @@ export default function App() {
     isSyncing,
     isRealtimeConnected,
     lastSynced,
+    error,
     refetch,
     refetchAutomationLogs,
     refetchEmailLogs,
@@ -584,6 +585,7 @@ export default function App() {
         setActiveTab={setActiveTab}
         onSync={() => refetch(false)}
         isSyncing={isSyncing}
+        error={error}
         isRealtimeConnected={isRealtimeConnected}
         lastSynced={lastSynced}
         todayCount={todayBirthdays.length}
