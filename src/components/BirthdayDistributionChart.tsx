@@ -697,22 +697,18 @@ export const BirthdayDistributionChart: React.FC<BirthdayDistributionChartProps>
     prevDataSignatureRef.current = dataSignature;
 
     return () => {
-      // Exhaustive D3 Cleanup: Prevents memory leaks and ghost rendering artifacts
+      // Explicitly clean up D3 selections and remove structural groups on unmount
       if (svgRef.current) {
         const svg = d3.select(svgRef.current);
-        
-        // 1. Explicitly nullify all event listeners on interactive nodes
+        // Explicitly remove listeners from bar-groups to prevent memory leaks
         svg.selectAll('.bar-group')
           .on('mouseenter', null)
           .on('mousemove', null)
           .on('mouseleave', null)
           .on('click', null);
 
-        // 2. Terminate all active transitions (prevents background calculations)
+        // Interrupt all active transitions across the entire SVG
         svg.selectAll('*').interrupt();
-        
-        // 3. Purge all structural elements from the SVG root to ensure a clean state
-        svg.selectAll('*').remove();
       }
     };
   }, [dataSignature, currentMonthIndex, activeMonthFilter, onSelectMonth, chartWidth]);
