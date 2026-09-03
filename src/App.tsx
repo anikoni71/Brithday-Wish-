@@ -18,7 +18,9 @@ import { DispatchInsights } from './components/DispatchInsights';
 import { checkIsTodayBirthday, getUpcomingBirthdayInfo } from './utils/dateUtils';
 import { triggerBirthdayConfetti } from './utils/confetti';
 import { useTeamData } from './hooks/useTeamData';
+import { useBirthdayAlerts } from './hooks/useBirthdayAlerts';
 import { computeDerivedAnalytics } from './utils/analyticsCalculations';
+import { BirthdayCalendarOverlay } from './components/BirthdayCalendarOverlay';
 import {
   requestNotificationPermission,
   sendBrowserBirthdayNotification,
@@ -48,6 +50,7 @@ export default function App() {
   const [manualLogs, setManualLogs] = useState<LogEntry[]>([]);
   const [selectedMonthFilter, setSelectedMonthFilter] = useState<number | null>(null);
   const [rosterFilterType, setRosterFilterType] = useState<'all' | 'today' | 'due_soon' | 'sent_2026' | 'pending' | 'has_wa'>('all');
+  const [isCalendarOpen, setIsCalendarOpen] = useState<boolean>(false);
 
   // Desktop Notifications & Audio settings
   const [desktopNotificationsEnabled, setDesktopNotificationsEnabled] = useState<boolean>(() => {
@@ -107,6 +110,8 @@ export default function App() {
     setTeamMembers,
     setAutomationLogs,
   } = useTeamData(autoSyncEnabled, sentYearMap);
+
+  const { alerts, toggleAlert, isAlertEnabled, markAsNotified } = useBirthdayAlerts();
 
   // Automatically keep twilioConfig sender synced with Google Sheet master source
   useEffect(() => {
@@ -189,8 +194,26 @@ export default function App() {
           );
         }
       }
+
+      // Check for personalized custom alerts
+      if (teamMembers.length > 0 && desktopNotificationsEnabled) {
+        const currentYearNum = new Date().getFullYear();
+        
+        todayBirthdays.forEach(member => {
+          const id = member.id || member.sl;
+          const alertPref = alerts[id];
+          
+          if (alertPref?.enabled && alertPref.lastNotifiedYear !== currentYearNum) {
+            sendBrowserBirthdayNotification(
+              `🎂 Special Birthday Alert: ${member.name}!`,
+              `Your personalized alert for ${member.name}'s birthday is active. Wish them a great day!`
+            );
+            markAsNotified(id, currentYearNum);
+          }
+        });
+      }
     }
-  }, [teamMembers.length, todayBirthdays, dueSoonBirthdays, soundEnabled, desktopNotificationsEnabled]);
+  }, [teamMembers.length, todayBirthdays, dueSoonBirthdays, soundEnabled, desktopNotificationsEnabled, alerts, markAsNotified]);
 
   // Toggle Desktop Notifications
   const handleToggleDesktopNotifications = async () => {
@@ -678,6 +701,16 @@ export default function App() {
             </div>
           </div>
 
+          <div className="bg-white rounded-2xl p-3.5 border border-slate-200 shadow-2xs flex items-center gap-3 cursor-pointer hover:border-slate-300 transition" onClick={() => setIsCalendarOpen(true)}>
+            <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold shrink-0">
+              <Calendar className="w-4.5 h-4.5" />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Visual Map</p>
+              <p className="text-xs font-bold text-indigo-700 mt-0.5">Calendar View</p>
+            </div>
+          </div>
+
           <div className="bg-white rounded-2xl p-3.5 border border-slate-200 shadow-2xs flex items-center gap-3 cursor-pointer hover:border-slate-300 transition" onClick={() => setIsAdminPlanningOpen(true)}>
             <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold shrink-0">
               <Bell className="w-4.5 h-4.5" />
@@ -727,6 +760,7 @@ export default function App() {
             isSendingWhatsApp={isSendingWhatsApp}
             onNavigateTab={setActiveTab}
             onOpenAdminPlanning={() => setIsAdminPlanningOpen(true)}
+            onOpenCalendar={() => setIsCalendarOpen(true)}
           />
         )}
 
@@ -764,6 +798,9 @@ export default function App() {
               isSending={isSendingWhatsApp}
               onUpdateMemberMessage={handleUpdateMemberMessage}
               onToggleWishSent={handleToggleWishSent}
+              onToggleAlert={toggleAlert}
+              isAlertEnabled={isAlertEnabled}
+              onOpenCalendar={() => setIsCalendarOpen(true)}
             />
           </div>
         )}
@@ -849,6 +886,13 @@ export default function App() {
           />
         )}
       </main>
+
+      {/* Birthday Calendar Overlay */}
+      <BirthdayCalendarOverlay 
+        isOpen={isCalendarOpen}
+        onClose={() => setIsCalendarOpen(false)}
+        teamMembers={teamMembers}
+      />
 
       {/* Wish Generator Modal */}
       <WishGeneratorModal

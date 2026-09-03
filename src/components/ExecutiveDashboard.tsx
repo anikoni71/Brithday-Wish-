@@ -81,6 +81,7 @@ interface ExecutiveDashboardProps {
   isSendingWhatsApp?: boolean;
   onNavigateTab: (tab: 'dashboard' | 'roster' | 'festive' | 'email' | 'generator' | 'script' | 'tester' | 'automation') => void;
   onOpenAdminPlanning: () => void;
+  onOpenCalendar: () => void;
 }
 
 /**
@@ -324,6 +325,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
   isSendingWhatsApp = false,
   onNavigateTab,
   onOpenAdminPlanning,
+  onOpenCalendar,
 }) => {
   const currentYear = new Date().getFullYear();
   const [chartViewMode, setChartViewMode] = useState<'area' | 'bar'>('area');
@@ -700,6 +702,14 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin text-emerald-400' : 'text-zinc-400'}`} />
               <span>{isSyncing ? 'Syncing...' : 'Sync Master'}</span>
+            </button>
+
+            <button
+              onClick={onOpenCalendar}
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20 transition-all duration-200 cursor-pointer font-bold"
+            >
+              <Calendar className="w-3.5 h-3.5 text-white" />
+              <span>Calendar View</span>
             </button>
 
             <button

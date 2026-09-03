@@ -35,6 +35,8 @@ import {
   Layers,
   Users,
   Cake,
+  Bell,
+  BellOff,
 } from 'lucide-react';
 
 interface RosterTableProps {
@@ -44,6 +46,9 @@ interface RosterTableProps {
   isSending: boolean;
   onUpdateMemberMessage: (idOrSl: string, newMessage: string) => void;
   onToggleWishSent?: (idOrSl: string) => void;
+  onToggleAlert?: (member: TeamMember) => void;
+  isAlertEnabled?: (memberId: string) => boolean;
+  onOpenCalendar?: () => void;
   selectedMonthFilter?: number | null;
   onClearMonthFilter?: () => void;
   externalFilterType?: 'all' | 'today' | 'due_soon' | 'sent_2026' | 'pending' | 'has_wa';
@@ -59,6 +64,9 @@ export const RosterTable: React.FC<RosterTableProps> = ({
   isSending,
   onUpdateMemberMessage,
   onToggleWishSent,
+  onToggleAlert,
+  isAlertEnabled,
+  onOpenCalendar,
   selectedMonthFilter = null,
   onClearMonthFilter,
   externalFilterType,
@@ -225,6 +233,7 @@ export const RosterTable: React.FC<RosterTableProps> = ({
     const isDueSoon = !isToday && upcomingInfo.isDueSoon;
     const specialDayMatch = getNearbySpecialDayForBirthday(member.birthday, 3);
     const formattedImageUrl = formatProfileImageUrl(member.imageUrl);
+    const alertEnabled = isAlertEnabled ? isAlertEnabled(member.id || member.sl) : false;
 
     return (
       <tr
@@ -492,6 +501,20 @@ export const RosterTable: React.FC<RosterTableProps> = ({
             >
               <Sparkles className="w-3.5 h-3.5" />
             </button>
+
+            {onToggleAlert && (
+              <button
+                onClick={() => onToggleAlert(member)}
+                className={`p-1.5 rounded border transition cursor-pointer ${
+                  alertEnabled 
+                    ? 'bg-indigo-600 text-white border-indigo-700 shadow-sm' 
+                    : 'bg-white text-slate-400 border-slate-200 hover:bg-slate-50'
+                }`}
+                title={alertEnabled ? "Disable personalized birthday alert" : "Enable personalized birthday alert"}
+              >
+                {alertEnabled ? <Bell className="w-3.5 h-3.5" /> : <BellOff className="w-3.5 h-3.5" />}
+              </button>
+            )}
           </div>
         </td>
       </tr>
@@ -522,6 +545,15 @@ export const RosterTable: React.FC<RosterTableProps> = ({
 
           {/* View Mode Toggle: List View vs Department View */}
           <div className="flex items-center gap-2 self-start md:self-auto">
+            {onOpenCalendar && (
+              <button
+                onClick={onOpenCalendar}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-indigo-50 text-indigo-700 text-xs font-bold border border-indigo-100 hover:bg-indigo-100 transition-colors cursor-pointer shadow-2xs mr-2"
+              >
+                <Calendar className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Calendar View</span>
+              </button>
+            )}
             <div className="inline-flex items-center bg-slate-200/80 p-1 rounded-xl border border-slate-300/80 shadow-2xs">
               <button
                 id="btn-view-list"

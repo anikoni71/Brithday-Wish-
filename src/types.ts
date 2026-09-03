@@ -82,6 +82,14 @@ export interface LogEntry {
   channel?: string;
 }
 
+export interface BirthdayAlert {
+  memberId: string;
+  memberName: string;
+  birthday: string;
+  enabled: boolean;
+  lastNotifiedYear?: number;
+}
+
 export interface AutomationLogEntry {
   id: string;
   timestamp: string;
