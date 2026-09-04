@@ -156,10 +156,11 @@ export const FestiveCalendarWorkstation: React.FC<FestiveCalendarWorkstationProp
 
         if (relationship) {
           // Generate a custom tailored festive wish quote for this birth boy + special day
+          const meaningNote = member.nameMeaning ? ` (${member.nameMeaning})` : '';
           const customFestiveWish =
             relationship === 'exact'
-              ? `🎉 Happy Birthday ${member.name}! May your special day, beautifully coinciding with ${sd.name}, be filled with boundless joy, prosperity, and proud achievements across our IE Central team!`
-              : `🌟 Wishing you a wonderful birthday, ${member.name}! In this festive season of ${sd.name}, may your innovative spirit and dedication bring continued success to our IE team.`;
+              ? `🎉 Happy Birthday ${member.name}${meaningNote}! May your special day, beautifully coinciding with ${sd.name}, be filled with boundless joy, prosperity, and proud achievements across our IE Central team!`
+              : `🌟 Wishing you a wonderful birthday, ${member.name}${meaningNote}! In this festive season of ${sd.name}, may your innovative spirit and dedication bring continued success to our IE team.`;
 
           matches.push({
             member,
@@ -1057,6 +1058,18 @@ export const FestiveCalendarWorkstation: React.FC<FestiveCalendarWorkstationProp
                                     <p className="text-[11px] text-slate-500 font-medium">
                                       {item.member.designation} • {item.member.department || 'IE Central'}
                                     </p>
+                                    {item.member.nameMeaning && (
+                                      <p className="text-[10px] text-amber-700 font-normal italic flex items-center gap-1 mt-0.5">
+                                        <Sparkles className="w-2.5 h-2.5 text-amber-500 shrink-0" />
+                                        <span>{item.member.nameMeaning}</span>
+                                      </p>
+                                    )}
+                                    {item.member.specialDayMatch && (
+                                      <p className="text-[10px] text-emerald-700 font-medium flex items-center gap-1 mt-0.5" title={`Special Day Match: ${item.member.specialDayMatch}`}>
+                                        <span className="text-[9px]">🌟</span>
+                                        <span className="truncate max-w-[280px]">{item.member.specialDayMatch}</span>
+                                      </p>
+                                    )}
                                   </div>
                                 </div>
 
@@ -1243,6 +1256,12 @@ export const FestiveCalendarWorkstation: React.FC<FestiveCalendarWorkstationProp
                                 <div className="text-[10px] text-slate-500">
                                   {c.member.designation} • {c.birthdayFormatted}
                                 </div>
+                                {c.member.nameMeaning && (
+                                  <div className="text-[9.5px] text-amber-700 italic flex items-center gap-1 mt-0.5">
+                                    <span>✦</span>
+                                    <span>{c.member.nameMeaning}</span>
+                                  </div>
+                                )}
                               </div>
 
                               <div className="flex items-center gap-1.5 self-end sm:self-auto">

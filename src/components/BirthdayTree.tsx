@@ -36,6 +36,7 @@ import {
   normalizeBirthdayString
 } from '../utils/dateUtils';
 import { formatProfileImageUrl } from '../utils/imageUtils';
+import { getMemberNameMeaningDetails, getMemberSpecialDayMatch } from '../data/fallbackData';
 
 interface BirthdayTreeProps {
   members: TeamMember[];
@@ -61,13 +62,13 @@ const MONTH_THEMES = [
 ];
 
 // Predefined branch slot coordinates on the tree canopy (percentages: x%, y%)
-// Arranged organically across left, center, right spreading branches
+// Arranged organically across left, center, right spreading branches with apex top crown slots
 const BRANCH_POSITIONS = [
-  // Top canopy crown (4 slots)
-  { x: 28, y: 15, rotate: -6 },
-  { x: 42, y: 12, rotate: -2 },
-  { x: 58, y: 12, rotate: 3 },
-  { x: 72, y: 16, rotate: 8 },
+  // Top canopy crown (explicit apex slots for top leadership)
+  { x: 30, y: 13, rotate: -4 },
+  { x: 50, y: 11, rotate: 0 },
+  { x: 70, y: 13, rotate: 4 },
+  { x: 84, y: 19, rotate: 8 },
 
   // Upper branches (6 slots)
   { x: 16, y: 26, rotate: -12 },
@@ -141,9 +142,9 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
     };
   }, [isFullscreen]);
 
-  // Process members with parsed dates
+  // Process members with parsed dates and explicitly position Ranjith Sir, Rohan Sir, and Danushka Wanniarachchi at the top of the tree canopy
   const processedMembers = useMemo(() => {
-    return (members || []).map((m, idx) => {
+    const list = (members || []).map((m, idx) => {
       const parsed = parseBirthdayDate(m.birthday);
       const rawMonth = parsed ? parsed.month : getBirthMonth(m.birthday);
       const monthIdx = typeof rawMonth === 'number' && !isNaN(rawMonth) && rawMonth >= 0 && rawMonth <= 11 
@@ -166,6 +167,40 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
         slotIndex: idx,
       };
     });
+
+    // Helper to rank the top three leaders for canopy placement
+    const getTopLeaderRank = (name: string = '') => {
+      const n = name.toLowerCase().trim();
+      if (n.includes('ranjith')) return 1;
+      if (n.includes('rohan')) return 2;
+      if (n.includes('danushka')) return 3;
+      return null;
+    };
+
+    const topThree: typeof list = [];
+    const others: typeof list = [];
+    let ranjith: (typeof list)[0] | undefined;
+    let rohan: (typeof list)[0] | undefined;
+    let danushka: (typeof list)[0] | undefined;
+
+    list.forEach((m) => {
+      const rank = getTopLeaderRank(m.name);
+      if (rank === 1 && !ranjith) {
+        ranjith = m;
+      } else if (rank === 2 && !rohan) {
+        rohan = m;
+      } else if (rank === 3 && !danushka) {
+        danushka = m;
+      } else {
+        others.push(m);
+      }
+    });
+
+    if (ranjith) topThree.push(ranjith);
+    if (rohan) topThree.push(rohan);
+    if (danushka) topThree.push(danushka);
+
+    return [...topThree, ...others];
   }, [members]);
 
   // Filter members based on month and search
@@ -670,13 +705,23 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
 
                     {/* Member Name Plate / Badge (under ornament) */}
                     {cardDetailLevel === 'compact' ? (
-                      <div className="mt-0.5 px-2 py-0.5 rounded bg-zinc-950/90 border border-zinc-700/80 shadow-md text-center max-w-[85px] truncate transition-all">
+                      <div className="mt-0.5 px-2 py-0.5 rounded bg-zinc-950/90 border border-zinc-700/80 shadow-md text-center max-w-[85px] truncate transition-all" title={`${member.name}${member.nameMeaning ? ` • Meaning: ${member.nameMeaning}` : ''}${member.specialDayMatch ? ` • Special Day: ${member.specialDayMatch}` : ''}`}>
                         <p className="text-[10px] font-bold text-white truncate leading-tight">{member.name}</p>
                         <p className="text-[8px] font-mono text-amber-300 font-semibold leading-tight">{member.formattedBirthday}</p>
                       </div>
                     ) : (
-                      <div className="mt-0.5 p-1.5 rounded-xl bg-zinc-950/95 border border-zinc-700/90 shadow-xl text-center min-w-[105px] max-w-[125px] backdrop-blur-md transition-all">
+                      <div className="mt-0.5 p-1.5 rounded-xl bg-zinc-950/95 border border-zinc-700/90 shadow-xl text-center min-w-[105px] max-w-[125px] backdrop-blur-md transition-all" title={`${member.name}${member.nameMeaning ? ` • Meaning: ${member.nameMeaning}` : ''}${member.specialDayMatch ? ` • Special Day: ${member.specialDayMatch}` : ''}`}>
                         <p className="text-[10px] font-bold text-white truncate leading-tight">{member.name}</p>
+                        {member.nameMeaning && (
+                          <p className="text-[7.5px] font-sans text-amber-300/90 truncate leading-tight mt-0.5 font-medium" title={`Name Meaning: ${member.nameMeaning}`}>
+                            ✦ {member.nameMeaning}
+                          </p>
+                        )}
+                        {member.specialDayMatch && (
+                          <p className="text-[7.5px] font-sans text-emerald-300/90 truncate leading-tight mt-0.5 font-medium" title={`Special Day: ${member.specialDayMatch}`}>
+                            🌟 {member.specialDayMatch}
+                          </p>
+                        )}
                         {member.designation && (
                           <p className="text-[8px] font-mono text-zinc-400 truncate leading-tight mt-0.5">{member.designation}</p>
                         )}
@@ -994,6 +1039,48 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
 
               {/* Details Grid */}
               <div className="mt-5 space-y-2 text-xs">
+                {/* Name Meaning Card */}
+                {(() => {
+                  const meaningDetails = getMemberNameMeaningDetails(activeMember.name);
+                  const meaning = activeMember.nameMeaning || meaningDetails.note;
+                  const emoji = activeMember.nameMeaningEmoji || meaningDetails.emoji;
+                  if (!meaning) return null;
+                  return (
+                    <div className="p-3.5 rounded-2xl bg-gradient-to-br from-amber-500/10 via-zinc-900/90 to-zinc-900/90 border border-amber-500/25 flex flex-col gap-1.5 shadow-sm">
+                      <div className="flex items-center justify-between">
+                        <span className="text-amber-400 text-[10px] uppercase font-bold tracking-wider flex items-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Name Meaning
+                        </span>
+                        <span className="text-base select-none">{emoji}</span>
+                      </div>
+                      <span className="font-semibold text-amber-200 text-xs leading-relaxed">
+                        {meaning}
+                      </span>
+                    </div>
+                  );
+                })()}
+
+                {/* Birthday Special Day Detail Card */}
+                {(() => {
+                  const specialDay = activeMember.specialDayMatch || getMemberSpecialDayMatch(activeMember.birthday, activeMember.name);
+                  if (!specialDay) return null;
+                  return (
+                    <div className="p-3.5 rounded-2xl bg-gradient-to-br from-emerald-500/10 via-zinc-900/90 to-zinc-900/90 border border-emerald-500/25 flex flex-col gap-1.5 shadow-sm">
+                      <div className="flex items-center justify-between">
+                        <span className="text-emerald-400 text-[10px] uppercase font-bold tracking-wider flex items-center gap-1.5">
+                          <span className="text-xs">🌟</span> Birthday Special Day Detail
+                        </span>
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold tracking-wider">
+                          Global Match
+                        </span>
+                      </div>
+                      <span className="font-semibold text-emerald-200 text-xs leading-relaxed">
+                        {specialDay}
+                      </span>
+                    </div>
+                  );
+                })()}
+
                 <div className="p-3 rounded-xl bg-zinc-900/80 border border-zinc-800/80 flex items-center justify-between">
                   <span className="text-zinc-400 flex items-center gap-2">
                     <Cake className="w-3.5 h-3.5 text-amber-400" /> Birthday:

@@ -1,6 +1,6 @@
 import { TeamMember, AdminSheetConfig } from '../types';
 import { checkIsTodayBirthday } from '../utils/dateUtils';
-import { REAL_IE_TEAM_ROSTER } from '../data/fallbackData';
+import { REAL_IE_TEAM_ROSTER, getDemoTeamMembers, getMemberNameMeaning, getMemberSpecialDayMatch, getMemberNameMeaningDetails } from '../data/fallbackData';
 import { formatProfileImageUrl } from '../utils/imageUtils';
 
 export const DEFAULT_GOOGLE_SHEET_CSV_URL =
@@ -362,6 +362,8 @@ export function parseSheetRowsToMembers(rows: string[][]): TeamMember[] {
       wishingMessage = `Happy Birthday, ${name}! Wishing you a great day from the IE Central Team. 🎉`;
     }
 
+    const meaningDetails = getMemberNameMeaningDetails(name);
+
     members.push({
       sl,
       id,
@@ -374,6 +376,10 @@ export function parseSheetRowsToMembers(rows: string[][]): TeamMember[] {
       whatsapp: whatsapp || mobile,
       imageUrl,
       wishingMessage,
+      nameMeaning: meaningDetails.note,
+      nameMeaningEmoji: meaningDetails.emoji,
+      nameMeaningNote: meaningDetails.note,
+      specialDayMatch: getMemberSpecialDayMatch(birthday, name),
       isBirthdayToday: checkIsTodayBirthday(birthday),
       lastSentYear
     });
@@ -402,10 +408,22 @@ export async function fetchLiveTeamData(targetSheetUrl?: string): Promise<{
     if (res.ok && contentType.includes('application/json')) {
       const json = await res.json();
       if (json.data && Array.isArray(json.data) && json.data.length > 0) {
+        const enriched = json.data.map((m: any) => {
+          const meaningDetails = getMemberNameMeaningDetails(String(m.name || ''));
+          const specialMatch = m.specialDayMatch || getMemberSpecialDayMatch(String(m.birthday || ''), String(m.name || ''));
+          return {
+            ...m,
+            nameMeaning: m.nameMeaning || meaningDetails.note,
+            nameMeaningEmoji: m.nameMeaningEmoji || meaningDetails.emoji,
+            nameMeaningNote: m.nameMeaningNote || meaningDetails.note,
+            specialDayMatch: specialMatch,
+            isBirthdayToday: checkIsTodayBirthday(String(m.birthday || ''))
+          };
+        });
         return {
           success: true,
           source: json.source || 'server_proxy',
-          data: json.data,
+          data: enriched,
           adminConfig: json.adminConfig,
           error: json.error || null
         };
@@ -446,6 +464,8 @@ export async function fetchLiveTeamData(targetSheetUrl?: string): Promise<{
               const formattedImage = formatProfileImageUrl(imageUrl);
               const lastSentYear = item.lastSentYear || item.sentYear || '';
 
+              const meaningDetails = getMemberNameMeaningDetails(String(name));
+
               return {
                 sl: String(sl),
                 id: String(id),
@@ -458,6 +478,10 @@ export async function fetchLiveTeamData(targetSheetUrl?: string): Promise<{
                 whatsapp: String(whatsapp),
                 imageUrl: formattedImage || undefined,
                 wishingMessage: String(wishingMessage),
+                nameMeaning: meaningDetails.note,
+                nameMeaningEmoji: meaningDetails.emoji,
+                nameMeaningNote: meaningDetails.note,
+                specialDayMatch: getMemberSpecialDayMatch(String(birthday), String(name)),
                 isBirthdayToday: checkIsTodayBirthday(String(birthday)),
                 lastSentYear: String(lastSentYear || '')
               };
@@ -496,10 +520,7 @@ export async function fetchLiveTeamData(targetSheetUrl?: string): Promise<{
   }
 
   // Step 3: Resilient fallback to real official baseline IE team data
-  const fallbackMembers = REAL_IE_TEAM_ROSTER.map((m) => ({
-    ...m,
-    isBirthdayToday: checkIsTodayBirthday(m.birthday)
-  }));
+  const fallbackMembers = getDemoTeamMembers();
   return {
     success: true,
     source: 'baseline_roster',

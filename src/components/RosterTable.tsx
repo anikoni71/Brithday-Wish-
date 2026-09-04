@@ -101,7 +101,9 @@ export const RosterTable: React.FC<RosterTableProps> = ({
         m.designation.toLowerCase().includes(searchTerm.toLowerCase()) ||
         deptName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         m.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        m.whatsapp.includes(searchTerm);
+        m.whatsapp.includes(searchTerm) ||
+        (m.nameMeaning ? m.nameMeaning.toLowerCase().includes(searchTerm.toLowerCase()) : false) ||
+        (m.specialDayMatch ? m.specialDayMatch.toLowerCase().includes(searchTerm.toLowerCase()) : false);
 
       if (!matchesSearch) return false;
 
@@ -294,19 +296,27 @@ export const RosterTable: React.FC<RosterTableProps> = ({
 
         {/* Name (Column D) */}
         <td className="py-3 px-4 font-bold text-slate-900">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span>{member.name}</span>
-            {isToday && (
-              <span className="px-2 py-0.5 rounded-full text-[10px] bg-amber-50 text-amber-600 border border-amber-200 font-black animate-pulse shadow-xs flex items-center gap-1">
-                <div className="w-1.5 h-1.5 rounded-full bg-amber-600 animate-ping"></div>
-                Today
-              </span>
-            )}
-            {isDueSoon && upcomingInfo.daysRemaining <= 3 && (
-              <span className="px-2 py-0.5 rounded-full text-[10px] bg-blue-50 text-blue-600 border border-blue-200 font-bold inline-flex items-center gap-1 shadow-xs">
-                <CalendarClock className="w-2.5 h-2.5 text-blue-500" />
-                Upcoming
-              </span>
+          <div className="flex flex-col">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span title={member.nameMeaning ? `Name Meaning: ${member.nameMeaning}` : undefined}>{member.name}</span>
+              {isToday && (
+                <span className="px-2 py-0.5 rounded-full text-[10px] bg-amber-50 text-amber-600 border border-amber-200 font-black animate-pulse shadow-xs flex items-center gap-1">
+                  <div className="w-1.5 h-1.5 rounded-full bg-amber-600 animate-ping"></div>
+                  Today
+                </span>
+              )}
+              {isDueSoon && upcomingInfo.daysRemaining <= 3 && (
+                <span className="px-2 py-0.5 rounded-full text-[10px] bg-blue-50 text-blue-600 border border-blue-200 font-bold inline-flex items-center gap-1 shadow-xs">
+                  <CalendarClock className="w-2.5 h-2.5 text-blue-500" />
+                  Upcoming
+                </span>
+              )}
+            </div>
+            {member.nameMeaning && (
+              <p className="text-[10.5px] font-normal text-slate-600 leading-tight flex items-center gap-1.5 mt-0.5" title={`Literal Meaning: ${member.nameMeaning}${member.specialDayMatch ? ` • Birthday Special Day Match: ${member.specialDayMatch}` : ''}`}>
+                <span className="text-xs">{member.nameMeaningEmoji || '✦'}</span>
+                <span className="italic truncate max-w-[260px]">{member.nameMeaning}</span>
+              </p>
             )}
           </div>
         </td>
@@ -348,7 +358,15 @@ export const RosterTable: React.FC<RosterTableProps> = ({
               </div>
 
               {/* Global / National Festive Sub-Badge */}
-              {specialDayMatch && (
+              {member.specialDayMatch ? (
+                <span
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-amber-50 text-amber-900 border border-amber-200/80 shadow-2xs"
+                  title={`Special Day Match: ${member.specialDayMatch}`}
+                >
+                  <span className="text-amber-600">🌟</span>
+                  <span className="truncate max-w-[220px]">{member.specialDayMatch}</span>
+                </span>
+              ) : specialDayMatch ? (
                 <span
                   className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold border transition shadow-2xs ${
                     specialDayMatch.relationship === 'exact'
@@ -359,7 +377,7 @@ export const RosterTable: React.FC<RosterTableProps> = ({
                 >
                   <span>{specialDayMatch.label}</span>
                 </span>
-              )}
+              ) : null}
             </div>
           ) : (
             <span className="text-slate-400 italic">Not set</span>

@@ -15,7 +15,8 @@ import { MailWorkstation } from './components/MailWorkstation';
 import { FestiveCalendarWorkstation } from './components/FestiveCalendarWorkstation';
 import { ExecutiveDashboard } from './components/ExecutiveDashboard';
 import { DispatchInsights } from './components/DispatchInsights';
-import { checkIsTodayBirthday, getUpcomingBirthdayInfo } from './utils/dateUtils';
+import { NameMeaningWorkstation } from './components/NameMeaningWorkstation';
+import { checkIsTodayBirthday, getUpcomingBirthdayInfo, parseBirthdayDate, getDaysUntilBirthday } from './utils/dateUtils';
 import { triggerBirthdayConfetti } from './utils/confetti';
 import { useTeamData } from './hooks/useTeamData';
 import { useBirthdayAlerts } from './hooks/useBirthdayAlerts';
@@ -39,7 +40,7 @@ interface ToastNotification {
 }
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'insights' | 'roster' | 'festive' | 'email' | 'generator' | 'script' | 'automation' | 'tester'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'insights' | 'roster' | 'meanings' | 'festive' | 'email' | 'generator' | 'script' | 'automation' | 'tester'>('dashboard');
   const [autoSyncEnabled, setAutoSyncEnabled] = useState<boolean>(true);
   const [toastNotification, setToastNotification] = useState<ToastNotification | null>(null);
   const [isWishModalOpen, setIsWishModalOpen] = useState<boolean>(false);
@@ -159,6 +160,36 @@ export default function App() {
       const info = getUpcomingBirthdayInfo(m.birthday, 7);
       return info.isDueSoon && !info.isToday;
     });
+  }, [teamMembers]);
+
+  // Count of birthdays occurring in the current week for visual status notification
+  const currentWeekBirthdaysCount = useMemo(() => {
+    const today = new Date();
+    // Sunday (0) to Saturday (6) calendar week
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - today.getDay());
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    endOfWeek.setHours(23, 59, 59, 999);
+
+    const calendarMatches = teamMembers.filter((m) => {
+      const parsed = parseBirthdayDate(m.birthday);
+      if (!parsed) return false;
+      const bday = new Date(today.getFullYear(), parsed.month, parsed.day);
+      return bday >= startOfWeek && bday <= endOfWeek;
+    });
+
+    if (calendarMatches.length > 0) {
+      return calendarMatches.length;
+    }
+
+    // Rolling 7-day window fallback if calendar week has passed
+    return teamMembers.filter((m) => {
+      const days = getDaysUntilBirthday(m.birthday);
+      return days !== null && days >= 0 && days <= 6;
+    }).length;
   }, [teamMembers]);
 
   // Sync browser tab title with dynamic reminder badge
@@ -638,7 +669,7 @@ export default function App() {
         />
 
         {/* Top Summary Metrics Bar */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 mb-8">
           
           <div className="bg-white rounded-2xl p-3.5 border border-slate-200 shadow-2xs flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold shrink-0">
@@ -657,6 +688,22 @@ export default function App() {
             <div>
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Today's Birthdays</p>
               <p className="text-lg font-bold text-amber-600">{todayBirthdays.length}</p>
+            </div>
+          </div>
+
+          <div
+            className="bg-white rounded-2xl p-3.5 border border-amber-200 shadow-2xs flex items-center gap-3 cursor-pointer hover:border-amber-400 hover:shadow-xs transition"
+            onClick={() => setActiveTab('meanings')}
+          >
+            <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold shrink-0">
+              <Sparkles className="w-4.5 h-4.5" />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Name Meanings</p>
+              <p className="text-xs font-bold text-amber-800 mt-0.5 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                16 Team Traits
+              </p>
             </div>
           </div>
 
@@ -701,12 +748,35 @@ export default function App() {
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl p-3.5 border border-slate-200 shadow-2xs flex items-center gap-3 cursor-pointer hover:border-slate-300 transition" onClick={() => setIsCalendarOpen(true)}>
-            <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold shrink-0">
+          <div 
+            id="visual-map-button"
+            className="bg-white rounded-2xl p-3.5 border border-slate-200 shadow-2xs flex items-center gap-3 cursor-pointer hover:border-indigo-300 hover:shadow-xs transition relative group" 
+            onClick={() => setIsCalendarOpen(true)}
+            title={`Visual Map Calendar View${currentWeekBirthdaysCount > 0 ? ` — ${currentWeekBirthdaysCount} birthday${currentWeekBirthdaysCount > 1 ? 's' : ''} this week` : ''}`}
+          >
+            <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold shrink-0 relative">
               <Calendar className="w-4.5 h-4.5" />
+              {currentWeekBirthdaysCount > 0 && (
+                <span 
+                  id="visual-map-badge"
+                  className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 bg-rose-500 text-white text-[10px] font-extrabold rounded-full flex items-center justify-center border-2 border-white shadow-xs animate-pulse"
+                >
+                  {currentWeekBirthdaysCount}
+                </span>
+              )}
             </div>
-            <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Visual Map</p>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center justify-between gap-1">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Visual Map</p>
+                {currentWeekBirthdaysCount > 0 && (
+                  <span 
+                    id="visual-map-week-count-tag"
+                    className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-rose-50 text-rose-600 border border-rose-200 shrink-0"
+                  >
+                    {currentWeekBirthdaysCount} this wk
+                  </span>
+                )}
+              </div>
               <p className="text-xs font-bold text-indigo-700 mt-0.5">Calendar View</p>
             </div>
           </div>
@@ -803,6 +873,16 @@ export default function App() {
               onOpenCalendar={() => setIsCalendarOpen(true)}
             />
           </div>
+        )}
+
+        {/* Dedicated Name Meaning Of Team Member Workstation */}
+        {activeTab === 'meanings' && (
+          <NameMeaningWorkstation
+            members={teamMembers}
+            onOpenGenerator={handleOpenGenerator}
+            onSendWhatsApp={handleSendWhatsApp}
+            isSendingWhatsApp={isSendingWhatsApp}
+          />
         )}
 
         {/* Dedicated Global Special Days & Festive Calendar Workstation */}

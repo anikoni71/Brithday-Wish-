@@ -100,6 +100,18 @@ export const TodayBirthdayBanner: React.FC<TodayBirthdayBannerProps> = ({
                           <Briefcase className="w-3 h-3 text-slate-400" />
                           {member.designation || 'IE Central Team Member'}
                         </p>
+                        {member.nameMeaning && (
+                          <p className="text-xs text-amber-300/90 flex items-center gap-1 mt-1 font-medium" title={`Name Meaning: ${member.nameMeaning}`}>
+                            <span className="text-amber-400">✦</span>
+                            <span className="italic">{member.nameMeaning}</span>
+                          </p>
+                        )}
+                        {member.specialDayMatch && (
+                          <p className="text-xs text-emerald-300 flex items-center gap-1 mt-0.5 font-medium" title={`Birthday Special Day: ${member.specialDayMatch}`}>
+                            <span>🌟</span>
+                            <span>{member.specialDayMatch}</span>
+                          </p>
+                        )}
                       </div>
 
                       <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">

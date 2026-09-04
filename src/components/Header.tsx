@@ -3,8 +3,8 @@ import { RefreshCw, ExternalLink, Cake, Sparkles, Code2, Send, PhoneCall, Radio,
 import { AdminSheetConfig } from '../types';
 
 interface HeaderProps {
-  activeTab: 'dashboard' | 'roster' | 'festive' | 'email' | 'generator' | 'script' | 'tester' | 'automation' | 'insights';
-  setActiveTab: (tab: 'dashboard' | 'roster' | 'festive' | 'email' | 'generator' | 'script' | 'tester' | 'automation' | 'insights') => void;
+  activeTab: 'dashboard' | 'roster' | 'meanings' | 'festive' | 'email' | 'generator' | 'script' | 'tester' | 'automation' | 'insights';
+  setActiveTab: (tab: 'dashboard' | 'roster' | 'meanings' | 'festive' | 'email' | 'generator' | 'script' | 'tester' | 'automation' | 'insights') => void;
   onSync: () => void;
   isSyncing: boolean;
   error?: string | null;
@@ -276,6 +276,21 @@ export const Header: React.FC<HeaderProps> = ({
                 {dueSoonCount}
               </span>
             ) : null}
+          </button>
+
+          <button
+            onClick={() => setActiveTab('meanings')}
+            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-t-lg border-b-2 transition whitespace-nowrap cursor-pointer ${
+              activeTab === 'meanings'
+                ? 'border-amber-500 text-amber-900 bg-amber-50/70 font-bold shadow-2xs'
+                : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+            }`}
+          >
+            <Sparkles className="w-4 h-4 text-amber-500" />
+            Name Meaning Of Team Member
+            <span className="ml-1 px-1.5 py-0.2 rounded-full text-[9px] bg-amber-100 text-amber-900 border border-amber-300 font-bold">
+              16 Meanings
+            </span>
           </button>
 
           <button

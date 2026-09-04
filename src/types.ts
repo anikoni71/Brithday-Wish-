@@ -20,6 +20,10 @@ export interface TeamMember {
   deliveryChannel?: 'whatsapp' | 'email_fallback' | 'dual_channel';
   lastDispatchError?: string;
   status?: string;
+  nameMeaning?: string; // Meaning and spiritual significance of the member's name
+  nameMeaningEmoji?: string; // Uplifting emoji (e.g. "🏹", "✨", "♾️", "🤲")
+  nameMeaningNote?: string; // Short meaningful note (e.g. "Armed with a bow / Prosperous leader")
+  specialDayMatch?: string; // Matching global & festive special day details for their birthday
 }
 
 export interface TwilioConfig {

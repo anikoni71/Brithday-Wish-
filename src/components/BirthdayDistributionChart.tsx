@@ -1,7 +1,7 @@
 import React, { useLayoutEffect, useRef, useState, useMemo, useEffect } from 'react';
 import * as d3 from 'd3';
 import { TeamMember } from '../types';
-import { MONTH_NAMES, getBirthMonth, parseBirthdayDate } from '../utils/dateUtils';
+import { MONTH_NAMES, getBirthMonth, parseBirthdayDate, getDaysUntilBirthday } from '../utils/dateUtils';
 import { 
   BarChart3, 
   Calendar, 
@@ -15,7 +15,8 @@ import {
   TrendingUp,
   X,
   Filter,
-  PieChart
+  PieChart,
+  Clock
 } from 'lucide-react';
 import { BirthdayMonthPieChart } from './BirthdayMonthPieChart';
 
@@ -155,6 +156,70 @@ export const BirthdayDistributionChart: React.FC<BirthdayDistributionChartProps>
 
   const currentMonthData = monthData[currentMonthIndex];
   const activeSelectedData = activeMonthFilter !== null ? monthData[activeMonthFilter] : null;
+
+  // Next month data calculation
+  const nextMonthIndex = (currentMonthIndex + 1) % 12;
+  const nextMonthData = monthData[nextMonthIndex];
+
+  // Upcoming in next 30 days list & horizon statistics
+  const upcomingHorizonStats = useMemo(() => {
+    const next30DaysList: {
+      member: TeamMember;
+      daysRemaining: number;
+      isToday: boolean;
+      isTomorrow: boolean;
+      timeframeLabel: string;
+      formattedDate: string;
+    }[] = [];
+
+    let nextCelebrantBeyond30: {
+      member: TeamMember;
+      daysRemaining: number;
+      formattedDate: string;
+    } | null = null;
+    let minDaysBeyond = Infinity;
+
+    members.forEach((m) => {
+      const days = getDaysUntilBirthday(m.birthday);
+      if (days !== null && days >= 0) {
+        const parsed = parseBirthdayDate(m.birthday);
+        const formattedDate = parsed ? parsed.formatted : String(m.birthday || '');
+
+        if (days <= 30) {
+          next30DaysList.push({
+            member: m,
+            daysRemaining: days,
+            isToday: days === 0,
+            isTomorrow: days === 1,
+            timeframeLabel: days === 0 ? 'Today' : days === 1 ? 'Tomorrow' : `In ${days}d`,
+            formattedDate,
+          });
+        } else if (days < minDaysBeyond) {
+          minDaysBeyond = days;
+          nextCelebrantBeyond30 = {
+            member: m,
+            daysRemaining: days,
+            formattedDate,
+          };
+        }
+      }
+    });
+
+    next30DaysList.sort((a, b) => a.daysRemaining - b.daysRemaining);
+
+    const next7DaysCount = next30DaysList.filter((item) => item.daysRemaining <= 7).length;
+    const todayCount = next30DaysList.filter((item) => item.isToday).length;
+    const averagePerMonth = totalWithBirthdays > 0 ? (totalWithBirthdays / 12).toFixed(1) : '0.0';
+
+    return {
+      next30DaysList,
+      next30DaysCount: next30DaysList.length,
+      next7DaysCount,
+      todayCount,
+      averagePerMonth,
+      nextCelebrantBeyond30,
+    };
+  }, [members, totalWithBirthdays]);
 
   // Compute signature of data values to distinguish structural init from dynamic updates
   const dataSignature = useMemo(() => {
@@ -985,6 +1050,209 @@ export const BirthdayDistributionChart: React.FC<BirthdayDistributionChartProps>
           </span>
         </div>
       )}
+
+      {/* Summary Statistics Section: 30-Day Horizon & Cadence Analytics */}
+      <div className="border-t border-slate-200/90 bg-gradient-to-b from-slate-50/70 to-slate-100/30 p-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-4">
+          <div className="flex items-center gap-2.5">
+            <span className="p-2 bg-indigo-600 text-white rounded-xl shadow-xs">
+              <Sparkles className="w-4 h-4" />
+            </span>
+            <div>
+              <div className="flex items-center gap-2">
+                <h4 className="text-sm font-bold text-slate-800 tracking-tight">
+                  Cadence & Upcoming Horizon Summary
+                </h4>
+                <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200/60">
+                  Next 30-Day Window
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Real-time celebration forecast and cadence summary across the team roster
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 text-xs font-semibold shadow-2xs">
+              <Users className="w-3.5 h-3.5 text-slate-400" />
+              <span>{totalWithBirthdays} Total Celebrants Recorded</span>
+            </span>
+          </div>
+        </div>
+
+        {/* 4 Summary Metric Cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 mb-4">
+          {/* Card 1: Next 30 Days (Upcoming in Next 30 Days) */}
+          <div className="bg-white rounded-xl p-4 border border-indigo-100/90 shadow-2xs hover:border-indigo-200 transition-all flex flex-col justify-between">
+            <div className="flex items-center justify-between text-xs mb-2">
+              <span className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">
+                Next 30 Days
+              </span>
+              <span className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600">
+                <Calendar className="w-3.5 h-3.5" />
+              </span>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-black text-indigo-600 tracking-tight">
+                {upcomingHorizonStats.next30DaysCount}
+              </span>
+              <span className="text-xs font-bold text-slate-600">
+                {upcomingHorizonStats.next30DaysCount === 1 ? 'Birthday' : 'Birthdays'}
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-400 mt-1.5 font-medium">
+              {upcomingHorizonStats.next30DaysCount > 0 && totalWithBirthdays > 0
+                ? `${Math.round((upcomingHorizonStats.next30DaysCount / totalWithBirthdays) * 100)}% of annual celebrants`
+                : 'No birthdays in this window'}
+            </p>
+          </div>
+
+          {/* Card 2: Next 7 Days (Immediate Horizon) */}
+          <div className="bg-white rounded-xl p-4 border border-amber-100/90 shadow-2xs hover:border-amber-200 transition-all flex flex-col justify-between">
+            <div className="flex items-center justify-between text-xs mb-2">
+              <span className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">
+                Next 7 Days
+              </span>
+              <span className="p-1.5 rounded-lg bg-amber-50 text-amber-600">
+                <Gift className="w-3.5 h-3.5" />
+              </span>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-black text-amber-600 tracking-tight">
+                {upcomingHorizonStats.next7DaysCount}
+              </span>
+              <span className="text-xs font-bold text-slate-600">
+                {upcomingHorizonStats.todayCount > 0
+                  ? `(${upcomingHorizonStats.todayCount} Today)`
+                  : 'Due Soon'}
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-400 mt-1.5 font-medium">
+              {upcomingHorizonStats.todayCount > 0
+                ? 'Action required today'
+                : 'Immediate planning window'}
+            </p>
+          </div>
+
+          {/* Card 3: Current vs Next Month */}
+          <div className="bg-white rounded-xl p-4 border border-emerald-100/90 shadow-2xs hover:border-emerald-200 transition-all flex flex-col justify-between">
+            <div className="flex items-center justify-between text-xs mb-2">
+              <span className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">
+                {currentMonthData?.shortName} vs {nextMonthData?.shortName}
+              </span>
+              <span className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600">
+                <Cake className="w-3.5 h-3.5" />
+              </span>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-black text-emerald-600 tracking-tight">
+                {currentMonthData?.count || 0}
+              </span>
+              <span className="text-xs font-bold text-slate-500">
+                now / <strong className="text-slate-800">{nextMonthData?.count || 0}</strong> next
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-400 mt-1.5 font-medium">
+              Monthly turnover cadence
+            </p>
+          </div>
+
+          {/* Card 4: Monthly Average & Peak */}
+          <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-2xs hover:border-slate-300 transition-all flex flex-col justify-between">
+            <div className="flex items-center justify-between text-xs mb-2">
+              <span className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">
+                Monthly Average
+              </span>
+              <span className="p-1.5 rounded-lg bg-slate-100 text-slate-600">
+                <TrendingUp className="w-3.5 h-3.5" />
+              </span>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-black text-slate-800 tracking-tight">
+                {upcomingHorizonStats.averagePerMonth}
+              </span>
+              <span className="text-xs font-bold text-slate-500">
+                per month
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-400 mt-1.5 font-medium">
+              Peak: {peakMonth ? `${peakMonth.shortName} (${peakMonth.count})` : 'None'}
+            </p>
+          </div>
+        </div>
+
+        {/* Next 30 Days Celebrants Interactive Roster Strip */}
+        {upcomingHorizonStats.next30DaysList.length > 0 ? (
+          <div className="bg-white rounded-xl p-3.5 border border-slate-200/80 shadow-2xs">
+            <div className="flex items-center justify-between gap-2 mb-2.5">
+              <div className="flex items-center gap-2">
+                <Clock className="w-3.5 h-3.5 text-indigo-600" />
+                <span className="text-xs font-bold text-slate-700">
+                  Upcoming in the Next 30 Days ({upcomingHorizonStats.next30DaysCount}):
+                </span>
+              </div>
+              <span className="text-[11px] text-slate-400 font-medium hidden sm:inline">
+                Click colleague to highlight their month
+              </span>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              {upcomingHorizonStats.next30DaysList.map((item, idx) => {
+                const bMonth = getBirthMonth(item.member.birthday);
+                const isSelected = activeMonthFilter === bMonth;
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      if (bMonth !== null) {
+                        handleMonthPillClick(bMonth);
+                      }
+                    }}
+                    className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-medium transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
+                        : item.isToday
+                        ? 'bg-rose-50 border-rose-200 text-rose-800 hover:bg-rose-100'
+                        : item.isTomorrow
+                        ? 'bg-amber-50 border-amber-200 text-amber-800 hover:bg-amber-100'
+                        : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-800'
+                    }`}
+                    title={`Click to filter for ${MONTH_NAMES[bMonth || 0]?.full}`}
+                  >
+                    <span className="font-bold">{item.member.name}</span>
+                    <span
+                      className={`text-[10px] font-mono px-1.5 py-0.5 rounded-md font-bold ${
+                        isSelected
+                          ? 'bg-indigo-500/80 text-white'
+                          : item.isToday
+                          ? 'bg-rose-200/80 text-rose-900 animate-pulse'
+                          : item.isTomorrow
+                          ? 'bg-amber-200/80 text-amber-900'
+                          : 'bg-white text-slate-600 border border-slate-200/60'
+                      }`}
+                    >
+                      {item.formattedDate} • {item.timeframeLabel}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          <div className="bg-white rounded-xl p-3.5 border border-slate-200/80 text-xs text-slate-500 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+              <span>No team birthdays occurring in the next 30-day window.</span>
+            </div>
+            {upcomingHorizonStats.nextCelebrantBeyond30 && (
+              <span className="text-[11px] text-indigo-600 font-semibold">
+                Next upcoming: {upcomingHorizonStats.nextCelebrantBeyond30.member.name} ({upcomingHorizonStats.nextCelebrantBeyond30.formattedDate} — in {upcomingHorizonStats.nextCelebrantBeyond30.daysRemaining} days)
+              </span>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { TeamMember, EmailLogEntry, AutomationLogEntry, AdminSheetConfig } from '../types';
 import { fetchLiveTeamData } from '../services/sheetService';
-import { getDemoTeamMembers } from '../data/fallbackData';
+import { getDemoTeamMembers, getMemberNameMeaningDetails, getMemberSpecialDayMatch } from '../data/fallbackData';
 import { formatProfileImageUrl } from '../utils/imageUtils';
 
 interface UseTeamDataResult {
@@ -94,9 +94,15 @@ export function useTeamData(
                   const localSentYear = currentMap[key];
                   const rawImg = m.imageUrl || (m as any).ImageUrl || (m as any).image || (m as any).Image || (m as any)['Image URL'] || (m as any)['Image_URL'] || '';
                   const formattedImg = rawImg ? formatProfileImageUrl(rawImg) : undefined;
+                  const details = getMemberNameMeaningDetails(m.name);
+                  const specialDay = m.specialDayMatch || getMemberSpecialDayMatch(m.birthday, m.name);
                   return {
                     ...m,
                     imageUrl: formattedImg || m.imageUrl,
+                    nameMeaning: m.nameMeaning || details.note,
+                    nameMeaningEmoji: m.nameMeaningEmoji || details.emoji,
+                    nameMeaningNote: m.nameMeaningNote || details.note,
+                    specialDayMatch: specialDay,
                     lastSentYear: localSentYear !== undefined && localSentYear !== '' ? localSentYear : m.lastSentYear || ''
                   };
                 });
@@ -159,8 +165,14 @@ export function useTeamData(
         const mergedMembers = result.data.map((m: TeamMember) => {
           const key = m.id || m.sl;
           const localSentYear = currentMap[key];
+          const details = getMemberNameMeaningDetails(m.name);
+          const specialDay = m.specialDayMatch || getMemberSpecialDayMatch(m.birthday, m.name);
           return {
             ...m,
+            nameMeaning: m.nameMeaning || details.note,
+            nameMeaningEmoji: m.nameMeaningEmoji || details.emoji,
+            nameMeaningNote: m.nameMeaningNote || details.note,
+            specialDayMatch: specialDay,
             lastSentYear:
               localSentYear !== undefined && localSentYear !== ''
                 ? localSentYear
