@@ -102,6 +102,8 @@ export function useTeamData(
                     nameMeaning: m.nameMeaning || details.note,
                     nameMeaningEmoji: m.nameMeaningEmoji || details.emoji,
                     nameMeaningNote: m.nameMeaningNote || details.note,
+                    nameEtymology: m.nameEtymology || details.etymology,
+                    inspiringNote: m.inspiringNote || details.inspiringNote,
                     specialDayMatch: specialDay,
                     lastSentYear: localSentYear !== undefined && localSentYear !== '' ? localSentYear : m.lastSentYear || ''
                   };
@@ -172,6 +174,8 @@ export function useTeamData(
             nameMeaning: m.nameMeaning || details.note,
             nameMeaningEmoji: m.nameMeaningEmoji || details.emoji,
             nameMeaningNote: m.nameMeaningNote || details.note,
+            nameEtymology: m.nameEtymology || details.etymology,
+            inspiringNote: m.inspiringNote || details.inspiringNote,
             specialDayMatch: specialDay,
             lastSentYear:
               localSentYear !== undefined && localSentYear !== ''

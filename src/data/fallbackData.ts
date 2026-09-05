@@ -512,6 +512,8 @@ export function getDemoTeamMembers(): TeamMember[] {
       nameMeaning: details.note,
       nameMeaningEmoji: details.emoji,
       nameMeaningNote: details.note,
+      nameEtymology: details.etymology,
+      inspiringNote: details.inspiringNote,
       specialDayMatch: getMemberSpecialDayMatch(m.birthday, m.name),
       isBirthdayToday: checkIsTodayBirthday(m.birthday)
     };

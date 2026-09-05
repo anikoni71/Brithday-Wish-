@@ -23,6 +23,8 @@ export interface TeamMember {
   nameMeaning?: string; // Meaning and spiritual significance of the member's name
   nameMeaningEmoji?: string; // Uplifting emoji (e.g. "🏹", "✨", "♾️", "🤲")
   nameMeaningNote?: string; // Short meaningful note (e.g. "Armed with a bow / Prosperous leader")
+  nameEtymology?: string; // Short etymological meaning (e.g. "Armed with a bow / Prosperous")
+  inspiringNote?: string; // Short inspiring note matching the deeper significance of their name
   specialDayMatch?: string; // Matching global & festive special day details for their birthday
 }
 

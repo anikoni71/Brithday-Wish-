@@ -10,99 +10,150 @@
 
 export interface NameMeaningDetails {
   emoji: string;
+  etymology: string;
+  inspiringNote: string;
   note: string;
   full: string;
   source: 'curated' | 'etymology' | 'generative';
 }
 
+export interface CuratedMeaningEntry {
+  emoji: string;
+  etymology: string;
+  inspiringNote: string;
+  note?: string;
+}
+
 /**
- * Curated Official Name Meanings for Core 16 Team Members
+ * Curated Official Name Meanings for Core Team Members
  */
-export const CURATED_TEAM_NAME_MEANINGS: Record<string, { emoji: string; note: string }> = {
+export const CURATED_TEAM_NAME_MEANINGS: Record<string, CuratedMeaningEntry> = {
   danushka: {
     emoji: "🏹",
-    note: "Armed with a bow / Prosperous",
+    etymology: "Armed with a bow / Prosperous",
+    inspiringNote: "A symbol of sharp focus, precision, and leading the team toward abundant success.",
+    note: "Armed with a bow / Prosperous — A symbol of sharp focus, precision, and leading the team toward abundant success.",
   },
   zahid: {
     emoji: "✨",
-    note: "Pious and devoted",
+    etymology: "Pious, dedicated, and devout",
+    inspiringNote: "Radiating integrity, unwavering commitment, and a soulful dedication to excellence.",
+    note: "Pious, dedicated, and devout — Radiating integrity, unwavering commitment, and a soulful dedication to excellence.",
   },
   khalid: {
     emoji: "♾️",
-    note: "Eternal and enduring",
+    etymology: "Eternal, enduring, and timeless",
+    inspiringNote: "Representing resilience, steadfast character, and lasting contributions to the team.",
+    note: "Eternal, enduring, and timeless — Representing resilience, steadfast character, and lasting contributions to the team.",
   },
   rasij: {
     emoji: "♾️",
-    note: "Eternal and enduring",
+    etymology: "Eternal, enduring, and timeless",
+    inspiringNote: "Representing resilience, steadfast character, and lasting contributions to the team.",
+    note: "Eternal, enduring, and timeless — Representing resilience, steadfast character, and lasting contributions to the team.",
   },
   abdulla: {
     emoji: "🤲",
-    note: "Servant of God",
+    etymology: "Servant of God / Gracious soul",
+    inspiringNote: "Embodying humility, kindness, and a compassionate spirit that uplifts everyone around.",
+    note: "Servant of God / Gracious soul — Embodying humility, kindness, and a compassionate spirit that uplifts everyone around.",
   },
   abdullah: {
     emoji: "🤲",
-    note: "Servant of God",
+    etymology: "Servant of God / Gracious soul",
+    inspiringNote: "Embodying humility, kindness, and a compassionate spirit that uplifts everyone around.",
+    note: "Servant of God / Gracious soul — Embodying humility, kindness, and a compassionate spirit that uplifts everyone around.",
   },
   bishnu: {
     emoji: "🛡️",
-    note: "The Preserver and Protector",
+    etymology: "The Preserver and Protector",
+    inspiringNote: "Acting as a dependable anchor, safeguarding teamwork and engineering stability.",
+    note: "The Preserver and Protector — Acting as a dependable anchor, safeguarding teamwork and engineering stability.",
   },
   sudipta: {
     emoji: "🌟",
-    note: "Bright and radiant",
+    etymology: "Bright, radiant, and illuminated",
+    inspiringNote: "Bringing a spark of brilliant clarity and positive energy to every project.",
+    note: "Bright, radiant, and illuminated — Bringing a spark of brilliant clarity and positive energy to every project.",
   },
   farjana: {
     emoji: "💡",
-    note: "Wise and knowledgeable",
+    etymology: "Wise, intelligent, and knowledgeable",
+    inspiringNote: "A sharp analytical thinker providing insightful guidance and smart solutions.",
+    note: "Wise, intelligent, and knowledgeable — A sharp analytical thinker providing insightful guidance and smart solutions.",
   },
   samon: {
     emoji: "🌸",
-    note: "Jasmine flower and valuable",
+    etymology: "Precious Jasmine flower and valuable",
+    inspiringNote: "Infusing grace, elegance, and treasured collaborative harmony into the workplace.",
+    note: "Precious Jasmine flower and valuable — Infusing grace, elegance, and treasured collaborative harmony into the workplace.",
   },
   irfan: {
     emoji: "🕊️",
-    note: "Deep knowledge and inner wisdom",
+    etymology: "Deep knowledge, wisdom, and inner awareness",
+    inspiringNote: "Offering thoughtful perspectives, profound clarity, and peaceful leadership.",
+    note: "Deep knowledge, wisdom, and inner awareness — Offering thoughtful perspectives, profound clarity, and peaceful leadership.",
   },
   anik: {
     emoji: "🛡️",
-    note: "Soldier and brave guardian",
+    etymology: "Brave guardian and strong defender",
+    inspiringNote: "A steadfast pillar of strength who protects the team's goals with courage.",
+    note: "Brave guardian and strong defender — A steadfast pillar of strength who protects the team's goals with courage.",
   },
   farhad: {
     emoji: "😊",
-    note: "Helper and joy",
+    etymology: "Helper, joy, and elation",
+    inspiringNote: "Bringing instant smiles, helpful hands, and an uplifting cheerful spirit to daily routines.",
+    note: "Helper, joy, and elation — Bringing instant smiles, helpful hands, and an uplifting cheerful spirit to daily routines.",
   },
   ranjith: {
     emoji: "🎉",
-    note: "Victorious and bringer of joy",
+    etymology: "Victorious and bringer of joy",
+    inspiringNote: "Inspiring triumph, celebration, and high-spirited motivation across the board.",
+    note: "Victorious and bringer of joy — Inspiring triumph, celebration, and high-spirited motivation across the board.",
   },
   rohan: {
     emoji: "🌿",
-    note: "Ascending and growing",
+    etymology: "Ascending, growing, and reaching higher paths",
+    inspiringNote: "Guiding continuous professional elevation, growth, and forward-thinking vision.",
+    note: "Ascending, growing, and reaching higher paths — Guiding continuous professional elevation, growth, and forward-thinking vision.",
   },
   dipankar: {
     emoji: "🕯️",
-    note: "Bringer of light",
+    etymology: "Bringer of light and illumination",
+    inspiringNote: "Dispelling challenges with clear guidance, optimism, and brilliant insight.",
+    note: "Bringer of light and illumination — Dispelling challenges with clear guidance, optimism, and brilliant insight.",
   },
   tareq: {
     emoji: "⭐",
-    note: "Morning star and guide",
+    etymology: "Morning star and guiding light",
+    inspiringNote: "A dependable beacon of direction who starts every day with high purpose and momentum.",
+    note: "Morning star and guiding light — A dependable beacon of direction who starts every day with high purpose and momentum.",
   },
   tariq: {
     emoji: "⭐",
-    note: "Morning star and guide",
+    etymology: "Morning star and guiding light",
+    inspiringNote: "A dependable beacon of direction who starts every day with high purpose and momentum.",
+    note: "Morning star and guiding light — A dependable beacon of direction who starts every day with high purpose and momentum.",
   },
   asif: {
     emoji: "⚖️",
-    note: "Strong, capable, and forgiving",
+    etymology: "Strong, capable, and forgiving",
+    inspiringNote: "Blending robust technical capability with a fair, gracious, and balanced nature.",
+    note: "Strong, capable, and forgiving — Blending robust technical capability with a fair, gracious, and balanced nature.",
   },
   // Additional core roster teammate:
   arifur: {
     emoji: "👑",
-    note: "Noble leader and wise guide",
+    etymology: "Noble leader and wise guide",
+    inspiringNote: "Cultivating disciplined planning, strategic vision, and thoughtful guidance.",
+    note: "Noble leader and wise guide — Cultivating disciplined planning, strategic vision, and thoughtful guidance.",
   },
   syed: {
     emoji: "👑",
-    note: "Noble leader and honored guide",
+    etymology: "Noble leader and wise guide",
+    inspiringNote: "Cultivating disciplined planning, strategic vision, and thoughtful guidance.",
+    note: "Noble leader and wise guide — Cultivating disciplined planning, strategic vision, and thoughtful guidance.",
   },
 };
 
@@ -202,19 +253,79 @@ export const NAME_ROOTS_DICTIONARY: Record<string, { emoji: string; note: string
 /**
  * Dynamic Archetypes for Algorithmic Synthesis of Novel Names
  */
-const INSPIRING_ARCHETYPES: Array<{ emoji: string; note: string }> = [
-  { emoji: "🌟", note: "Radiant spirit, innovative mind, and pillar of excellence" },
-  { emoji: "🛡️", note: "Courageous visionary, steadfast anchor, and loyal guide" },
-  { emoji: "✨", note: "Inspiring presence, inner wisdom, and beacon of positivity" },
-  { emoji: "🕊️", note: "Harmony bringer, benevolent heart, and thoughtful soul" },
-  { emoji: "💎", note: "Treasured intellect, integrity-driven, and refined character" },
-  { emoji: "🌿", note: "Continuous growth, resilient strength, and flourishing talent" },
-  { emoji: "🏹", note: "Purpose-driven achiever, focused leader, and bold pioneer" },
-  { emoji: "💡", note: "Creative illuminator, perceptive thinker, and problem solver" },
-  { emoji: "⚡", note: "Dynamic energy, spirited drive, and enthusiastic contributor" },
-  { emoji: "🧭", note: "Steadfast navigator, principled mentor, and trustworthy ally" },
-  { emoji: "🌺", note: "Flourishing spirit, gracious demeanor, and inspiring warmth" },
-  { emoji: "👑", note: "Empowering leader, visionary strategist, and noble guide" },
+const INSPIRING_ARCHETYPES: Array<{ emoji: string; etymology: string; inspiringNote: string; note: string }> = [
+  {
+    emoji: "🌟",
+    etymology: "Radiant spirit & innovative mind",
+    inspiringNote: "Bringing brilliance, positive energy, and thoughtful innovation to every endeavor.",
+    note: "Radiant spirit & innovative mind — Bringing brilliance, positive energy, and thoughtful innovation to every endeavor.",
+  },
+  {
+    emoji: "🛡️",
+    etymology: "Courageous visionary & steadfast anchor",
+    inspiringNote: "Safeguarding the team's mission with dependable strength and loyal dedication.",
+    note: "Courageous visionary & steadfast anchor — Safeguarding the team's mission with dependable strength and loyal dedication.",
+  },
+  {
+    emoji: "✨",
+    etymology: "Inspiring presence & inner wisdom",
+    inspiringNote: "A beacon of positivity and integrity who elevates and enriches those around.",
+    note: "Inspiring presence & inner wisdom — A beacon of positivity and integrity who elevates and enriches those around.",
+  },
+  {
+    emoji: "🕊️",
+    etymology: "Harmony bringer & benevolent heart",
+    inspiringNote: "Fostering peaceful collaboration, mutual respect, and gracious goodwill.",
+    note: "Harmony bringer & benevolent heart — Fostering peaceful collaboration, mutual respect, and gracious goodwill.",
+  },
+  {
+    emoji: "💎",
+    etymology: "Treasured intellect & refined character",
+    inspiringNote: "Demonstrating genuine value, analytical clarity, and pristine integrity.",
+    note: "Treasured intellect & refined character — Demonstrating genuine value, analytical clarity, and pristine integrity.",
+  },
+  {
+    emoji: "🌿",
+    etymology: "Continuous growth & resilient strength",
+    inspiringNote: "Cultivating flourishing potential, perseverance, and sustainable progress.",
+    note: "Continuous growth & resilient strength — Cultivating flourishing potential, perseverance, and sustainable progress.",
+  },
+  {
+    emoji: "🏹",
+    etymology: "Purpose-driven achiever & bold pioneer",
+    inspiringNote: "Leading with razor-sharp focus and inspiring determination toward shared milestones.",
+    note: "Purpose-driven achiever & bold pioneer — Leading with razor-sharp focus and inspiring determination toward shared milestones.",
+  },
+  {
+    emoji: "💡",
+    etymology: "Creative illuminator & perceptive thinker",
+    inspiringNote: "Sparking fresh solutions, smart methodologies, and lucid problem-solving.",
+    note: "Creative illuminator & perceptive thinker — Sparking fresh solutions, smart methodologies, and lucid problem-solving.",
+  },
+  {
+    emoji: "⚡",
+    etymology: "Dynamic energy & spirited drive",
+    inspiringNote: "Infusing high motivation, swift execution, and vibrant enthusiasm into daily teamwork.",
+    note: "Dynamic energy & spirited drive — Infusing high motivation, swift execution, and vibrant enthusiasm into daily teamwork.",
+  },
+  {
+    emoji: "🧭",
+    etymology: "Steadfast navigator & principled mentor",
+    inspiringNote: "Providing sound direction, dependable stability, and principled guidance.",
+    note: "Steadfast navigator & principled mentor — Providing sound direction, dependable stability, and principled guidance.",
+  },
+  {
+    emoji: "🌺",
+    etymology: "Flourishing spirit & gracious demeanor",
+    inspiringNote: "Spreading genuine warmth, artistic grace, and treasured harmony across the team.",
+    note: "Flourishing spirit & gracious demeanor — Spreading genuine warmth, artistic grace, and treasured harmony across the team.",
+  },
+  {
+    emoji: "👑",
+    etymology: "Empowering leader & noble visionary",
+    inspiringNote: "Inspiring excellence, strategic fortitude, and long-lasting collective achievement.",
+    note: "Empowering leader & noble visionary — Inspiring excellence, strategic fortitude, and long-lasting collective achievement.",
+  },
 ];
 
 /**
@@ -231,15 +342,17 @@ function getDeterministicNameHash(str: string): number {
 }
 
 /**
- * Returns structured name meaning details (emoji, short note, formatted full representation).
+ * Returns structured name meaning details (emoji, etymology, short inspiring note, formatted full representation).
  * Automatically checks curated list first, then etymology tokens, then synthesizes dynamically in real-time.
  */
 export function getMemberNameMeaningDetails(name?: string): NameMeaningDetails {
   if (!name || !name.trim()) {
     return {
       emoji: "✨",
-      note: "Inspiring presence and dedicated team member",
-      full: "✨ Inspiring presence and dedicated team member",
+      etymology: "Inspiring presence and dedicated team member",
+      inspiringNote: "Bringing steadfast dedication, positive energy, and valuable collaborative strength.",
+      note: "Inspiring presence and dedicated team member — Bringing steadfast dedication, positive energy, and valuable collaborative strength.",
+      full: "✨ Inspiring presence and dedicated team member — Bringing steadfast dedication, positive energy, and valuable collaborative strength.",
       source: "generative",
     };
   }
@@ -250,10 +363,15 @@ export function getMemberNameMeaningDetails(name?: string): NameMeaningDetails {
   // 1. Check Exact or Substring match in Core Curated List
   for (const [key, val] of Object.entries(CURATED_TEAM_NAME_MEANINGS)) {
     if (lower.includes(key)) {
+      const etymology = val.etymology || val.note || "Inspiring team member";
+      const inspiringNote = val.inspiringNote || "A valued contributor dedicated to excellence and teamwork.";
+      const note = val.note || `${etymology} — ${inspiringNote}`;
       return {
         emoji: val.emoji,
-        note: val.note,
-        full: `${val.emoji} ${val.note}`,
+        etymology,
+        inspiringNote,
+        note,
+        full: `${val.emoji} ${note}`,
         source: "curated",
       };
     }
@@ -264,10 +382,15 @@ export function getMemberNameMeaningDetails(name?: string): NameMeaningDetails {
   for (const token of tokens) {
     if (NAME_ROOTS_DICTIONARY[token]) {
       const val = NAME_ROOTS_DICTIONARY[token];
+      const etymology = val.note;
+      const inspiringNote = "Demonstrating steadfast character, admirable dedication, and uplifting positivity.";
+      const note = `${etymology} — ${inspiringNote}`;
       return {
         emoji: val.emoji,
-        note: val.note,
-        full: `${val.emoji} ${val.note}`,
+        etymology,
+        inspiringNote,
+        note,
+        full: `${val.emoji} ${note}`,
         source: "etymology",
       };
     }
@@ -279,6 +402,8 @@ export function getMemberNameMeaningDetails(name?: string): NameMeaningDetails {
 
   return {
     emoji: archetype.emoji,
+    etymology: archetype.etymology,
+    inspiringNote: archetype.inspiringNote,
     note: archetype.note,
     full: `${archetype.emoji} ${archetype.note}`,
     source: "generative",

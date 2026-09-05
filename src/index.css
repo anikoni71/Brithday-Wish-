@@ -8,3 +8,96 @@
     to { transform: rotate(360deg); }
   }
 }
+
+/* ==========================================================================
+   Live 3D Interactive Emoji Animation & Layered Depth Styling
+   ========================================================================== */
+@keyframes live-3d-breathing {
+  0% {
+    transform: perspective(600px) rotate3d(0, 0, 0, 0deg) translate3d(0, 0px, 0px) scale3d(1, 1, 1);
+    filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.18)) drop-shadow(0 6px 12px rgba(245, 158, 11, 0.28)) drop-shadow(0 12px 20px rgba(217, 119, 6, 0.15));
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(245, 158, 11, 0.2);
+  }
+  25% {
+    transform: perspective(600px) rotate3d(1, -1, 0, 9deg) translate3d(1px, -3px, 8px) scale3d(1.07, 1.07, 1.07);
+    filter: drop-shadow(2px 5px 5px rgba(0, 0, 0, 0.2)) drop-shadow(-2px 10px 18px rgba(245, 158, 11, 0.4)) drop-shadow(0 16px 24px rgba(217, 119, 6, 0.2));
+    text-shadow: 1px 3px 4px rgba(0, 0, 0, 0.15), 0 6px 12px rgba(245, 158, 11, 0.28);
+  }
+  50% {
+    transform: perspective(600px) rotate3d(-1, 1, 0.3, 8deg) translate3d(0, -6px, 14px) scale3d(1.12, 1.12, 1.12);
+    filter: drop-shadow(0 8px 8px rgba(0, 0, 0, 0.22)) drop-shadow(0 14px 24px rgba(245, 158, 11, 0.48)) drop-shadow(0 20px 30px rgba(217, 119, 6, 0.25));
+    text-shadow: 0 4px 6px rgba(0, 0, 0, 0.18), 0 8px 16px rgba(245, 158, 11, 0.35);
+  }
+  75% {
+    transform: perspective(600px) rotate3d(1, 1, -0.2, 7deg) translate3d(-1px, -3px, 8px) scale3d(1.06, 1.06, 1.06);
+    filter: drop-shadow(-2px 5px 5px rgba(0, 0, 0, 0.2)) drop-shadow(2px 10px 18px rgba(245, 158, 11, 0.4)) drop-shadow(0 16px 24px rgba(217, 119, 6, 0.2));
+    text-shadow: -1px 3px 4px rgba(0, 0, 0, 0.15), 0 6px 12px rgba(245, 158, 11, 0.28);
+  }
+  100% {
+    transform: perspective(600px) rotate3d(0, 0, 0, 0deg) translate3d(0, 0px, 0px) scale3d(1, 1, 1);
+    filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.18)) drop-shadow(0 6px 12px rgba(245, 158, 11, 0.28)) drop-shadow(0 12px 20px rgba(217, 119, 6, 0.15));
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(245, 158, 11, 0.2);
+  }
+}
+
+.live-3d-emoji {
+  display: inline-block;
+  transform-style: preserve-3d;
+  will-change: transform, filter;
+  animation: live-3d-breathing 4.5s ease-in-out infinite;
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.35s ease;
+}
+
+.live-3d-emoji:hover {
+  transform: perspective(600px) scale3d(1.26, 1.26, 1.26) translate3d(0, -7px, 20px) rotate3d(1, -1, 0, 12deg);
+  filter: drop-shadow(0 12px 14px rgba(0, 0, 0, 0.25)) drop-shadow(0 20px 30px rgba(245, 158, 11, 0.55)) drop-shadow(0 28px 40px rgba(217, 119, 6, 0.35));
+}
+
+/* ==========================================================================
+   Team Member Card Lift Effect on Hover (CSS Transitions)
+   ========================================================================== */
+.member-card-lift {
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s ease, border-color 0.25s ease !important;
+  will-change: transform, box-shadow;
+}
+
+.member-card-lift:hover {
+  transform: translateY(-4px) !important;
+  box-shadow: 0 12px 24px -4px rgba(0, 0, 0, 0.08), 0 4px 8px -2px rgba(0, 0, 0, 0.04) !important;
+}
+
+/* ==========================================================================
+   Staggered Fade-in Animation for Team Member Cards (CSS Keyframes)
+   ========================================================================== */
+@keyframes member-card-fade-in {
+  0% {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.member-card-stagger-fade {
+  animation: member-card-fade-in 0.45s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  will-change: opacity, transform;
+}
+
+.member-card-stagger-fade:nth-child(1) { animation-delay: 0ms; }
+.member-card-stagger-fade:nth-child(2) { animation-delay: 35ms; }
+.member-card-stagger-fade:nth-child(3) { animation-delay: 70ms; }
+.member-card-stagger-fade:nth-child(4) { animation-delay: 105ms; }
+.member-card-stagger-fade:nth-child(5) { animation-delay: 140ms; }
+.member-card-stagger-fade:nth-child(6) { animation-delay: 175ms; }
+.member-card-stagger-fade:nth-child(7) { animation-delay: 210ms; }
+.member-card-stagger-fade:nth-child(8) { animation-delay: 245ms; }
+.member-card-stagger-fade:nth-child(9) { animation-delay: 280ms; }
+.member-card-stagger-fade:nth-child(10) { animation-delay: 315ms; }
+.member-card-stagger-fade:nth-child(11) { animation-delay: 350ms; }
+.member-card-stagger-fade:nth-child(12) { animation-delay: 385ms; }
+.member-card-stagger-fade:nth-child(13) { animation-delay: 420ms; }
+.member-card-stagger-fade:nth-child(14) { animation-delay: 455ms; }
+.member-card-stagger-fade:nth-child(15) { animation-delay: 490ms; }
+.member-card-stagger-fade:nth-child(16) { animation-delay: 525ms; }

@@ -25,6 +25,7 @@ import {
 import { TeamMember } from '../types';
 import { getMemberNameMeaningDetails } from '../utils/nameMeaningUtils';
 import { checkIsTodayBirthday } from '../utils/dateUtils';
+import { formatProfileImageUrl } from '../utils/imageUtils';
 
 interface NameMeaningWorkstationProps {
   members: TeamMember[];
@@ -32,6 +33,14 @@ interface NameMeaningWorkstationProps {
   onSendWhatsApp?: (member: TeamMember) => void;
   isSendingWhatsApp?: boolean;
 }
+
+const getInitials = (name?: string) => {
+  if (!name) return 'TM';
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return 'TM';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+};
 
 export const NameMeaningWorkstation: React.FC<NameMeaningWorkstationProps> = ({
   members,
@@ -47,15 +56,20 @@ export const NameMeaningWorkstation: React.FC<NameMeaningWorkstationProps> = ({
   const [isShuffled, setIsShuffled] = useState(false);
   const [shuffleSeed, setShuffleSeed] = useState(0);
 
-  // Normalize members with dynamic real-time meanings and emojis
+  // Normalize members with dynamic real-time meanings, emojis, avatars, and notes
   const enrichedMembers = useMemo(() => {
     return members.map((member) => {
       const details = getMemberNameMeaningDetails(member.name);
+      const rawImg = member.imageUrl || (member as any).ImageUrl || (member as any).image || (member as any).Image || '';
+      const formattedImg = rawImg ? formatProfileImageUrl(rawImg) : '';
       return {
         ...member,
+        imageUrl: formattedImg || member.imageUrl,
         nameMeaning: member.nameMeaning || details.note,
         nameMeaningEmoji: member.nameMeaningEmoji || details.emoji,
         nameMeaningNote: member.nameMeaningNote || details.note,
+        nameEtymology: member.nameEtymology || details.etymology,
+        inspiringNote: member.inspiringNote || details.inspiringNote,
         meaningSource: details.source,
         isBirthdayToday: member.isBirthdayToday || checkIsTodayBirthday(member.birthday),
       };
@@ -123,7 +137,10 @@ export const NameMeaningWorkstation: React.FC<NameMeaningWorkstationProps> = ({
 
   // Copy single member card info to clipboard
   const handleCopyMember = (m: (typeof enrichedMembers)[0]) => {
-    const text = `${m.name}: ${m.nameMeaningEmoji || '✨'} ${m.nameMeaning}`;
+    const meaningText = m.inspiringNote
+      ? `${m.nameEtymology || m.nameMeaning} — "${m.inspiringNote}"`
+      : (m.nameEtymology || m.nameMeaning);
+    const text = `${m.name}: ${m.nameMeaningEmoji || '✨'} ${meaningText}`;
     navigator.clipboard.writeText(text).then(() => {
       setCopiedId(m.id || m.sl);
       setTimeout(() => setCopiedId(null), 2000);
@@ -133,7 +150,12 @@ export const NameMeaningWorkstation: React.FC<NameMeaningWorkstationProps> = ({
   // Copy all member meanings formatted as a clean list in current display order
   const handleCopyAll = () => {
     const text = displayMembers
-      .map((m) => `${m.name}: ${m.nameMeaningEmoji || '✨'} ${m.nameMeaning}`)
+      .map((m) => {
+        const meaningText = m.inspiringNote
+          ? `${m.nameEtymology || m.nameMeaning} — "${m.inspiringNote}"`
+          : (m.nameEtymology || m.nameMeaning);
+        return `${m.name}: ${m.nameMeaningEmoji || '✨'} ${meaningText}`;
+      })
       .join('\n\n');
     navigator.clipboard.writeText(text).then(() => {
       setCopyAllSuccess(true);
@@ -355,42 +377,81 @@ export const NameMeaningWorkstation: React.FC<NameMeaningWorkstationProps> = ({
               <motion.div
                 layout
                 key={member.id || member.sl}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{
-                  layout: { duration: 0.35, ease: 'easeInOut' },
-                  duration: 0.2,
-                  delay: Math.min(index * 0.02, 0.2)
+                  layout: { duration: 0.35, ease: 'easeInOut' }
                 }}
-                className="group relative bg-white rounded-2xl border border-slate-200 hover:border-amber-300 hover:shadow-md transition-all p-4.5 flex flex-col justify-between overflow-hidden"
+                style={{ animationDelay: `${Math.min(index * 35, 700)}ms` }}
+                className="group relative bg-white rounded-2xl border border-slate-200 hover:border-amber-300 hover:shadow-md transition-all p-4.5 flex flex-col justify-between overflow-hidden member-card-lift member-card-stagger-fade"
               >
                 {/* Birthday Accent Ribbon if celebrant today */}
                 {member.isBirthdayToday && (
-                  <div className="absolute top-0 right-0 bg-amber-500 text-white text-[9px] font-black uppercase tracking-wider px-3 py-0.5 rounded-bl-xl shadow-xs flex items-center gap-1 z-10">
+                  <div className="absolute top-0 left-0 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[9px] font-black uppercase tracking-wider px-3 py-0.5 rounded-br-xl shadow-xs flex items-center gap-1 z-10">
                     <Cake className="w-3 h-3 animate-bounce" /> Today Celebrant!
                   </div>
                 )}
 
                 <div>
-                  {/* Top Bar: Dept / SL Badge */}
+                  {/* Top Bar: Dept / SL Badge + Top Right Circular Profile Picture Avatar */}
                   <div className="flex items-center justify-between gap-2 mb-3">
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-[10px] font-semibold text-slate-600 font-mono">
-                      #{member.sl || member.id}
-                    </span>
-
-                    {member.department && (
-                      <span className="text-[10px] font-semibold text-slate-500 truncate max-w-[170px]" title={member.department}>
-                        {member.department}
+                    <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-[10px] font-semibold text-slate-600 font-mono">
+                        #{member.sl || member.id}
                       </span>
-                    )}
+
+                      {member.department && (
+                        <span className="text-[10px] font-semibold text-slate-500 truncate max-w-[120px]" title={member.department}>
+                          {member.department}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Professional Circular Profile Picture (Avatar) in Top Right Corner */}
+                    <div className="relative shrink-0" title={`${member.name}'s profile avatar`}>
+                      {member.imageUrl ? (
+                        <img
+                          src={member.imageUrl}
+                          alt={member.name}
+                          className="w-11 h-11 rounded-full object-cover border-2 border-amber-300/85 shadow-xs ring-2 ring-amber-100/80 transition-transform duration-300 group-hover:scale-105"
+                          referrerPolicy="no-referrer"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                            const fallback = e.currentTarget.parentElement?.querySelector('.member-avatar-fallback');
+                            if (fallback) fallback.classList.remove('hidden');
+                          }}
+                        />
+                      ) : null}
+                      <div
+                        className={`member-avatar-fallback w-11 h-11 rounded-full bg-gradient-to-br from-amber-100 via-orange-100 to-amber-200 border-2 border-amber-300/90 shadow-xs flex items-center justify-center text-xs font-black text-amber-950 ring-2 ring-amber-100/80 transition-transform duration-300 group-hover:scale-105 ${
+                          member.imageUrl ? 'hidden' : 'flex'
+                        }`}
+                      >
+                        {getInitials(member.name)}
+                      </div>
+                      {member.isBirthdayToday && (
+                        <span
+                          className="absolute -bottom-1 -right-1 w-4 h-4 bg-amber-500 rounded-full border-2 border-white flex items-center justify-center text-[9px] text-white shadow-xs"
+                          title="Birthday Today!"
+                        >
+                          🎂
+                        </span>
+                      )}
+                    </div>
                   </div>
 
-                  {/* Profile & Emoji Medallion Hero */}
+                  {/* Profile & Live 3D Emoji Medallion Hero */}
                   <div className="flex items-center gap-3.5 mb-3.5">
-                    {/* Expressive Emoji Medallion */}
-                    <div className="w-13 h-13 rounded-2xl bg-gradient-to-br from-amber-50 via-orange-50/60 to-yellow-50 border border-amber-200/80 shadow-2xs flex items-center justify-center text-2xl shrink-0 group-hover:scale-105 group-hover:shadow-xs transition-transform duration-200">
-                      <span>{member.nameMeaningEmoji || '✨'}</span>
+                    {/* Expressive Live 3D Interactive Emoji Medallion */}
+                    <div
+                      className="w-13 h-13 rounded-2xl bg-gradient-to-br from-amber-50/90 via-orange-50/70 to-yellow-100/80 border border-amber-200/90 shadow-xs flex items-center justify-center text-2xl shrink-0 group-hover:shadow-md transition-shadow duration-300"
+                      style={{ perspective: '500px' }}
+                    >
+                      <span
+                        className="live-3d-emoji select-none cursor-pointer"
+                        title={`${member.name}: ${member.nameEtymology || member.nameMeaning}`}
+                      >
+                        {member.nameMeaningEmoji || '✨'}
+                      </span>
                     </div>
 
                     {/* Member Details */}
@@ -404,18 +465,18 @@ export const NameMeaningWorkstation: React.FC<NameMeaningWorkstationProps> = ({
                     </div>
                   </div>
 
-                  {/* Name Meaning Highlight Container */}
-                  <div className="rounded-xl p-3 bg-gradient-to-r from-amber-50/80 via-orange-50/40 to-amber-50/60 border border-amber-200/70 relative">
-                    <div className="flex items-center justify-between gap-1 mb-1">
-                      <span className="text-[9.5px] font-black uppercase tracking-wider text-amber-800/90 flex items-center gap-1">
+                  {/* Name Meaning & Short Inspiring Note Container */}
+                  <div className="rounded-xl p-3.5 bg-gradient-to-br from-amber-50/90 via-orange-50/40 to-amber-50/70 border border-amber-200/80 relative space-y-2">
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="text-[9.5px] font-black uppercase tracking-wider text-amber-800/90 flex items-center gap-1.5">
                         <Sparkles className="w-3 h-3 text-amber-500 shrink-0" />
-                        Meaning & Spirit
+                        Name Meaning & Inspiring Note
                       </span>
 
                       <button
                         onClick={() => handleCopyMember(member)}
                         className="p-1 rounded text-amber-600 hover:text-amber-900 hover:bg-amber-100/60 transition cursor-pointer"
-                        title="Copy meaning note"
+                        title="Copy meaning and inspiring note"
                       >
                         {copiedId === (member.id || member.sl) ? (
                           <Check className="w-3.5 h-3.5 text-emerald-600" />
@@ -425,9 +486,18 @@ export const NameMeaningWorkstation: React.FC<NameMeaningWorkstationProps> = ({
                       </button>
                     </div>
 
-                    <p className="text-xs font-semibold text-amber-950 leading-relaxed italic">
-                      "{member.nameMeaning}"
-                    </p>
+                    {/* Short Etymological Meaning */}
+                    <div className="text-xs font-bold text-amber-950 flex items-baseline gap-1.5 leading-snug">
+                      <span className="shrink-0 text-sm">{member.nameMeaningEmoji || '✨'}</span>
+                      <span>{member.nameEtymology || member.nameMeaning}</span>
+                    </div>
+
+                    {/* Beautifully Written Short Inspiring Note */}
+                    {member.inspiringNote && (
+                      <div className="pt-2 border-t border-amber-200/70 text-[11.5px] font-medium text-slate-700 leading-relaxed italic">
+                        "{member.inspiringNote}"
+                      </div>
+                    )}
                   </div>
 
                   {/* Special Day Match or Birthday Meta */}
@@ -482,7 +552,7 @@ export const NameMeaningWorkstation: React.FC<NameMeaningWorkstationProps> = ({
                 <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                   <th className="py-3 px-4 w-12 text-center">SL</th>
                   <th className="py-3 px-4">Member Name & Role</th>
-                  <th className="py-3 px-4">Uplifting Meaning & Notes</th>
+                  <th className="py-3 px-4">Etymological Meaning & Inspiring Note</th>
                   <th className="py-3 px-4">Birthday</th>
                   <th className="py-3 px-4">Special Day Alignment</th>
                   <th className="py-3 px-4 text-right">Actions</th>
@@ -496,10 +566,39 @@ export const NameMeaningWorkstation: React.FC<NameMeaningWorkstationProps> = ({
                     </td>
 
                     <td className="py-3 px-4">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-base shrink-0">
-                          {m.nameMeaningEmoji || '✨'}
+                      <div className="flex items-center gap-3">
+                        {/* Circular Profile Avatar */}
+                        <div className="relative shrink-0">
+                          {m.imageUrl ? (
+                            <img
+                              src={m.imageUrl}
+                              alt={m.name}
+                              className="w-9 h-9 rounded-full object-cover border border-amber-200 shadow-xs"
+                              referrerPolicy="no-referrer"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                                const fallback = e.currentTarget.parentElement?.querySelector('.table-avatar-fallback');
+                                if (fallback) fallback.classList.remove('hidden');
+                              }}
+                            />
+                          ) : null}
+                          <div
+                            className={`table-avatar-fallback w-9 h-9 rounded-full bg-amber-100 border border-amber-200 shadow-xs flex items-center justify-center text-[11px] font-bold text-amber-900 ${
+                              m.imageUrl ? 'hidden' : 'flex'
+                            }`}
+                          >
+                            {getInitials(m.name)}
+                          </div>
                         </div>
+
+                        {/* Live 3D Emoji Medallion */}
+                        <div
+                          className="w-9 h-9 rounded-xl bg-amber-50 border border-amber-200/80 flex items-center justify-center text-lg shrink-0"
+                          style={{ perspective: '400px' }}
+                        >
+                          <span className="live-3d-emoji select-none">{m.nameMeaningEmoji || '✨'}</span>
+                        </div>
+
                         <div>
                           <p className="font-bold text-slate-900 leading-snug">{m.name}</p>
                           <p className="text-[10px] text-slate-500">{m.designation || 'Team Member'}</p>
@@ -508,9 +607,16 @@ export const NameMeaningWorkstation: React.FC<NameMeaningWorkstationProps> = ({
                     </td>
 
                     <td className="py-3 px-4">
-                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50/80 border border-amber-200/80 text-amber-950 font-semibold text-xs">
-                        <span>{m.nameMeaningEmoji || '✨'}</span>
-                        <span className="italic">{m.nameMeaning}</span>
+                      <div className="space-y-1 max-w-md">
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-amber-50/90 border border-amber-200/80 text-amber-950 font-bold text-xs">
+                          <span>{m.nameMeaningEmoji || '✨'}</span>
+                          <span>{m.nameEtymology || m.nameMeaning}</span>
+                        </div>
+                        {m.inspiringNote && (
+                          <p className="text-[11px] text-slate-600 italic leading-relaxed">
+                            "{m.inspiringNote}"
+                          </p>
+                        )}
                       </div>
                     </td>
 
