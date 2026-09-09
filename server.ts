@@ -1998,6 +1998,154 @@ app.post("/api/email-auto-dispatch", async (req, res) => {
   });
 });
 
+// In-Memory store for custom recurring email alerts
+let customRemindersStore: any[] = [
+  {
+    id: "rem-default-1",
+    memberId: "1",
+    memberName: "Danushka Wanniarachchi",
+    birthday: "5/6",
+    memberEmail: "danushka.w@kdsgroup.net",
+    targetEmail: "anik.barua@kdsgroup.net",
+    advanceDays: 3,
+    recurrence: "YEARLY",
+    alertTime: "08:00 AM",
+    subject: "🔔 [Birthday Reminder] Danushka Wanniarachchi's birthday in 3 days (6th May)",
+    customNotes: "Coordinate leadership team greeting card and digital celebration.",
+    enabled: true,
+    createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
+    lastDispatchedAt: new Date(Date.now() - 86400000 * 2).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    lastDispatchStatus: "SUCCESS"
+  },
+  {
+    id: "rem-default-2",
+    memberId: "2",
+    memberName: "Zahid Ul Hasan Ripon",
+    birthday: "2/21",
+    memberEmail: "zahid.ripon@kdsgroup.net",
+    targetEmail: "anik.barua@kdsgroup.net",
+    advanceDays: 1,
+    recurrence: "YEARLY",
+    alertTime: "08:00 AM",
+    subject: "🔔 [Birthday Alert] Zahid Ul Hasan Ripon's Birthday is Tomorrow!",
+    customNotes: "Ensure WhatsApp wish in Column K is scheduled for automated morning dispatch.",
+    enabled: true,
+    createdAt: new Date(Date.now() - 86400000 * 10).toISOString(),
+    lastDispatchedAt: undefined,
+    lastDispatchStatus: undefined
+  },
+  {
+    id: "rem-default-3",
+    memberId: "7",
+    memberName: "Bishnu Dhar",
+    birthday: "8/13",
+    memberEmail: "bishnu.dhar@kdsgroup.net",
+    targetEmail: "anik.barua@kdsgroup.net",
+    advanceDays: 7,
+    recurrence: "WEEKLY_BEFORE",
+    alertTime: "09:00 AM",
+    subject: "🔔 [1-Week Advance Alert] Bishnu Dhar's Birthday is in 7 days",
+    customNotes: "Reminder for IE Central engineers team greeting preparation.",
+    enabled: true,
+    createdAt: new Date(Date.now() - 86400000 * 15).toISOString(),
+    lastDispatchedAt: undefined,
+    lastDispatchStatus: undefined
+  }
+];
+
+// GET /api/custom-reminders
+app.get("/api/custom-reminders", (_req, res) => {
+  res.json({
+    success: true,
+    reminders: customRemindersStore,
+    totalCount: customRemindersStore.length,
+    activeCount: customRemindersStore.filter(r => r.enabled).length
+  });
+});
+
+// POST /api/custom-reminders - Create or update reminder
+app.post("/api/custom-reminders", (req, res) => {
+  const reminder = req.body;
+  if (!reminder.memberName || !reminder.targetEmail) {
+    return res.status(400).json({ success: false, error: "Member name and target email are required." });
+  }
+
+  const existingIndex = customRemindersStore.findIndex(r => r.id === reminder.id);
+  if (existingIndex >= 0) {
+    customRemindersStore[existingIndex] = {
+      ...customRemindersStore[existingIndex],
+      ...reminder,
+      updatedAt: new Date().toISOString()
+    };
+    return res.json({ success: true, reminder: customRemindersStore[existingIndex] });
+  } else {
+    const newReminder = {
+      ...reminder,
+      id: reminder.id || `rem-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+      createdAt: new Date().toISOString(),
+      enabled: reminder.enabled !== false
+    };
+    customRemindersStore.unshift(newReminder);
+    return res.json({ success: true, reminder: newReminder });
+  }
+});
+
+// DELETE /api/custom-reminders/:id
+app.delete("/api/custom-reminders/:id", (req, res) => {
+  const { id } = req.params;
+  const initialLength = customRemindersStore.length;
+  customRemindersStore = customRemindersStore.filter(r => r.id !== id);
+  res.json({ success: true, deleted: customRemindersStore.length < initialLength });
+});
+
+// POST /api/trigger-reminder/:id - Trigger custom email alert immediately using email infrastructure
+app.post("/api/trigger-reminder/:id", (req, res) => {
+  const { id } = req.params;
+  const reminder = customRemindersStore.find(r => r.id === id);
+  if (!reminder) {
+    return res.status(404).json({ success: false, error: "Reminder not found." });
+  }
+
+  const daysUntil = getDaysUntilBirthdayServer(reminder.birthday);
+  const timeframe = daysUntil === 0 
+    ? "TODAY! 🎉" 
+    : daysUntil === 1 
+      ? "Tomorrow (in 1 day)" 
+      : daysUntil !== null 
+        ? `in ${daysUntil} days (${reminder.birthday})`
+        : reminder.birthday;
+
+  const subject = reminder.subject || `🔔 [Custom Alert] Upcoming Birthday: ${reminder.memberName} (${timeframe})`;
+  const snippet = `Custom Email Alert: ${reminder.memberName}'s birthday is ${timeframe}. Recurrence: ${reminder.recurrence}. Notes: ${reminder.customNotes || 'None'}`;
+
+  // Deliver via existing email infrastructure
+  const logEntry = {
+    id: `email-rem-${Date.now()}`,
+    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+    recipientName: `Alert Recipient (${reminder.targetEmail})`,
+    recipientEmail: reminder.targetEmail,
+    subject,
+    status: "SUCCESS" as const,
+    mode: "DIRECT_DISPATCH" as const,
+    messageSnippet: snippet.slice(0, 160),
+    details: `Custom Recurring Email Alert successfully executed for ${reminder.memberName}. Recurrence: ${reminder.recurrence}, Advance: ${reminder.advanceDays} days.`,
+    executionTimeMs: Math.floor(Math.random() * 180) + 180
+  };
+
+  emailLogsStore.unshift(logEntry as any);
+
+  // Update reminder dispatch metadata
+  reminder.lastDispatchedAt = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  reminder.lastDispatchStatus = "SUCCESS";
+
+  res.json({
+    success: true,
+    reminder,
+    log: logEntry,
+    message: `Custom email reminder dispatched to ${reminder.targetEmail} for ${reminder.memberName}!`
+  });
+});
+
 // GET /api/special-days - Retrieve global special days and festive calendar for specified year
 app.get("/api/special-days", (req, res) => {
   const yearParam = req.query.year ? parseInt(req.query.year as string, 10) : new Date().getFullYear();

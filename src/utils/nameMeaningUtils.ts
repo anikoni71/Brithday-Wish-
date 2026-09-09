@@ -430,3 +430,70 @@ export function getMemberNameMeaningEmoji(name?: string): string {
 export function getMemberNameMeaningFull(name?: string): string {
   return getMemberNameMeaningDetails(name).full;
 }
+
+/**
+ * Returns curated or synthesized skills and core traits for a team member.
+ */
+export const MEMBER_SKILLS_MAP: Record<string, string[]> = {
+  danushka: ['Leadership', 'Process Optimization', 'Strategic Planning', 'Workflow Architecture'],
+  zahid: ['Quality Assurance', 'Process Optimization', 'Devotion & Integrity', 'Governance'],
+  khalid: ['Industrial Engineering', 'Continuous Improvement', 'Lean Manufacturing', 'Resilience'],
+  rasij: ['Industrial Engineering', 'Continuous Improvement', 'Process Optimization', 'Resilience'],
+  abdulla: ['Team Collaboration', 'Operations Management', 'Cross-functional Coordination', 'Knowledge Sharing'],
+  abdullah: ['Team Collaboration', 'Operations Management', 'Cross-functional Coordination', 'Knowledge Sharing'],
+  bishnu: ['Industrial Engineering', 'Workflow Architecture', 'Quality Assurance', 'Reliability'],
+  sudipta: ['Analytical Thinking', 'Problem Solving', 'Industrial Engineering', 'Innovation'],
+  farjana: ['Analytical Thinking', 'Strategic Planning', 'Data Modeling', 'Continuous Learning'],
+  samon: ['Team Collaboration', 'Quality Assurance', 'Efficiency Planning', 'Collaborative Harmony'],
+  irfan: ['Analytical Thinking', 'Deep Knowledge', 'Problem Solving', 'Knowledge Sharing'],
+  anik: ['System Architecture', 'Continuous Improvement', 'Team Collaboration', 'Resilience'],
+  farhad: ['Process Optimization', 'Problem Solving', 'Team Enablement', 'Team Collaboration'],
+  ranjith: ['Leadership', 'Continuous Improvement', 'Operational Excellence', 'Performance Metrics'],
+  rohan: ['Industrial Engineering', 'Growth Strategy', 'Leadership', 'Workflow Architecture'],
+  dipankar: ['Industrial Engineering', 'Technical Innovation', 'Problem Solving', 'Workflow Architecture'],
+  tareq: ['Leadership', 'Strategic Planning', 'Quality Assurance', 'Knowledge Sharing'],
+  tariq: ['Leadership', 'Strategic Planning', 'Quality Assurance', 'Knowledge Sharing'],
+  asif: ['Process Optimization', 'Resilience', 'Problem Solving', 'Team Collaboration'],
+  arifur: ['Leadership', 'Quality Assurance', 'Strategic Planning', 'Process Governance'],
+};
+
+export function getMemberSkillsAndTraits(name?: string, designation?: string, department?: string): string[] {
+  if (name) {
+    const lower = name.toLowerCase();
+    for (const [key, skills] of Object.entries(MEMBER_SKILLS_MAP)) {
+      if (lower.includes(key)) {
+        return skills;
+      }
+    }
+  }
+
+  // Dynamic trait synthesis based on role and department
+  const synthesized: string[] = [];
+  const desig = (designation || '').toLowerCase();
+  const dept = (department || '').toLowerCase();
+
+  if (desig.includes('manager') || desig.includes('lead') || desig.includes('head')) {
+    synthesized.push('Leadership', 'Strategic Planning');
+  } else if (desig.includes('engineer') || dept.includes('ie')) {
+    synthesized.push('Industrial Engineering', 'Workflow Architecture');
+  } else if (desig.includes('officer') || desig.includes('executive')) {
+    synthesized.push('Operations Management', 'Quality Assurance');
+  }
+
+  if (dept.includes('ie') && !synthesized.includes('Industrial Engineering')) {
+    synthesized.push('Industrial Engineering');
+  }
+
+  if (!synthesized.includes('Process Optimization')) {
+    synthesized.push('Process Optimization');
+  }
+  if (!synthesized.includes('Team Collaboration')) {
+    synthesized.push('Team Collaboration');
+  }
+  if (!synthesized.includes('Problem Solving')) {
+    synthesized.push('Problem Solving');
+  }
+
+  return synthesized.slice(0, 4);
+}
+

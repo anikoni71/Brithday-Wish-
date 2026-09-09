@@ -24,10 +24,12 @@ import {
   ChevronDown,
   ChevronUp,
   Phone,
-  Mail
+  Mail,
+  Tag,
+  X
 } from 'lucide-react';
 import { TeamMember } from '../types';
-import { getMemberNameMeaningDetails } from '../utils/nameMeaningUtils';
+import { getMemberNameMeaningDetails, getMemberSkillsAndTraits } from '../utils/nameMeaningUtils';
 import { checkIsTodayBirthday, getDaysUntilBirthday } from '../utils/dateUtils';
 import { formatProfileImageUrl } from '../utils/imageUtils';
 
@@ -61,6 +63,7 @@ export const NameMeaningWorkstation: React.FC<NameMeaningWorkstationProps> = ({
   const [shuffleSeed, setShuffleSeed] = useState(0);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [lastShuffleTime, setLastShuffleTime] = useState<string | null>(null);
+  const [selectedSkill, setSelectedSkill] = useState<string | null>(null);
 
   const updateShuffleTime = () => {
     const now = new Date();
@@ -71,12 +74,13 @@ export const NameMeaningWorkstation: React.FC<NameMeaningWorkstationProps> = ({
     setExpandedId(prev => prev === id ? null : id);
   };
 
-  // Normalize members with dynamic real-time meanings, emojis, avatars, and notes
+  // Normalize members with dynamic real-time meanings, emojis, avatars, skills, and notes
   const enrichedMembers = useMemo(() => {
     return members.map((member) => {
       const details = getMemberNameMeaningDetails(member.name);
       const rawImg = member.imageUrl || (member as any).ImageUrl || (member as any).image || (member as any).Image || '';
       const formattedImg = rawImg ? formatProfileImageUrl(rawImg) : '';
+      const skills = getMemberSkillsAndTraits(member.name, member.designation, member.department);
       return {
         ...member,
         imageUrl: formattedImg || member.imageUrl,
@@ -87,6 +91,7 @@ export const NameMeaningWorkstation: React.FC<NameMeaningWorkstationProps> = ({
         inspiringNote: member.inspiringNote || details.inspiringNote,
         meaningSource: details.source,
         isBirthdayToday: member.isBirthdayToday || checkIsTodayBirthday(member.birthday),
+        skills,
       };
     });
   }, [members]);
@@ -100,11 +105,15 @@ export const NameMeaningWorkstation: React.FC<NameMeaningWorkstationProps> = ({
     return Array.from(set).sort();
   }, [enrichedMembers]);
 
-  // Filtered members based on search and department
+  // Filtered members based on search, department, and selected skill
   const filteredMembers = useMemo(() => {
     return enrichedMembers.filter((m) => {
       const matchesDept = selectedDept === 'all' || m.department === selectedDept;
       if (!matchesDept) return false;
+
+      if (selectedSkill && !m.skills.includes(selectedSkill)) {
+        return false;
+      }
 
       if (!searchTerm.trim()) return true;
       const term = searchTerm.toLowerCase();
@@ -114,10 +123,11 @@ export const NameMeaningWorkstation: React.FC<NameMeaningWorkstationProps> = ({
         (m.nameMeaningEmoji && m.nameMeaningEmoji.includes(term)) ||
         (m.designation && m.designation.toLowerCase().includes(term)) ||
         (m.department && m.department.toLowerCase().includes(term)) ||
-        (m.specialDayMatch && m.specialDayMatch.toLowerCase().includes(term))
+        (m.specialDayMatch && m.specialDayMatch.toLowerCase().includes(term)) ||
+        m.skills.some((s: string) => s.toLowerCase().includes(term))
       );
     });
-  }, [enrichedMembers, selectedDept, searchTerm]);
+  }, [enrichedMembers, selectedDept, searchTerm, selectedSkill]);
 
   // Randomized / shuffled members to bring fresh dynamic energy to display
   const displayMembers = useMemo(() => {
@@ -393,6 +403,35 @@ export const NameMeaningWorkstation: React.FC<NameMeaningWorkstationProps> = ({
         )}
       </AnimatePresence>
 
+      {/* Active Skill Filter Indicator */}
+      <AnimatePresence>
+        {selectedSkill && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="rounded-xl bg-gradient-to-r from-amber-500/10 via-amber-100/60 to-orange-100/50 px-4 py-2.5 border border-amber-300 flex items-center justify-between gap-3 text-xs text-amber-950 shadow-2xs">
+              <div className="flex items-center gap-2">
+                <Tag className="w-4 h-4 text-amber-600 shrink-0" />
+                <span>
+                  Filtering peers by skill / trait: <strong className="font-bold text-amber-900 bg-amber-200/70 px-2 py-0.5 rounded-md">"{selectedSkill}"</strong> ({filteredMembers.length} {filteredMembers.length === 1 ? 'member' : 'members'} found)
+                </span>
+              </div>
+              <button
+                onClick={() => setSelectedSkill(null)}
+                className="px-2.5 py-1 rounded-lg bg-white/90 hover:bg-white text-amber-900 border border-amber-300/80 font-bold text-[11px] transition cursor-pointer flex items-center gap-1 shadow-2xs shrink-0"
+                title="Clear skill filter"
+              >
+                <X className="w-3 h-3" />
+                <span>Clear Filter</span>
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Grid or List Display */}
       {viewMode === 'grid' ? (
         <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -584,6 +623,42 @@ export const NameMeaningWorkstation: React.FC<NameMeaningWorkstationProps> = ({
                             </div>
                           </div>
 
+                          {/* Interactive Skills & Core Traits */}
+                          {member.skills && member.skills.length > 0 && (
+                            <div className="space-y-1.5 pt-0.5">
+                              <div className="flex items-center justify-between">
+                                <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1">
+                                  <Tag className="w-2.5 h-2.5 text-amber-500" /> Skills & Core Traits
+                                </span>
+                                <span className="text-[8px] font-semibold text-slate-400">Click to filter peers</span>
+                              </div>
+                              <div className="flex flex-wrap gap-1.5 pt-0.5">
+                                {member.skills.map((skill: string) => {
+                                  const isSelected = selectedSkill === skill;
+                                  return (
+                                    <button
+                                      key={skill}
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSelectedSkill((prev) => (prev === skill ? null : skill));
+                                      }}
+                                      className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-lg transition-all cursor-pointer ${
+                                        isSelected
+                                          ? 'bg-amber-500 text-white shadow-xs ring-2 ring-amber-300 font-black'
+                                          : 'bg-slate-50 hover:bg-amber-100 hover:text-amber-900 text-slate-600 border border-slate-200/80'
+                                      }`}
+                                      title={isSelected ? `Clear filter for "${skill}"` : `Filter team members with "${skill}"`}
+                                    >
+                                      <span>{skill}</span>
+                                      {isSelected && <X className="w-2.5 h-2.5 ml-0.5" />}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+
                           {member.wishingMessage && (
                             <div className="bg-amber-50/40 p-3 rounded-xl border border-amber-100/60 relative overflow-hidden group/note">
                               <div className="absolute top-0 right-0 p-1 opacity-10">
@@ -615,8 +690,7 @@ export const NameMeaningWorkstation: React.FC<NameMeaningWorkstationProps> = ({
                           const days = getDaysUntilBirthday(member.birthday);
                           if (days === null) return 'N/A';
                           if (days === 0) return 'Today! 🎉';
-                          const months = Math.ceil(days / 30.44);
-                          return months === 1 ? '1 month left' : `${months} months left`;
+                          return days === 1 ? '1 day left' : `${days} days left`;
                         })()}
                       </span>
                     </div>
@@ -757,6 +831,29 @@ export const NameMeaningWorkstation: React.FC<NameMeaningWorkstationProps> = ({
                           <p className="text-[11px] text-slate-600 italic leading-relaxed">
                             "{m.inspiringNote}"
                           </p>
+                        )}
+                        {m.skills && m.skills.length > 0 && (
+                          <div className="flex flex-wrap gap-1 pt-1">
+                            {m.skills.map((skill: string) => {
+                              const isSelected = selectedSkill === skill;
+                              return (
+                                <button
+                                  key={skill}
+                                  type="button"
+                                  onClick={() => setSelectedSkill((prev) => (prev === skill ? null : skill))}
+                                  className={`inline-flex items-center gap-1 text-[9.5px] font-bold px-2 py-0.5 rounded-md transition-all cursor-pointer ${
+                                    isSelected
+                                      ? 'bg-amber-500 text-white shadow-2xs font-bold'
+                                      : 'bg-slate-100 hover:bg-amber-100 hover:text-amber-900 text-slate-600 border border-slate-200/60'
+                                  }`}
+                                  title={isSelected ? `Clear filter for "${skill}"` : `Filter team members with "${skill}"`}
+                                >
+                                  <span>{skill}</span>
+                                  {isSelected && <X className="w-2.5 h-2.5 ml-0.5" />}
+                                </button>
+                              );
+                            })}
+                          </div>
                         )}
                       </div>
                     </td>

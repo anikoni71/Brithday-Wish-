@@ -3,8 +3,8 @@ import { RefreshCw, ExternalLink, Cake, Sparkles, Code2, Send, PhoneCall, Radio,
 import { AdminSheetConfig } from '../types';
 
 interface HeaderProps {
-  activeTab: 'dashboard' | 'roster' | 'meanings' | 'festive' | 'email' | 'generator' | 'script' | 'tester' | 'automation' | 'insights';
-  setActiveTab: (tab: 'dashboard' | 'roster' | 'meanings' | 'festive' | 'email' | 'generator' | 'script' | 'tester' | 'automation' | 'insights') => void;
+  activeTab: 'dashboard' | 'roster' | 'meanings' | 'festive' | 'email' | 'reminders' | 'generator' | 'script' | 'tester' | 'automation' | 'insights';
+  setActiveTab: (tab: 'dashboard' | 'roster' | 'meanings' | 'festive' | 'email' | 'reminders' | 'generator' | 'script' | 'tester' | 'automation' | 'insights') => void;
   onSync: () => void;
   isSyncing: boolean;
   error?: string | null;
@@ -320,6 +320,21 @@ export const Header: React.FC<HeaderProps> = ({
             Mail Address & Auto-Wish
             <span className="ml-1 px-1.5 py-0.2 rounded-full text-[9px] bg-indigo-100 text-indigo-700 border border-indigo-200 font-bold">
               Automated
+            </span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('reminders')}
+            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-t-lg border-b-2 transition whitespace-nowrap cursor-pointer ${
+              activeTab === 'reminders'
+                ? 'border-indigo-600 text-indigo-900 bg-indigo-50/70 font-bold shadow-2xs'
+                : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+            }`}
+          >
+            <Bell className={`w-4 h-4 ${activeTab === 'reminders' ? 'text-indigo-600 animate-pulse' : 'text-slate-500'}`} />
+            Reminders & Alerts
+            <span className="ml-1 px-1.5 py-0.2 rounded-full text-[9px] bg-indigo-100 text-indigo-800 border border-indigo-200 font-bold">
+              Custom
             </span>
           </button>
 

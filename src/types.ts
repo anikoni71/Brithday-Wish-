@@ -120,3 +120,24 @@ export interface AutomationLogEntry {
   details?: string;
 }
 
+export type ReminderRecurrence = 'YEARLY' | 'WEEKLY_BEFORE' | 'DAILY_WEEK_OF' | 'ONE_TIME';
+
+export interface CustomEmailReminder {
+  id: string;
+  memberId: string;
+  memberName: string;
+  birthday: string;
+  memberEmail?: string;
+  targetEmail: string; // Recipient who receives the alert (e.g. admin or manager)
+  advanceDays: number; // 0 = day of birthday, 1 = 1 day before, 3 = 3 days before, 7 = 1 week before
+  recurrence: ReminderRecurrence;
+  alertTime: string; // e.g. "08:00 AM"
+  subject: string;
+  customNotes?: string;
+  enabled: boolean;
+  createdAt: string;
+  lastDispatchedAt?: string;
+  lastDispatchStatus?: 'SUCCESS' | 'FAILED';
+}
+
+

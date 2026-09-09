@@ -16,6 +16,7 @@ import { FestiveCalendarWorkstation } from './components/FestiveCalendarWorkstat
 import { ExecutiveDashboard } from './components/ExecutiveDashboard';
 import { DispatchInsights } from './components/DispatchInsights';
 import { NameMeaningWorkstation } from './components/NameMeaningWorkstation';
+import { RemindersWorkstation } from './components/RemindersWorkstation';
 import { checkIsTodayBirthday, getUpcomingBirthdayInfo, parseBirthdayDate, getDaysUntilBirthday } from './utils/dateUtils';
 import { triggerBirthdayConfetti } from './utils/confetti';
 import { useTeamData } from './hooks/useTeamData';
@@ -40,7 +41,7 @@ interface ToastNotification {
 }
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'insights' | 'roster' | 'meanings' | 'festive' | 'email' | 'generator' | 'script' | 'automation' | 'tester'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'insights' | 'roster' | 'meanings' | 'festive' | 'email' | 'reminders' | 'generator' | 'script' | 'automation' | 'tester'>('dashboard');
   const [autoSyncEnabled, setAutoSyncEnabled] = useState<boolean>(true);
   const [toastNotification, setToastNotification] = useState<ToastNotification | null>(null);
   const [isWishModalOpen, setIsWishModalOpen] = useState<boolean>(false);
@@ -906,6 +907,15 @@ export default function App() {
             onUpdateMemberEmail={handleUpdateMemberEmail}
             onUpdateMemberWish={handleUpdateMemberMessage}
             onSendWhatsApp={handleSendWhatsApp}
+          />
+        )}
+
+        {/* Dedicated Birthday Email Alerts & Custom Reminders Workstation */}
+        {activeTab === 'reminders' && (
+          <RemindersWorkstation
+            members={teamMembers}
+            adminConfig={adminConfig}
+            onNavigateTab={setActiveTab}
           />
         )}
 
