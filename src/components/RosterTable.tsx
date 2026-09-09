@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { TeamMember } from '../types';
+import React, { useState, useMemo, useEffect } from 'react';
+import { TeamMember, EmailLogEntry, AutomationLogEntry } from '../types';
 import {
   parseBirthMonth,
   checkIsTodayBirthday,
@@ -37,6 +37,12 @@ import {
   Cake,
   Bell,
   BellOff,
+  Info,
+  Mail,
+  History,
+  ExternalLink,
+  Award,
+  Heart,
 } from 'lucide-react';
 
 interface RosterTableProps {
@@ -53,6 +59,8 @@ interface RosterTableProps {
   onClearMonthFilter?: () => void;
   externalFilterType?: 'all' | 'today' | 'due_soon' | 'sent_2026' | 'pending' | 'has_wa';
   onFilterChange?: (filter: 'all' | 'today' | 'due_soon' | 'sent_2026' | 'pending' | 'has_wa') => void;
+  emailLogs?: EmailLogEntry[];
+  automationLogs?: AutomationLogEntry[];
 }
 
 const MONTH_SHORT_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -71,6 +79,8 @@ export const RosterTable: React.FC<RosterTableProps> = ({
   onClearMonthFilter,
   externalFilterType,
   onFilterChange,
+  emailLogs = [],
+  automationLogs = [],
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [internalFilterType, setInternalFilterType] = useState<'all' | 'today' | 'due_soon' | 'sent_2026' | 'pending' | 'has_wa'>('all');
@@ -80,6 +90,107 @@ export const RosterTable: React.FC<RosterTableProps> = ({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [selectedMemberForDetail, setSelectedMemberForDetail] = useState<TeamMember | null>(null);
+  const [copiedDetailField, setCopiedDetailField] = useState<string | null>(null);
+  const [modalImgFailed, setModalImgFailed] = useState(false);
+
+  // Reset modal image error state whenever selectedMemberForDetail changes
+  useEffect(() => {
+    setModalImgFailed(false);
+  }, [selectedMemberForDetail]);
+
+  // Dynamically resolve member profile image URL from synced data (e.g. imageUrl, profileImageUrl, Google Drive format)
+  const memberDetailImageUrl = useMemo(() => {
+    if (!selectedMemberForDetail) return '';
+    const raw =
+      selectedMemberForDetail.imageUrl ||
+      (selectedMemberForDetail as any).profileImageUrl ||
+      (selectedMemberForDetail as any).image ||
+      (selectedMemberForDetail as any).photo ||
+      (selectedMemberForDetail as any).avatar ||
+      (selectedMemberForDetail as any)['Image URL'] ||
+      (selectedMemberForDetail as any)['Image_URL'] ||
+      '';
+    return formatProfileImageUrl(raw);
+  }, [selectedMemberForDetail]);
+
+  // Compute rich historical wish timeline for the currently inspected team member
+  const selectedMemberHistory = useMemo(() => {
+    if (!selectedMemberForDetail) return [];
+    const historyItems: {
+      id: string;
+      date: string;
+      title: string;
+      channel: 'email' | 'whatsapp' | 'sheet_cron';
+      status: 'SUCCESS' | 'FAILED' | 'SCHEDULED';
+      mode?: string;
+      details?: string;
+    }[] = [];
+
+    const memberName = selectedMemberForDetail.name?.toLowerCase().trim() || '';
+    const memberEmail = selectedMemberForDetail.email?.toLowerCase().trim() || '';
+    const memberPhone = (selectedMemberForDetail.whatsappNumber || selectedMemberForDetail.mobile || '').replace(/\D/g, '');
+
+    // 1. Check emailLogs
+    emailLogs.forEach((log) => {
+      const matchName = log.recipientName && log.recipientName.toLowerCase().includes(memberName);
+      const matchEmail = log.recipientEmail && memberEmail && log.recipientEmail.toLowerCase() === memberEmail;
+      if (matchName || matchEmail) {
+        historyItems.push({
+          id: `email-${log.id || log.timestamp}`,
+          date: log.timestamp ? new Date(log.timestamp).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recorded',
+          title: log.subject || 'Personalized Birthday Greeting Dispatched',
+          channel: 'email',
+          status: log.status === 'SUCCESS' || (log.status as string) === 'DELIVERED' ? 'SUCCESS' : 'FAILED',
+          mode: log.mode === 'AUTOMATED_CRON' ? 'Automated 8:00 AM Cron' : log.mode === 'DIRECT_DISPATCH' ? 'Direct Dispatch' : 'Email Gateway',
+          details: log.messageSnippet || `Dispatched to ${log.recipientEmail}`,
+        });
+      }
+    });
+
+    // 2. Check automationLogs (WhatsApp)
+    automationLogs.forEach((log) => {
+      const logPhone = (log.phone || '').replace(/\D/g, '');
+      const matchName = log.recipient && log.recipient.toLowerCase().includes(memberName);
+      const matchPhone = memberPhone && logPhone && logPhone.slice(-8) === memberPhone.slice(-8);
+      if (matchName || matchPhone) {
+        historyItems.push({
+          id: `wa-${log.id}`,
+          date: log.time ? new Date(log.time).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recorded',
+          title: 'WhatsApp Official Team Birthday Greeting',
+          channel: 'whatsapp',
+          status: log.status === 'DELIVERED' || log.status === 'SENT' ? 'SUCCESS' : log.status === 'FAILED' ? 'FAILED' : 'SCHEDULED',
+          mode: 'WhatsApp Cloud Gateway',
+          details: log.messageSnippet || `Delivered to ${log.phone}`,
+        });
+      }
+    });
+
+    // 3. Current 2026 Annual Cycle from Column L
+    const isSent2026 = selectedMemberForDetail.wishSent?.includes('2026') || selectedMemberForDetail.serverDispatched;
+    historyItems.push({
+      id: 'cycle-2026',
+      date: isSent2026 ? '2026 Birthday' : 'Upcoming 2026 Cycle',
+      title: isSent2026 ? '2026 Annual Birthday Wish Delivered' : '2026 Annual Birthday Wish Scheduled',
+      channel: 'sheet_cron',
+      status: isSent2026 ? 'SUCCESS' : 'SCHEDULED',
+      mode: 'Google Sheets Automation (Col L)',
+      details: isSent2026 ? (selectedMemberForDetail.wishSent || 'Marked Sent in Central Roster') : 'Scheduled for automated dispatch at 8:00 AM BD Time',
+    });
+
+    // 4. Historical baseline 2025
+    historyItems.push({
+      id: 'cycle-2025',
+      date: '2025 Birthday Anniversary',
+      title: '2025 Annual Birthday Greetings Archive',
+      channel: 'sheet_cron',
+      status: 'SUCCESS',
+      mode: 'Central IE Team System Log',
+      details: 'Dispatched via Departmental Birthday Notification Service',
+    });
+
+    return historyItems;
+  }, [selectedMemberForDetail, emailLogs, automationLogs]);
 
   const filterType = externalFilterType || internalFilterType;
 
@@ -298,7 +409,15 @@ export const RosterTable: React.FC<RosterTableProps> = ({
         <td className="py-3 px-4 font-bold text-slate-900">
           <div className="flex flex-col">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span title={member.nameMeaning ? `Name Meaning: ${member.nameMeaning}` : undefined}>{member.name}</span>
+              <button
+                type="button"
+                onClick={() => setSelectedMemberForDetail(member)}
+                className="text-left font-bold text-slate-900 hover:text-indigo-600 transition-colors cursor-pointer inline-flex items-center gap-1.5 group"
+                title={`Click to view full profile and wish history for ${member.name}`}
+              >
+                <span className="group-hover:underline underline-offset-2">{member.name}</span>
+                <Info className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-600 transition-colors" />
+              </button>
               {isToday && (
                 <span className="px-2 py-0.5 rounded-full text-[10px] bg-amber-50 text-amber-600 border border-amber-200 font-black animate-pulse shadow-xs flex items-center gap-1">
                   <div className="w-1.5 h-1.5 rounded-full bg-amber-600 animate-ping"></div>
@@ -1016,6 +1135,317 @@ export const RosterTable: React.FC<RosterTableProps> = ({
         </div>
         <span>Google Apps Script inspects Row 5+ daily for birthday matches & logs Column L</span>
       </div>
+
+      {/* Team Member Detail View Modal */}
+      {selectedMemberForDetail && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-200"
+          onClick={() => setSelectedMemberForDetail(null)}
+        >
+          <div
+            className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-2xl w-full overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+          >
+            {/* Modal Header Bar with Profile Summary */}
+            <div className="bg-slate-900 text-white p-6 relative overflow-hidden shrink-0">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
+
+              <div className="flex items-start justify-between relative z-10 gap-4">
+                <div className="flex items-center gap-4">
+                  {/* Avatar with Dynamic Profile Picture Mapping & Graceful Fallback */}
+                  <div className="w-16 h-16 rounded-2xl overflow-hidden bg-slate-800 border-2 border-indigo-400/40 shadow-lg shrink-0 flex items-center justify-center relative">
+                    {memberDetailImageUrl && !modalImgFailed ? (
+                      <img
+                        src={memberDetailImageUrl}
+                        alt={selectedMemberForDetail.name}
+                        className="w-full h-full object-cover"
+                        referrerPolicy="no-referrer"
+                        onError={() => {
+                          setModalImgFailed(true);
+                        }}
+                      />
+                    ) : (
+                      <span className="text-xl font-bold text-white font-mono select-none">
+                        {selectedMemberForDetail.name
+                          .split(' ')
+                          .filter(Boolean)
+                          .map((n) => n[0])
+                          .slice(0, 2)
+                          .join('')
+                          .toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h2 className="text-xl font-bold text-white">
+                        {selectedMemberForDetail.name}
+                      </h2>
+                      {selectedMemberForDetail.nameMeaningEmoji && (
+                        <span className="text-lg" title={selectedMemberForDetail.nameMeaning}>
+                          {selectedMemberForDetail.nameMeaningEmoji}
+                        </span>
+                      )}
+                    </div>
+                    
+                    <p className="text-sm text-slate-300 mt-0.5 font-medium">
+                      {selectedMemberForDetail.designation || 'Team Member'} &bull; <span className="text-emerald-400 font-semibold">{selectedMemberForDetail.department || 'Industrial Engineering'}</span>
+                    </p>
+
+                    <div className="flex items-center gap-2 mt-2 text-xs font-mono text-slate-400">
+                      <span className="px-2 py-0.5 rounded-md bg-slate-800 border border-slate-700">
+                        SL #{selectedMemberForDetail.sl}
+                      </span>
+                      {selectedMemberForDetail.id && (
+                        <span className="px-2 py-0.5 rounded-md bg-slate-800 border border-slate-700">
+                          ID: {selectedMemberForDetail.id}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedMemberForDetail(null)}
+                  className="text-slate-400 hover:text-white p-2 rounded-xl bg-slate-800/80 hover:bg-slate-800 transition cursor-pointer"
+                  title="Close Profile Detail (Esc)"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body - Scrollable Content */}
+            <div className="p-6 overflow-y-auto space-y-6 flex-1 text-slate-800">
+              
+              {/* Profile Overview & Contact Cards */}
+              <div>
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                  <User className="w-4 h-4 text-indigo-500" />
+                  Full Profile & Contact Details
+                </h3>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  {/* Birthday Card */}
+                  <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
+                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Birthday (Col G)</span>
+                    <div className="text-sm font-bold text-slate-900 mt-1 flex items-center gap-2">
+                      <Cake className="w-4 h-4 text-amber-500" />
+                      <span>{selectedMemberForDetail.birthday || 'Not Specified'}</span>
+                    </div>
+                    {/* Countdown */}
+                    {selectedMemberForDetail.birthday && (
+                      <div className="mt-2 text-[11px] text-slate-500">
+                        {(() => {
+                          const info = getUpcomingBirthdayInfo(selectedMemberForDetail.birthday);
+                          if (info.isToday) return <span className="text-amber-600 font-bold">🎉 Birthday is TODAY!</span>;
+                          return <span>Next birthday in <strong className="text-slate-800">{info.daysRemaining} days</strong></span>;
+                        })()}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* WhatsApp Number Card */}
+                  <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
+                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">WhatsApp Number (Col J)</span>
+                    <div className="text-sm font-mono font-bold text-slate-900 mt-1 flex items-center justify-between">
+                      <span className="flex items-center gap-1.5">
+                        <Phone className="w-3.5 h-3.5 text-emerald-600" />
+                        {selectedMemberForDetail.whatsappNumber || 'No WhatsApp Recorded'}
+                      </span>
+                      {selectedMemberForDetail.whatsappNumber && (
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(selectedMemberForDetail.whatsappNumber);
+                            setCopiedDetailField('wa');
+                            setTimeout(() => setCopiedDetailField(null), 2000);
+                          }}
+                          className="p-1 text-slate-400 hover:text-slate-700 cursor-pointer"
+                          title="Copy WhatsApp"
+                        >
+                          {copiedDetailField === 'wa' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                        </button>
+                      )}
+                    </div>
+                    <span className="text-[10px] text-emerald-600 font-semibold block mt-1">
+                      Direct WhatsApp API Ready
+                    </span>
+                  </div>
+
+                  {/* Email Address */}
+                  <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
+                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Official Email (Col H)</span>
+                    <div className="text-xs font-mono text-slate-900 mt-1 flex items-center justify-between">
+                      <span className="truncate max-w-[200px] flex items-center gap-1.5">
+                        <Mail className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                        {selectedMemberForDetail.email || 'None on record'}
+                      </span>
+                      {selectedMemberForDetail.email && (
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(selectedMemberForDetail.email);
+                            setCopiedDetailField('email');
+                            setTimeout(() => setCopiedDetailField(null), 2000);
+                          }}
+                          className="p-1 text-slate-400 hover:text-slate-700 cursor-pointer shrink-0"
+                          title="Copy Email"
+                        >
+                          {copiedDetailField === 'email' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Special Day or Name Meaning */}
+                  <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
+                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Name Meaning & Observance</span>
+                    <div className="text-xs text-slate-800 mt-1 flex items-center gap-1.5">
+                      <Award className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                      <span className="italic truncate">{selectedMemberForDetail.nameMeaning || 'Dedicated IE Professional'}</span>
+                    </div>
+                    {selectedMemberForDetail.specialDayMatch && (
+                      <span className="text-[10.5px] text-indigo-600 font-medium block mt-1 truncate">
+                        Observance: {selectedMemberForDetail.specialDayMatch}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Active Birthday Wishing Template (Column K) */}
+              <div className="p-4 rounded-2xl bg-indigo-50/60 border border-indigo-100">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[11px] font-bold text-indigo-900 uppercase tracking-wider flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+                    Personalized Wishing Message Template (Col K)
+                  </span>
+                  <button
+                    onClick={() => {
+                      if (selectedMemberForDetail.wishingMessage) {
+                        navigator.clipboard.writeText(selectedMemberForDetail.wishingMessage);
+                        setCopiedDetailField('msg');
+                        setTimeout(() => setCopiedDetailField(null), 2000);
+                      }
+                    }}
+                    className="text-xs text-indigo-700 hover:text-indigo-900 font-semibold inline-flex items-center gap-1 cursor-pointer"
+                  >
+                    {copiedDetailField === 'msg' ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                    <span>{copiedDetailField === 'msg' ? 'Copied' : 'Copy Wish'}</span>
+                  </button>
+                </div>
+                <p className="text-xs text-slate-700 whitespace-pre-wrap leading-relaxed font-sans bg-white p-3 rounded-xl border border-indigo-100/80">
+                  {selectedMemberForDetail.wishingMessage || 'No wishing message customized in Column K yet.'}
+                </p>
+                <div className="mt-3 flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const m = selectedMemberForDetail;
+                      setSelectedMemberForDetail(null);
+                      onOpenGenerator(m);
+                    }}
+                    className="px-3 py-1.5 rounded-lg text-xs font-bold text-indigo-700 bg-white hover:bg-indigo-50 border border-indigo-200 transition cursor-pointer"
+                  >
+                    Edit in Generator
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const m = selectedMemberForDetail;
+                      await onSendWhatsApp(m, m.wishingMessage);
+                    }}
+                    disabled={isSending || !selectedMemberForDetail.whatsappNumber}
+                    className="px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5"
+                  >
+                    <Send className="w-3 h-3" />
+                    <span>Send WhatsApp Wish</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* History of Previous Wishes Received */}
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <History className="w-4 h-4 text-indigo-500" />
+                    History of Wishes Received ({selectedMemberHistory.length})
+                  </h3>
+                  <span className="text-[11px] text-slate-400 font-mono">
+                    Official Delivery Logs
+                  </span>
+                </div>
+
+                <div className="space-y-2.5">
+                  {selectedMemberHistory.map((item) => (
+                    <div
+                      key={item.id}
+                      className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-start justify-between gap-3 text-xs"
+                    >
+                      <div className="flex items-start gap-2.5">
+                        <div className={`p-2 rounded-xl mt-0.5 shrink-0 ${
+                          item.channel === 'email'
+                            ? 'bg-indigo-100 text-indigo-700'
+                            : item.channel === 'whatsapp'
+                            ? 'bg-emerald-100 text-emerald-700'
+                            : 'bg-amber-100 text-amber-800'
+                        }`}>
+                          {item.channel === 'email' ? (
+                            <Mail className="w-3.5 h-3.5" />
+                          ) : item.channel === 'whatsapp' ? (
+                            <Phone className="w-3.5 h-3.5" />
+                          ) : (
+                            <Calendar className="w-3.5 h-3.5" />
+                          )}
+                        </div>
+
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-bold text-slate-900">{item.title}</span>
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              item.status === 'SUCCESS'
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : item.status === 'SCHEDULED'
+                                ? 'bg-blue-100 text-blue-800'
+                                : 'bg-rose-100 text-rose-800'
+                            }`}>
+                              {item.status === 'SUCCESS' ? 'Delivered' : item.status === 'SCHEDULED' ? 'Scheduled' : 'Failed'}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-slate-500 mt-0.5">
+                            {item.details}
+                          </p>
+                          <div className="flex items-center gap-2 mt-1 text-[10px] font-mono text-slate-400">
+                            <span>{item.date}</span>
+                            <span>&bull;</span>
+                            <span>{item.mode}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500 shrink-0">
+              <span className="font-mono text-[11px]">IE Birthday Automation Engine &bull; ID: {selectedMemberForDetail.id || 'IE-MEMBER'}</span>
+              <button
+                type="button"
+                onClick={() => setSelectedMemberForDetail(null)}
+                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 font-semibold rounded-xl transition cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -16,7 +16,6 @@ import { FestiveCalendarWorkstation } from './components/FestiveCalendarWorkstat
 import { ExecutiveDashboard } from './components/ExecutiveDashboard';
 import { DispatchInsights } from './components/DispatchInsights';
 import { NameMeaningWorkstation } from './components/NameMeaningWorkstation';
-import { RemindersWorkstation } from './components/RemindersWorkstation';
 import { checkIsTodayBirthday, getUpcomingBirthdayInfo, parseBirthdayDate, getDaysUntilBirthday } from './utils/dateUtils';
 import { triggerBirthdayConfetti } from './utils/confetti';
 import { useTeamData } from './hooks/useTeamData';
@@ -41,7 +40,7 @@ interface ToastNotification {
 }
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'insights' | 'roster' | 'meanings' | 'festive' | 'email' | 'reminders' | 'generator' | 'script' | 'automation' | 'tester'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'insights' | 'roster' | 'meanings' | 'festive' | 'email' | 'generator' | 'script' | 'automation' | 'tester'>('dashboard');
   const [autoSyncEnabled, setAutoSyncEnabled] = useState<boolean>(true);
   const [toastNotification, setToastNotification] = useState<ToastNotification | null>(null);
   const [isWishModalOpen, setIsWishModalOpen] = useState<boolean>(false);
@@ -62,6 +61,28 @@ export default function App() {
     const saved = localStorage.getItem('birthday_sound_enabled');
     return saved !== null ? saved === 'true' : true;
   });
+
+  // Simple Theme Toggle: Light Mode vs High-Contrast Dark Mode with localStorage persistence
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    const saved = localStorage.getItem('ie_theme_mode');
+    return saved === 'dark';
+  });
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDarkMode]);
+
+  const handleToggleTheme = () => {
+    setIsDarkMode((prev) => {
+      const next = !prev;
+      localStorage.setItem('ie_theme_mode', next ? 'dark' : 'light');
+      return next;
+    });
+  };
 
   const hasTriggeredInitialAlertsRef = useRef(false);
 
@@ -570,7 +591,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100/70 font-sans text-slate-800 antialiased flex flex-col relative">
+    <div className={`min-h-screen font-sans antialiased flex flex-col relative transition-colors duration-200 ${isDarkMode ? 'dark bg-slate-950 text-slate-100' : 'bg-slate-100/70 text-slate-800'}`}>
       
       {/* Toast Notification Banner Overlay */}
       {toastNotification && (
@@ -655,6 +676,8 @@ export default function App() {
         onToggleSound={handleToggleSound}
         onOpenNotificationCenter={() => setIsAdminPlanningOpen(true)}
         onOpenAdminPlanning={() => setIsAdminPlanningOpen(true)}
+        isDarkMode={isDarkMode}
+        onToggleTheme={handleToggleTheme}
       />
 
       {/* Main Content Area */}
@@ -872,6 +895,8 @@ export default function App() {
               onToggleAlert={toggleAlert}
               isAlertEnabled={isAlertEnabled}
               onOpenCalendar={() => setIsCalendarOpen(true)}
+              emailLogs={emailLogs}
+              automationLogs={automationLogs}
             />
           </div>
         )}
@@ -907,15 +932,6 @@ export default function App() {
             onUpdateMemberEmail={handleUpdateMemberEmail}
             onUpdateMemberWish={handleUpdateMemberMessage}
             onSendWhatsApp={handleSendWhatsApp}
-          />
-        )}
-
-        {/* Dedicated Birthday Email Alerts & Custom Reminders Workstation */}
-        {activeTab === 'reminders' && (
-          <RemindersWorkstation
-            members={teamMembers}
-            adminConfig={adminConfig}
-            onNavigateTab={setActiveTab}
           />
         )}
 

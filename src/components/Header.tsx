@@ -1,10 +1,10 @@
 import React from 'react';
-import { RefreshCw, ExternalLink, Cake, Sparkles, Code2, Send, PhoneCall, Radio, CheckCircle2, Bot, Mail, Bell, Volume2, VolumeX, Globe, ShieldCheck, LayoutDashboard, TrendingUp, Lightbulb, Settings, Hand, AlertCircle } from 'lucide-react';
+import { RefreshCw, ExternalLink, Cake, Sparkles, Code2, Send, PhoneCall, Radio, CheckCircle2, Bot, Mail, Bell, Volume2, VolumeX, Globe, ShieldCheck, LayoutDashboard, TrendingUp, Lightbulb, Settings, Hand, AlertCircle, Sun, Moon } from 'lucide-react';
 import { AdminSheetConfig } from '../types';
 
 interface HeaderProps {
-  activeTab: 'dashboard' | 'roster' | 'meanings' | 'festive' | 'email' | 'reminders' | 'generator' | 'script' | 'tester' | 'automation' | 'insights';
-  setActiveTab: (tab: 'dashboard' | 'roster' | 'meanings' | 'festive' | 'email' | 'reminders' | 'generator' | 'script' | 'tester' | 'automation' | 'insights') => void;
+  activeTab: 'dashboard' | 'roster' | 'meanings' | 'festive' | 'email' | 'generator' | 'script' | 'tester' | 'automation' | 'insights';
+  setActiveTab: (tab: 'dashboard' | 'roster' | 'meanings' | 'festive' | 'email' | 'generator' | 'script' | 'tester' | 'automation' | 'insights') => void;
   onSync: () => void;
   isSyncing: boolean;
   error?: string | null;
@@ -22,6 +22,8 @@ interface HeaderProps {
   onToggleSound?: () => void;
   onOpenNotificationCenter?: () => void;
   onOpenAdminPlanning?: () => void;
+  isDarkMode?: boolean;
+  onToggleTheme?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -44,6 +46,8 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleSound,
   onOpenNotificationCenter,
   onOpenAdminPlanning,
+  isDarkMode = false,
+  onToggleTheme,
 }) => {
   const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTODUAg2mUYQUTN3P9SPB5Q41Ta_9SufI2gct0GBYDUbPSJX81O1mWHgBjElAIfNfobEbd7Mkii18lt/pubhtml?gid=0&single=true";
 
@@ -205,6 +209,30 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             )}
 
+            {/* Simple Light / High-Contrast Dark Mode Toggle */}
+            {onToggleTheme && (
+              <button
+                id="theme-mode-toggle"
+                onClick={onToggleTheme}
+                className={`p-2 rounded-lg text-xs font-semibold border transition cursor-pointer flex items-center gap-1.5 ${
+                  isDarkMode
+                    ? 'bg-slate-800 text-amber-300 border-slate-700 hover:bg-slate-700 shadow-xs'
+                    : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200 shadow-2xs'
+                }`}
+                title={isDarkMode ? 'High-Contrast Dark Mode Active (Click for Light Mode)' : 'Light Mode Active (Click for High-Contrast Dark Mode)'}
+                aria-label="Toggle light and high-contrast dark theme"
+              >
+                {isDarkMode ? (
+                  <Sun className="w-4 h-4 text-amber-400" />
+                ) : (
+                  <Moon className="w-4 h-4 text-indigo-600" />
+                )}
+                <span className="hidden xl:inline text-[11px] font-bold">
+                  {isDarkMode ? 'Dark' : 'Light'}
+                </span>
+              </button>
+            )}
+
             {/* Admin Planning Alert Trigger */}
             {onOpenAdminPlanning && (
               <button
@@ -320,21 +348,6 @@ export const Header: React.FC<HeaderProps> = ({
             Mail Address & Auto-Wish
             <span className="ml-1 px-1.5 py-0.2 rounded-full text-[9px] bg-indigo-100 text-indigo-700 border border-indigo-200 font-bold">
               Automated
-            </span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('reminders')}
-            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-t-lg border-b-2 transition whitespace-nowrap cursor-pointer ${
-              activeTab === 'reminders'
-                ? 'border-indigo-600 text-indigo-900 bg-indigo-50/70 font-bold shadow-2xs'
-                : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-            }`}
-          >
-            <Bell className={`w-4 h-4 ${activeTab === 'reminders' ? 'text-indigo-600 animate-pulse' : 'text-slate-500'}`} />
-            Reminders & Alerts
-            <span className="ml-1 px-1.5 py-0.2 rounded-full text-[9px] bg-indigo-100 text-indigo-800 border border-indigo-200 font-bold">
-              Custom
             </span>
           </button>
 

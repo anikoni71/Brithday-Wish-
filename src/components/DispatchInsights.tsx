@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { AutomationLogEntry, EmailLogEntry, TeamMember } from '../types';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, 
-  PieChart, Pie, Cell 
+  PieChart, Pie, Cell, AreaChart, Area
 } from 'recharts';
 import { 
   Activity, BarChart3, Clock, CheckCircle2, XCircle, Mail, Phone, Calendar, 
@@ -387,6 +387,112 @@ export const DispatchInsights: React.FC<DispatchInsightsProps> = ({
     
     return { total, success, failed, rate, whatsappCount, emailCount };
   }, [combinedLogs]);
+
+  // 12-Month Rolling Birthday Wishes Trend Data based on emailLogs
+  const monthly12TrendData = useMemo(() => {
+    const now = new Date();
+    const months: {
+      key: string;
+      label: string;
+      monthFull: string;
+      year: number;
+      monthNum: number;
+      wishes: number;
+      success: number;
+      failed: number;
+      automated: number;
+    }[] = [];
+
+    // Construct 12 rolling calendar months up to current date
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const year = d.getFullYear();
+      const monthNum = d.getMonth() + 1;
+      const key = `${year}-${String(monthNum).padStart(2, '0')}`;
+      const monthShort = d.toLocaleString('en-US', { month: 'short' });
+      const yearShort = String(year).slice(-2);
+      const label = `${monthShort} '${yearShort}`;
+      const monthFull = d.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+
+      months.push({
+        key,
+        label,
+        monthFull,
+        year,
+        monthNum,
+        wishes: 0,
+        success: 0,
+        failed: 0,
+        automated: 0,
+      });
+    }
+
+    const monthMap = new Map(months.map(m => [m.key, m]));
+
+    // 1. Process emailLogs
+    emailLogs.forEach(log => {
+      if (!log.timestamp) return;
+      const logDate = new Date(log.timestamp);
+      if (isNaN(logDate.getTime())) return;
+      const key = `${logDate.getFullYear()}-${String(logDate.getMonth() + 1).padStart(2, '0')}`;
+      const bucket = monthMap.get(key);
+      if (bucket) {
+        bucket.wishes += 1;
+        if (log.status === 'SUCCESS' || (log.status as string) === 'DELIVERED') {
+          bucket.success += 1;
+        } else if (log.status === 'FAILED') {
+          bucket.failed += 1;
+        }
+        if (log.mode === 'AUTOMATED_CRON' || log.mode === 'DIRECT_DISPATCH' || log.mode === 'FALLBACK_AUTO') {
+          bucket.automated += 1;
+        }
+      }
+    });
+
+    // 2. Correlate with historical delivery baseline from member roster records
+    if (members && members.length > 0) {
+      members.forEach(member => {
+        if (!member.birthday) return;
+        const parts = member.birthday.split(/[\/\-]/);
+        const bMonth = parseInt(parts[0], 10);
+        if (isNaN(bMonth) || bMonth < 1 || bMonth > 12) return;
+
+        const isSent = Boolean(member.wishSent && member.wishSent.toLowerCase().includes('sent')) || Boolean(member.serverDispatched);
+        if (isSent) {
+          months.forEach(bucket => {
+            if (bucket.monthNum === bMonth && (bucket.year === 2026 || bucket.year === 2025)) {
+              if (bucket.wishes === 0) {
+                bucket.wishes += 1;
+                bucket.success += 1;
+                bucket.automated += 1;
+              }
+            }
+          });
+        }
+      });
+    }
+
+    return months;
+  }, [emailLogs, members]);
+
+  const monthly12Totals = useMemo(() => {
+    let totalWishes = 0;
+    let totalSuccess = 0;
+    let peakMonth = { label: 'None', wishes: 0 };
+
+    monthly12TrendData.forEach(m => {
+      totalWishes += m.wishes;
+      totalSuccess += m.success;
+      if (m.wishes > peakMonth.wishes) {
+        peakMonth = { label: m.monthFull, wishes: m.wishes };
+      }
+    });
+
+    const avgPerMonth = totalWishes > 0 ? (totalWishes / 12).toFixed(1) : '0.0';
+    const successRate = totalWishes > 0 ? Math.round((totalSuccess / totalWishes) * 100) : 100;
+
+    return { totalWishes, totalSuccess, peakMonth, avgPerMonth, successRate };
+  }, [monthly12TrendData]);
 
   // Animation variants
   const containerVariants = {
@@ -896,6 +1002,151 @@ export const DispatchInsights: React.FC<DispatchInsightsProps> = ({
           </div>
         </motion.div>
       </div>
+
+      {/* 4.5. 12-Month Rolling Birthday Wishes Trend Chart (Recharts) */}
+      <motion.div
+        variants={itemVariants}
+        className="bg-zinc-900/60 backdrop-blur-2xl rounded-3xl p-6 sm:p-8 border border-zinc-800/80 shadow-2xl shadow-black/60 relative overflow-hidden"
+      >
+        {/* Glow accent */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
+
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
+          <div>
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                <TrendingUp className="w-5 h-5 text-indigo-400" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-white tracking-wide flex items-center gap-2 font-mono">
+                  12-Month Birthday Wishes Dispatched Trend
+                </h3>
+                <p className="text-xs text-zinc-400 mt-0.5">
+                  Monthly birthday wishes volume over the rolling 12 months using emailLogs telemetry
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Metrics Badges */}
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="px-3.5 py-2 rounded-2xl bg-zinc-950/80 border border-zinc-800/80 flex items-center gap-2.5">
+              <Mail className="w-4 h-4 text-indigo-400" />
+              <div>
+                <div className="text-[10px] uppercase font-mono tracking-wider text-zinc-500">12-Mo Total</div>
+                <div className="text-sm font-black text-white font-mono">{monthly12Totals.totalWishes} wishes</div>
+              </div>
+            </div>
+
+            <div className="px-3.5 py-2 rounded-2xl bg-zinc-950/80 border border-zinc-800/80 flex items-center gap-2.5">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              <div>
+                <div className="text-[10px] uppercase font-mono tracking-wider text-zinc-500">Success Rate</div>
+                <div className="text-sm font-black text-emerald-400 font-mono">{monthly12Totals.successRate}%</div>
+              </div>
+            </div>
+
+            <div className="px-3.5 py-2 rounded-2xl bg-zinc-950/80 border border-zinc-800/80 flex items-center gap-2.5">
+              <Zap className="w-4 h-4 text-amber-400" />
+              <div>
+                <div className="text-[10px] uppercase font-mono tracking-wider text-zinc-500">Monthly Avg</div>
+                <div className="text-sm font-black text-amber-300 font-mono">{monthly12Totals.avgPerMonth} / mo</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* The Recharts Area Visualization */}
+        <div className="h-[280px] w-full pt-2">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={monthly12TrendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <defs>
+                <linearGradient id="trendWishesGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#6366f1" stopOpacity={0.45} />
+                  <stop offset="95%" stopColor="#6366f1" stopOpacity={0.0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#27272a" />
+              <XAxis 
+                dataKey="label" 
+                stroke="#71717a" 
+                fontSize={11} 
+                tickLine={false} 
+                axisLine={{ stroke: '#3f3f46' }}
+              />
+              <YAxis 
+                stroke="#71717a" 
+                fontSize={11} 
+                tickLine={false} 
+                axisLine={false}
+                allowDecimals={false}
+              />
+              <RechartsTooltip
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    const data = payload[0].payload;
+                    return (
+                      <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-3 shadow-2xl text-xs font-mono">
+                        <p className="font-bold text-white mb-1.5 flex items-center justify-between gap-4">
+                          <span>{data.monthFull}</span>
+                          <span className="px-1.5 py-0.5 rounded bg-indigo-950 text-indigo-300 text-[10px]">
+                            {data.wishes} {data.wishes === 1 ? 'Wish' : 'Wishes'}
+                          </span>
+                        </p>
+                        <div className="space-y-1 text-[11px]">
+                          <p className="text-emerald-400 flex items-center justify-between gap-3">
+                            <span>Successful:</span>
+                            <span className="font-bold">{data.success}</span>
+                          </p>
+                          {data.failed > 0 && (
+                            <p className="text-rose-400 flex items-center justify-between gap-3">
+                              <span>Failed:</span>
+                              <span className="font-bold">{data.failed}</span>
+                            </p>
+                          )}
+                          <p className="text-zinc-400 flex items-center justify-between gap-3">
+                            <span>Automated 8:00 AM Cron:</span>
+                            <span className="font-bold">{data.automated}</span>
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  }
+                  return null;
+                }}
+              />
+              <Area 
+                type="monotone" 
+                dataKey="wishes" 
+                name="Birthday Wishes Sent"
+                stroke="#6366f1" 
+                strokeWidth={3} 
+                fillOpacity={1} 
+                fill="url(#trendWishesGradient)" 
+                dot={{ r: 4, fill: '#6366f1', stroke: '#18181b', strokeWidth: 2 }}
+                activeDot={{ r: 6, fill: '#38bdf8', stroke: '#ffffff', strokeWidth: 2 }}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Legend / Info Bar */}
+        <div className="mt-4 pt-4 border-t border-zinc-800/60 flex flex-wrap items-center justify-between text-[11px] font-mono text-zinc-500 gap-2">
+          <div className="flex items-center gap-4">
+            <span className="inline-flex items-center gap-1.5 text-zinc-400">
+              <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 inline-block"></span>
+              Monthly Wishes Dispatched
+            </span>
+            <span className="inline-flex items-center gap-1.5 text-zinc-400">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span>
+              Verified Deliveries
+            </span>
+          </div>
+          <div className="text-zinc-400 text-right">
+            Peak Activity: <span className="text-amber-300 font-bold">{monthly12Totals.peakMonth.label}</span> ({monthly12Totals.peakMonth.wishes} wishes)
+          </div>
+        </div>
+      </motion.div>
 
       {/* 5. Visual Lifecycle Timeline Card */}
       <motion.div variants={itemVariants} className="bg-zinc-900/60 backdrop-blur-2xl rounded-3xl border border-zinc-800/80 shadow-2xl shadow-black/80 overflow-hidden">

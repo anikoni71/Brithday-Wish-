@@ -678,45 +678,75 @@ export const NameMeaningWorkstation: React.FC<NameMeaningWorkstationProps> = ({
                   </AnimatePresence>
                 </div>
 
-                {/* Birthday Milestone Progress Bar */}
-                {member.birthday && (
-                  <div className="mt-3.5 px-0.5">
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter flex items-center gap-1">
-                        <Calendar className="w-2.5 h-2.5" /> Birthday Milestone
-                      </span>
-                      <span className="text-[10px] font-black text-amber-600">
-                        {(() => {
-                          const days = getDaysUntilBirthday(member.birthday);
-                          if (days === null) return 'N/A';
-                          if (days === 0) return 'Today! 🎉';
-                          return days === 1 ? '1 day left' : `${days} days left`;
-                        })()}
-                      </span>
+                {/* Birthday Milestone Progress Bar with Moving Cake Indicator & Animated Cutting Knife */}
+                {member.birthday && (() => {
+                  const days = getDaysUntilBirthday(member.birthday);
+                  const isZeroDaysLeft = days === 0 || member.isBirthdayToday || checkIsTodayBirthday(member.birthday);
+                  const progress = days === null ? 0 : Math.max(0, Math.min(100, ((365 - days) / 365) * 100));
+                  const isDueSoon = days !== null && days <= 7;
+
+                  return (
+                    <div className="mt-3.5 px-0.5">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter flex items-center gap-1">
+                          <Calendar className="w-2.5 h-2.5" /> Birthday Milestone
+                        </span>
+                        <span className={`text-[10px] font-black ${isZeroDaysLeft ? 'text-rose-600 flex items-center gap-1' : 'text-amber-600'}`}>
+                          {days === null ? 'N/A' : days === 0 ? 'Today! 🎉' : days === 1 ? '1 day left' : `${days} days left`}
+                        </span>
+                      </div>
+
+                      {/* Progress Bar Track with attached Cake Indicator & Cutting Knife */}
+                      <div className="relative py-2 -my-2 flex items-center">
+                        {/* Background track & filled gradient bar */}
+                        <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-200/50">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${progress}%` }}
+                            transition={{ duration: 1, ease: "easeOut" }}
+                            className={`h-full rounded-full ${
+                              isDueSoon ? 'bg-gradient-to-r from-rose-400 to-amber-500' : 'bg-gradient-to-r from-amber-300 to-amber-500'
+                            }`}
+                          />
+                        </div>
+
+                        {/* Cake Indicator (🎂) & Cutting Knife (🔪) attached to the very end of filled portion */}
+                        <motion.div
+                          initial={{ left: '0%' }}
+                          animate={{ 
+                            left: `clamp(10px, ${progress}%, calc(100% - ${isZeroDaysLeft ? 18 : 10}px))` 
+                          }}
+                          transition={{ duration: 1, ease: "easeOut" }}
+                          className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 pointer-events-none flex items-center z-10 select-none"
+                        >
+                          {/* Birthday Cake 🎂 */}
+                          <span
+                            className={`text-xs inline-block leading-none filter drop-shadow-xs transition-transform ${
+                              isZeroDaysLeft ? 'cake-celebrate-anim' : 'hover:scale-125'
+                            }`}
+                            role="img"
+                            aria-label="Birthday Cake Indicator"
+                            title={isZeroDaysLeft ? "Birthday Today! 🎂" : `${Math.round(progress)}% of milestone completed`}
+                          >
+                            🎂
+                          </span>
+
+                          {/* The Birthday State (0 Days Left): Cutting Knife 🔪 */}
+                          {isZeroDaysLeft && (
+                            <span
+                              className="knife-cutting-anim text-xs -ml-0.5 inline-block leading-none filter drop-shadow-xs origin-bottom-left"
+                              role="img"
+                              aria-label="Cutting Knife"
+                              title="Cutting the birthday cake!"
+                            >
+                              🔪
+                            </span>
+                          )}
+                        </motion.div>
+                      </div>
                     </div>
-                    <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-200/50">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ 
-                          width: (() => {
-                            const days = getDaysUntilBirthday(member.birthday);
-                            if (days === null) return '0%';
-                            const progress = Math.max(0, Math.min(100, ((365 - days) / 365) * 100));
-                            return `${progress}%`;
-                          })()
-                        }}
-                        transition={{ duration: 1, ease: "easeOut" }}
-                        className={`h-full rounded-full ${
-                          (() => {
-                            const days = getDaysUntilBirthday(member.birthday);
-                            if (days !== null && days <= 7) return 'bg-gradient-to-r from-rose-400 to-amber-500';
-                            return 'bg-gradient-to-r from-amber-300 to-amber-500';
-                          })()
-                        }`}
-                      />
-                    </div>
-                  </div>
-                )}
+                  );
+                })()}
 
                 {/* Card Footer: Birthday & Actions */}
                 <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2 text-xs">
