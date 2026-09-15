@@ -698,7 +698,7 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
                       {/* Birthday Cake Badge if Today */}
                       {isToday && (
                         <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-amber-400 text-zinc-950 flex items-center justify-center shadow-lg border border-white animate-bounce">
-                          <Cake className="w-3 h-3 text-zinc-950" />
+                          <Cake className="w-3 h-3 text-zinc-950 cake-celebrate-anim" />
                         </div>
                       )}
                     </div>

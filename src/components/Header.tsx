@@ -113,7 +113,7 @@ export const Header: React.FC<HeaderProps> = ({
                 </h1>
                 {todayCount > 0 && (
                   <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 animate-pulse">
-                    <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                    <Cake className="w-3.5 h-3.5 text-amber-600 cake-celebrate-anim" />
                     {todayCount} Birthday{todayCount > 1 ? 's' : ''} Today!
                   </span>
                 )}
