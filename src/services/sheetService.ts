@@ -425,7 +425,7 @@ export async function fetchLiveTeamData(targetSheetUrl?: string): Promise<{
           source: json.source || 'server_proxy',
           data: enriched,
           adminConfig: json.adminConfig,
-          error: json.error || null
+          error: (json.data && json.data.length > 0) ? null : (json.error || null)
         };
       }
     }
@@ -502,17 +502,22 @@ export async function fetchLiveTeamData(targetSheetUrl?: string): Promise<{
         }
       }
 
-      // Parse CSV
-      const rows = parseCSV(rawText);
-      const members = parseSheetRowsToMembers(rows);
-      if (members.length > 0) {
-        const adminConfig = extractAdminConfigFromSheet(rows, members);
-        return {
-          success: true,
-          source: 'client_direct_sheet_csv',
-          data: members,
-          adminConfig
-        };
+      // Guard against HTML Google sign-in response
+      if (rawText.trim().startsWith('<!DOCTYPE html') || rawText.includes('Sign in to your Google Account') || rawText.includes('<html')) {
+        console.warn('Google Sheet returned HTML sign-in page, activating resilient baseline roster');
+      } else {
+        // Parse CSV
+        const rows = parseCSV(rawText);
+        const members = parseSheetRowsToMembers(rows);
+        if (members.length > 0) {
+          const adminConfig = extractAdminConfigFromSheet(rows, members);
+          return {
+            success: true,
+            source: 'client_direct_sheet_csv',
+            data: members,
+            adminConfig
+          };
+        }
       }
     }
   } catch (directErr) {

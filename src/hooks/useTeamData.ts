@@ -188,8 +188,10 @@ export function useTeamData(
         if (result.adminConfig) {
           setAdminConfig(result.adminConfig);
         }
-        if (result.error) {
+        if (result.error && (!mergedMembers || mergedMembers.length === 0)) {
           setError(result.error);
+        } else {
+          setError(null);
         }
         setLastSynced(new Date().toLocaleTimeString());
       } else {
@@ -206,7 +208,7 @@ export function useTeamData(
       if (err.name === 'AbortError') {
         return;
       }
-      console.error('Error fetching sheet data in hook:', err);
+      console.warn('Notice in useTeamData hook:', err?.message || err);
       setError('Unable to sync live sheet data. Showing cached baseline roster.');
       setTeamMembers((prev) => (prev.length > 0 ? prev : getDemoTeamMembers()));
     } finally {

@@ -140,4 +140,10 @@ export interface CustomEmailReminder {
   lastDispatchStatus?: 'SUCCESS' | 'FAILED';
 }
 
+export interface GalleryItem {
+  memoryPhoto: string; // URL to the image
+  memoryNote: string;   // Text description
+  photo?: string;       // Secondary text or avatar URL
+}
+
 

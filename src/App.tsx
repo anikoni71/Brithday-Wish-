@@ -16,6 +16,7 @@ import { FestiveCalendarWorkstation } from './components/FestiveCalendarWorkstat
 import { ExecutiveDashboard } from './components/ExecutiveDashboard';
 import { DispatchInsights } from './components/DispatchInsights';
 import { NameMeaningWorkstation } from './components/NameMeaningWorkstation';
+import { MemoryGallery } from './components/MemoryGallery';
 import { checkIsTodayBirthday, getUpcomingBirthdayInfo, parseBirthdayDate, getDaysUntilBirthday } from './utils/dateUtils';
 import { triggerBirthdayConfetti } from './utils/confetti';
 import { useTeamData } from './hooks/useTeamData';
@@ -40,7 +41,7 @@ interface ToastNotification {
 }
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'insights' | 'roster' | 'meanings' | 'festive' | 'email' | 'generator' | 'script' | 'automation' | 'tester'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'insights' | 'roster' | 'meanings' | 'festive' | 'email' | 'generator' | 'script' | 'automation' | 'tester' | 'gallery'>('dashboard');
   const [autoSyncEnabled, setAutoSyncEnabled] = useState<boolean>(true);
   const [toastNotification, setToastNotification] = useState<ToastNotification | null>(null);
   const [isWishModalOpen, setIsWishModalOpen] = useState<boolean>(false);
@@ -856,6 +857,11 @@ export default function App() {
             onOpenAdminPlanning={() => setIsAdminPlanningOpen(true)}
             onOpenCalendar={() => setIsCalendarOpen(true)}
           />
+        )}
+
+        {/* Memory Gallery Workstation (Placed after Executive Dashboard) */}
+        {activeTab === 'gallery' && (
+          <MemoryGallery />
         )}
 
         {activeTab === 'insights' && (

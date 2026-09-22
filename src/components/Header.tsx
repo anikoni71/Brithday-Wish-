@@ -1,10 +1,10 @@
 import React from 'react';
-import { RefreshCw, ExternalLink, Cake, Sparkles, Code2, Send, PhoneCall, Radio, CheckCircle2, Bot, Mail, Bell, Volume2, VolumeX, Globe, ShieldCheck, LayoutDashboard, TrendingUp, Lightbulb, Settings, Hand, AlertCircle, Sun, Moon } from 'lucide-react';
+import { RefreshCw, ExternalLink, Cake, Sparkles, Code2, Send, PhoneCall, Radio, CheckCircle2, Bot, Mail, Bell, Volume2, VolumeX, Globe, ShieldCheck, LayoutDashboard, TrendingUp, AlertCircle, Sun, Moon, Images } from 'lucide-react';
 import { AdminSheetConfig } from '../types';
 
 interface HeaderProps {
-  activeTab: 'dashboard' | 'roster' | 'meanings' | 'festive' | 'email' | 'generator' | 'script' | 'tester' | 'automation' | 'insights';
-  setActiveTab: (tab: 'dashboard' | 'roster' | 'meanings' | 'festive' | 'email' | 'generator' | 'script' | 'tester' | 'automation' | 'insights') => void;
+  activeTab: 'dashboard' | 'roster' | 'meanings' | 'festive' | 'email' | 'generator' | 'script' | 'tester' | 'automation' | 'insights' | 'gallery';
+  setActiveTab: (tab: 'dashboard' | 'roster' | 'meanings' | 'festive' | 'email' | 'generator' | 'script' | 'tester' | 'automation' | 'insights' | 'gallery') => void;
   onSync: () => void;
   isSyncing: boolean;
   error?: string | null;
@@ -77,34 +77,7 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Brand Identity */}
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white shadow-md shadow-emerald-600/20 relative group overflow-hidden">
-              {/* 1. Hands (Prominent base from reference) */}
-              <div className="absolute bottom-0 w-full flex justify-center items-end opacity-90 z-20 pb-0.5">
-                <Hand className="w-5 h-5 -rotate-[30deg] translate-x-1.5" />
-                <Hand className="w-5 h-5 rotate-[30deg] -translate-x-1.5 scale-x-[-1]" />
-              </div>
-              
-              {/* 2. Lightbulb (Centerpiece) */}
-              <div className="relative z-10 translate-y-1">
-                <Lightbulb className="w-6 h-6 text-white fill-white/20 relative z-10 drop-shadow-[0_0_12px_rgba(255,255,255,0.8)]" />
-                <div className="absolute inset-0 bg-white/30 blur-md rounded-full animate-pulse -z-0" />
-              </div>
-
-              {/* 3. Gear Bloom (Above the lightbulb) */}
-              <div className="absolute top-0 inset-x-0 h-6 flex justify-center items-start opacity-50 z-10 pt-1">
-                <div className="relative w-full h-full">
-                  <Settings className="w-4 h-4 absolute top-0 left-1 animate-spin-slow" style={{ animationDuration: '10s' }} />
-                  <Settings className="w-3 h-3 absolute top-1 right-2 animate-spin-slow" style={{ animationDuration: '15s', animationDirection: 'reverse' }} />
-                  <Settings className="w-5 h-5 absolute -top-1 left-1/2 -translate-x-1/2 animate-spin-slow opacity-60" style={{ animationDuration: '12s' }} />
-                </div>
-              </div>
-
-              {/* 4. Festive Cake (The crowning element at the very top) */}
-              <div className="absolute top-0.5 left-1/2 -translate-x-1/2 z-30">
-                <Cake className="w-3.5 h-3.5 text-amber-200 animate-bounce drop-shadow-sm" />
-              </div>
-
-              {/* Finishing Touches: Small Sparkles */}
-              <Sparkles className="w-2 h-2 absolute top-2 right-1 text-white/50 animate-pulse" />
+              <Cake className="w-6 h-6 text-white drop-shadow-sm" />
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
@@ -282,6 +255,23 @@ export const Header: React.FC<HeaderProps> = ({
             Executive Dashboard
             <span className="ml-1 px-1.5 py-0.2 rounded-full text-[9px] bg-indigo-100 text-indigo-800 border border-indigo-200 font-bold">
               Overview
+            </span>
+          </button>
+
+          {/* Memory Gallery Tab (Placed after Executive Dashboard) */}
+          <button
+            onClick={() => setActiveTab('gallery')}
+            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-t-lg border-b-2 transition whitespace-nowrap cursor-pointer ${
+              activeTab === 'gallery'
+                ? 'border-amber-500 text-amber-900 bg-amber-50/70 font-bold shadow-xs'
+                : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+            }`}
+          >
+            <Images className={`w-4 h-4 ${activeTab === 'gallery' ? 'text-amber-600' : 'text-slate-500'}`} />
+            Memory Gallery
+            <span className="ml-1 px-1.5 py-0.2 rounded-full text-[9px] bg-amber-100 text-amber-900 border border-amber-300 font-bold flex items-center gap-1">
+              <Sparkles className="w-2.5 h-2.5 text-amber-600" />
+              Live
             </span>
           </button>
 
