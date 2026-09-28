@@ -1719,6 +1719,20 @@ export const StarFieldMap: React.FC<StarFieldMapProps> = ({
           className="w-full h-full max-h-[220px] relative z-10 overflow-visible select-none"
         >
           <defs>
+            <style>{`
+              @keyframes star-organic-twinkle {
+                0%, 100% {
+                  opacity: var(--star-min-opacity, 0.25);
+                  transform: scale(var(--star-min-scale, 0.85));
+                }
+                50% {
+                  opacity: var(--star-peak-opacity, 1);
+                  transform: scale(var(--star-peak-scale, 1.4));
+                  filter: drop-shadow(0 0 var(--star-glow-spread, 6px) rgba(255, 255, 255, 0.95))
+                          drop-shadow(0 0 calc(var(--star-glow-spread, 6px) * 1.8) rgba(56, 189, 248, 0.85));
+                }
+              }
+            `}</style>
             <filter id="starFieldGlow" x="-20%" y="-20%" width="140%" height="140%">
               <feGaussianBlur stdDeviation="1.8" result="blur" />
               <feMerge>
@@ -1734,16 +1748,29 @@ export const StarFieldMap: React.FC<StarFieldMapProps> = ({
             { x: 220, y: 20, r: 1.1 }, { x: 310, y: 35, r: 1.3 }, { x: 400, y: 25, r: 1 },
             { x: 490, y: 40, r: 1.2 }, { x: 35, y: 180, r: 1 }, { x: 110, y: 195, r: 1.2 },
             { x: 260, y: 200, r: 0.9 }, { x: 380, y: 190, r: 1.3 }, { x: 500, y: 185, r: 1.1 }
-          ].map((st, i) => (
-            <circle
-              key={`bg-dot-${i}`}
-              cx={st.x}
-              cy={st.y}
-              r={st.r}
-              fill="rgba(255, 255, 255, 0.4)"
-              className="animate-pulse"
-            />
-          ))}
+          ].map((st, i) => {
+            const bgRand = ((i * 47 + 13) % 100) / 100;
+            const bgDuration = (1.9 + bgRand * 2.2).toFixed(2);
+            const bgDelay = (((i * 67 + 29) % 100) / 100 * 2.6).toFixed(2);
+            return (
+              <circle
+                key={`bg-dot-${i}`}
+                cx={st.x}
+                cy={st.y}
+                r={st.r}
+                fill="rgba(255, 255, 255, 0.45)"
+                style={{
+                  animation: `star-organic-twinkle ${bgDuration}s ease-in-out infinite ${bgDelay}s`,
+                  transformBox: 'fill-box',
+                  transformOrigin: 'center',
+                  ['--star-min-opacity' as any]: (0.15 + bgRand * 0.2).toFixed(2),
+                  ['--star-peak-opacity' as any]: (0.65 + bgRand * 0.35).toFixed(2),
+                  ['--star-peak-scale' as any]: (1.1 + bgRand * 0.3).toFixed(2),
+                  ['--star-glow-spread' as any]: '4px'
+                }}
+              />
+            );
+          })}
 
           {/* Ecliptic Curve Guide */}
           <path
@@ -1776,23 +1803,34 @@ export const StarFieldMap: React.FC<StarFieldMapProps> = ({
             })}
           </g>
 
-          {/* Constellation Stars */}
+          {/* Constellation Stars with Randomized Organic Twinkle Intensity */}
           {constellationData.stars.map((s, idx) => {
             const cx = s.x * 1.9 + 80;
             const cy = s.y * 0.95 + 15;
             const starInfo = s.name ? starsMap[s.name] : null;
             const isSelected = activeStar?.name === s.name;
-            const twinkleClass =
-              s.twinkle === 1
-                ? 'animate-star-twinkle-1'
-                : s.twinkle === 2
-                ? 'animate-star-twinkle-2'
-                : 'animate-star-twinkle-3';
+
+            // Randomized twinkle intensity and timing factor for an organic celestial look
+            const randFactor = ((idx * 37 + 19) % 100) / 100;
+            const duration = (2.1 + randFactor * 2.4).toFixed(2); // 2.1s - 4.5s
+            const delay = (((idx * 59 + 23) % 100) / 100 * 2.8).toFixed(2); // 0.0s - 2.8s
+            const minOpacity = (0.2 + randFactor * 0.25).toFixed(2); // 0.20 - 0.45
+            const peakScale = (1.25 + randFactor * 0.4).toFixed(2); // 1.25 - 1.65
+            const glowSpread = Math.round(5 + randFactor * 7); // 5px - 12px
 
             return (
               <g
                 key={`star-${idx}`}
-                className={`cursor-pointer ${twinkleClass}`}
+                className="cursor-pointer"
+                style={{
+                  animation: `star-organic-twinkle ${duration}s ease-in-out infinite ${delay}s`,
+                  transformBox: 'fill-box',
+                  transformOrigin: 'center',
+                  ['--star-min-opacity' as any]: minOpacity,
+                  ['--star-peak-opacity' as any]: '1',
+                  ['--star-peak-scale' as any]: peakScale,
+                  ['--star-glow-spread' as any]: `${glowSpread}px`
+                }}
                 onClick={() => s.name && starInfo && setActiveStar({ name: s.name, ...starInfo })}
                 onMouseEnter={() => s.name && starInfo && setActiveStar({ name: s.name, ...starInfo })}
               >
