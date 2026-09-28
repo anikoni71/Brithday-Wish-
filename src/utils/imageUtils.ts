@@ -92,3 +92,48 @@ export async function verifyImageAccessibility(url: string): Promise<boolean> {
     return false;
   }
 }
+
+/**
+ * Curated high-resolution profile picture map matching official Google Drive records.
+ */
+const CURATED_MEMBER_AVATARS: Record<string, string> = {
+  'bishnu': 'https://lh3.googleusercontent.com/d/1hrF6n4832pfTzLWQKcWkt6ZExfIOxkBz',
+  'danushka': 'https://lh3.googleusercontent.com/d/1WooamzxkuanrAM-7wrp4hm3ogll6vbsI',
+  'zahid': 'https://lh3.googleusercontent.com/d/1TGztacSMzBPNu1tTX6wo_jEp3t_6VYDN',
+  'khalid': 'https://lh3.googleusercontent.com/d/12oCALoY649CD3fGa5hrE19k2yhmJK3xk',
+  'anik': 'https://lh3.googleusercontent.com/d/1x9pY5gY04zYfJTCWwScGl7c-qWHaqjhA',
+  'abdulla': 'https://lh3.googleusercontent.com/d/11Nao3LxNhjdv69fJQwQnkrP2g379pWO5',
+  'rohan': 'https://lh3.googleusercontent.com/d/1sZ1hMuK8i_--jTugcthyeFwglSLowYVW',
+  'ranjith': 'https://lh3.googleusercontent.com/d/14CtdR96ZaRAuDy2pvX3ukytrxxK3KuOu',
+  'farjana': 'https://lh3.googleusercontent.com/d/1xYvwup9TtefhCmz04Vut2Or5_qn9keXP',
+  'sudipta': 'https://lh3.googleusercontent.com/d/1geVYxxK_CIr5GoL43pt2QdkQ5FFH-iB1',
+};
+
+/**
+ * Resolves a team member's profile picture URL in real-time, prioritising live sheet data
+ * with fallback to verified team avatar assets.
+ */
+export function getMemberPhotoUrl(member?: { name?: string; imageUrl?: string; [key: string]: any }): string {
+  if (!member) return '';
+  const raw =
+    member.imageUrl ||
+    member.photo ||
+    member.image ||
+    member.avatar ||
+    member.profileImageUrl ||
+    member['Image URL'] ||
+    member['Image_URL'] ||
+    '';
+  if (raw && typeof raw === 'string') {
+    const formatted = formatProfileImageUrl(raw);
+    if (formatted) return formatted;
+  }
+  const nameLower = (member.name || '').toLowerCase().trim();
+  for (const [key, url] of Object.entries(CURATED_MEMBER_AVATARS)) {
+    if (nameLower.includes(key)) {
+      return url;
+    }
+  }
+  return '';
+}
+

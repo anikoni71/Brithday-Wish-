@@ -322,6 +322,7 @@ export const REAL_IE_TEAM_ROSTER: TeamMember[] = [
     mobile: "",
     email: "",
     whatsapp: "",
+    imageUrl: "https://lh3.googleusercontent.com/d/1hrF6n4832pfTzLWQKcWkt6ZExfIOxkBz",
     wishingMessage: "Happy Birthday, Bishnu! (The Preserver and Protector). Wishing you a great day from the IE Central Team. 🎉",
     isBirthdayToday: checkIsTodayBirthday("13th Sep"),
     lastSentYear: ""

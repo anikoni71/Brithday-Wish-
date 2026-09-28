@@ -16,6 +16,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { TeamMember } from '../types';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay } from 'date-fns';
 import { parseBirthdayDate, getDaysUntilBirthday, MONTH_NAMES } from '../utils/dateUtils';
+import { formatProfileImageUrl, getMemberPhotoUrl } from '../utils/imageUtils';
 
 interface BirthdayCalendarOverlayProps {
   isOpen: boolean;
@@ -255,14 +256,27 @@ export const BirthdayCalendarOverlay: React.FC<BirthdayCalendarOverlayProps> = (
                           {format(day, 'd')}
                         </span>
                         {dayBirthdays.length > 0 && (
-                          <div className="flex -space-x-1">
-                            {dayBirthdays.slice(0, 3).map((m) => (
-                              <div 
-                                key={m.sl || m.id || m.name} 
-                                className={`w-2.5 h-2.5 rounded-full border border-white ${COLOR_PALETTE[Number(m.sl || 1) % COLOR_PALETTE.length]}`}
-                                title={m.name}
-                              />
-                            ))}
+                          <div className="flex -space-x-1.5">
+                            {dayBirthdays.slice(0, 3).map((m) => {
+                              const mPhoto = formatProfileImageUrl(m.imageUrl) || getMemberPhotoUrl(m);
+                              return (
+                                <div 
+                                  key={m.sl || m.id || m.name} 
+                                  className={`w-3.5 h-3.5 rounded-full border border-white overflow-hidden shadow-2xs ${COLOR_PALETTE[Number(m.sl || 1) % COLOR_PALETTE.length]}`}
+                                  title={m.name}
+                                >
+                                  {mPhoto ? (
+                                    <img 
+                                      src={mPhoto} 
+                                      alt={m.name} 
+                                      className="w-full h-full object-cover rounded-full" 
+                                      referrerPolicy="no-referrer"
+                                      onError={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }}
+                                    />
+                                  ) : null}
+                                </div>
+                              );
+                            })}
                             {dayBirthdays.length > 3 && (
                               <div className="text-[9px] font-bold text-slate-400 pl-1">
                                 +{dayBirthdays.length - 3}
@@ -273,19 +287,52 @@ export const BirthdayCalendarOverlay: React.FC<BirthdayCalendarOverlayProps> = (
                       </div>
                       
                       <div className="space-y-1 mt-1.5">
-                        {dayBirthdays.map((member) => (
-                          <div 
-                            key={member.sl || member.id || member.name}
-                            className={`px-1.5 py-1 rounded-md text-[10px] font-bold truncate border flex items-center gap-1 shadow-2xs transition-transform hover:scale-[1.02] cursor-default ${
-                              COLOR_PALETTE[Number(member.sl || 1) % COLOR_PALETTE.length].replace('bg-', 'text-').replace('-500', '-700')
-                            } ${COLOR_PALETTE[Number(member.sl || 1) % COLOR_PALETTE.length].replace('bg-', 'bg-').replace('-500', '-50')}`}
-                            style={{ borderColor: 'currentColor' }}
-                            title={`${member.name}${member.nameMeaning ? ` (${member.nameMeaning})` : ''}${member.specialDayMatch ? ` • Match: ${member.specialDayMatch}` : ''} - ${member.designation || ''}`}
-                          >
-                            <Cake className="w-2.5 h-2.5 shrink-0" />
-                            <span className="truncate">{member.name.split(' ')[0]}</span>
-                          </div>
-                        ))}
+                        {dayBirthdays.map((member) => {
+                          const photoUrl = formatProfileImageUrl(member.imageUrl) || getMemberPhotoUrl(member);
+                          const initials = member.name
+                            ? member.name.split(' ').filter(Boolean).map((n) => n[0]).slice(0, 2).join('')
+                            : '🎂';
+                          const colorClass = COLOR_PALETTE[Number(member.sl || 1) % COLOR_PALETTE.length];
+
+                          return (
+                            <div 
+                              key={member.sl || member.id || member.name}
+                              className={`px-1.5 py-1 rounded-md text-[10px] font-bold truncate border flex items-center gap-1.5 shadow-2xs transition-transform hover:scale-[1.03] cursor-default ${
+                                colorClass.replace('bg-', 'text-').replace('-500', '-700')
+                              } ${colorClass.replace('bg-', 'bg-').replace('-500', '-50')}`}
+                              style={{ borderColor: 'currentColor' }}
+                              title={`${member.name}${member.nameMeaning ? ` (${member.nameMeaning})` : ''}${member.specialDayMatch ? ` • Match: ${member.specialDayMatch}` : ''} - ${member.designation || ''}`}
+                            >
+                              {/* Birthday Person Profile Picture with Cinematic Animation */}
+                              <div className="relative shrink-0 w-4 h-4 rounded-full overflow-hidden birthday-avatar-cinematic shadow-xs">
+                                {photoUrl ? (
+                                  <img 
+                                    src={photoUrl} 
+                                    alt={member.name}
+                                    className="w-full h-full object-cover object-center rounded-full block"
+                                    referrerPolicy="no-referrer"
+                                    loading="eager"
+                                    onError={(e) => {
+                                      (e.currentTarget as HTMLElement).style.display = 'none';
+                                      const fallback = e.currentTarget.parentElement?.querySelector('.avatar-calendar-fallback');
+                                      if (fallback) {
+                                        fallback.classList.remove('hidden');
+                                        fallback.classList.add('flex');
+                                      }
+                                    }}
+                                  />
+                                ) : null}
+                                <div 
+                                  className={`avatar-calendar-fallback w-full h-full rounded-full items-center justify-center text-[7px] font-black text-white ${colorClass} ${photoUrl ? 'hidden' : 'flex'}`}
+                                >
+                                  {initials}
+                                </div>
+                              </div>
+                              <Cake className="w-2.5 h-2.5 shrink-0 opacity-85" />
+                              <span className="truncate">{member.name.split(' ')[0]}</span>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   );
@@ -400,12 +447,29 @@ export const BirthdayCalendarOverlay: React.FC<BirthdayCalendarOverlayProps> = (
                             </span>
                           </div>
 
-                          {/* Avatar Initials */}
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white text-xs shrink-0 shadow-2xs ${
-                            COLOR_PALETTE[Number(member.sl || 1) % COLOR_PALETTE.length]
-                          }`}>
-                            {member.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
-                          </div>
+                          {/* Avatar Picture with Cinematic Animation */}
+                          {(() => {
+                            const uPhoto = formatProfileImageUrl(member.imageUrl) || getMemberPhotoUrl(member);
+                            const uColor = COLOR_PALETTE[Number(member.sl || 1) % COLOR_PALETTE.length];
+                            return (
+                              <div className={`relative w-10 h-10 rounded-full flex items-center justify-center font-bold text-white text-xs shrink-0 shadow-2xs overflow-hidden border border-white birthday-avatar-cinematic ${uColor}`}>
+                                {uPhoto ? (
+                                  <img
+                                    src={uPhoto}
+                                    alt={member.name}
+                                    className="w-full h-full object-cover object-center rounded-full block"
+                                    referrerPolicy="no-referrer"
+                                    onError={(e) => {
+                                      (e.currentTarget as HTMLElement).style.display = 'none';
+                                    }}
+                                  />
+                                ) : null}
+                                <span className={uPhoto ? 'hidden' : 'block'}>
+                                  {member.name.split(' ').map((n) => n[0]).slice(0, 2).join('')}
+                                </span>
+                              </div>
+                            );
+                          })()}
 
                           {/* Names and Department */}
                           <div className="min-w-0">

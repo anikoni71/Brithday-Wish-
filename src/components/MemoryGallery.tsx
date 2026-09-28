@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   Images, 
   Sparkles, 
+  Car,
   RefreshCw, 
   ExternalLink, 
   Clock, 
@@ -298,7 +299,7 @@ export const MemoryGallery: React.FC = () => {
               className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-slate-900 text-white hover:bg-slate-800 transition disabled:opacity-60 cursor-pointer shadow-xs"
               title="Force fetch latest photos from Google Sheet"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <Car className={`w-3.5 h-3.5 ${isRefreshing ? 'f1-speed-motion' : ''}`} />
               {isRefreshing ? 'Syncing...' : 'Sync Now'}
             </button>
           </div>

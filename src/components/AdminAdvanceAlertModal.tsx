@@ -10,6 +10,7 @@ import {
   Clock,
   Sparkles,
   ShieldCheck,
+  Car,
   RefreshCw,
   Layers,
   ListFilter,
@@ -362,11 +363,11 @@ export const AdminAdvanceAlertModal: React.FC<AdminAdvanceAlertModalProps> = ({
                   title="Re-fetch Admin WhatsApp Number & Admin Notification Email directly from Google Sheet"
                 >
                   {isReCollecting ? (
-                    <RefreshCw className="w-3 h-3 text-emerald-600 animate-spin" />
+                    <Car className="w-3 h-3 text-emerald-600 f1-speed-motion" />
                   ) : sheetSyncSuccess ? (
                     <CheckCheck className="w-3 h-3 text-emerald-600" />
                   ) : (
-                    <RefreshCw className="w-3 h-3 text-emerald-600" />
+                    <Car className="w-3 h-3 text-emerald-600" />
                   )}
                   {isReCollecting ? 'Syncing Sheet...' : sheetSyncSuccess ? 'Sheet Values Applied!' : 'Re-Collect from Sheet'}
                 </button>

@@ -16,6 +16,7 @@ import {
   Mail,
   Bell,
   Bot,
+  Car,
   RefreshCw,
   TrendingUp,
   Activity,
@@ -703,7 +704,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
               className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-zinc-900/90 hover:bg-zinc-800 text-zinc-200 border border-zinc-700/70 hover:border-emerald-500/40 shadow-lg shadow-black/60 transition-all duration-200 cursor-pointer disabled:opacity-50"
               title="Synchronize Google Sheet records"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin text-emerald-400' : 'text-zinc-400'}`} />
+              <Car className={`w-3.5 h-3.5 ${isSyncing ? 'f1-speed-motion text-emerald-400' : 'text-zinc-400'}`} />
               <span>{isSyncing ? 'Syncing...' : 'Sync Master'}</span>
             </button>
 

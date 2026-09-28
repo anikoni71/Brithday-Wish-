@@ -31,6 +31,7 @@ import {
   Eye,
   X,
   SendHorizontal,
+  Car,
   RefreshCw,
   Wifi,
   Plus,
@@ -512,7 +513,7 @@ export const FestiveCalendarWorkstation: React.FC<FestiveCalendarWorkstationProp
               className="px-3.5 py-2.5 rounded-2xl bg-indigo-600/90 hover:bg-indigo-600 text-white font-bold text-xs transition flex items-center gap-2 shadow-md border border-indigo-400/40 cursor-pointer disabled:opacity-50"
               title="Sync with Google Online Server to retrieve updated holiday dates"
             >
-              <RefreshCw className={`w-4 h-4 text-indigo-200 ${isSyncingOnline ? 'animate-spin' : ''}`} />
+              <Car className={`w-4 h-4 text-indigo-200 ${isSyncingOnline ? 'f1-speed-motion' : ''}`} />
               <span>{isSyncingOnline ? 'Syncing...' : 'Sync Google Server'}</span>
             </button>
 

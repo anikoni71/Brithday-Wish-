@@ -23,6 +23,7 @@ import { useTeamData } from './hooks/useTeamData';
 import { useBirthdayAlerts } from './hooks/useBirthdayAlerts';
 import { computeDerivedAnalytics } from './utils/analyticsCalculations';
 import { BirthdayCalendarOverlay } from './components/BirthdayCalendarOverlay';
+import { MonthOfFortune } from './components/MonthOfFortune';
 import {
   requestNotificationPermission,
   sendBrowserBirthdayNotification,
@@ -41,7 +42,7 @@ interface ToastNotification {
 }
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'insights' | 'roster' | 'meanings' | 'festive' | 'email' | 'generator' | 'script' | 'automation' | 'tester' | 'gallery'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'insights' | 'roster' | 'meanings' | 'festive' | 'email' | 'generator' | 'script' | 'automation' | 'tester' | 'gallery' | 'fortune'>('dashboard');
   const [autoSyncEnabled, setAutoSyncEnabled] = useState<boolean>(true);
   const [toastNotification, setToastNotification] = useState<ToastNotification | null>(null);
   const [isWishModalOpen, setIsWishModalOpen] = useState<boolean>(false);
@@ -862,6 +863,15 @@ export default function App() {
         {/* Memory Gallery Workstation (Placed after Executive Dashboard) */}
         {activeTab === 'gallery' && (
           <MemoryGallery />
+        )}
+
+        {/* Month of Fortune Astrological Workstation */}
+        {activeTab === 'fortune' && (
+          <MonthOfFortune
+            members={teamMembers}
+            onOpenGenerator={handleOpenGenerator}
+            onSendWhatsApp={handleSendWhatsApp}
+          />
         )}
 
         {activeTab === 'insights' && (
