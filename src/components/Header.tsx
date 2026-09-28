@@ -236,59 +236,11 @@ export const Header: React.FC<HeaderProps> = ({
                 </div>
               )}
               {isSyncing ? (
-                <svg
-                  viewBox="0 0 40 14"
+                <img
+                  src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCA0MCAxNCcgZmlsbD0nbm9uZSc+PHJlY3QgeD0nMScgeT0nMicgd2lkdGg9JzIuNScgaGVpZ2h0PSc1LjUnIHJ4PScwLjUnIGZpbGw9JyNiOTFjMWMnLz48cGF0aCBkPSdNMiAyLjVoMy41djJIMnonIGZpbGw9JyMxMTExMTEnLz48cGF0aCBkPSdNMyA0LjVsMyAzJyBzdHJva2U9JyMxMTExMTEnIHN0cm9rZS13aWR0aD0nMC44Jy8+PHBhdGggZD0nTTMuNSAzLjVMMTQgMnYzLjVMMy41IDZ6JyBmaWxsPScjZGMyNjI2Jy8+PHBhdGggZD0nTTEzIDJxMy0uNSA0IDF2Mi41aC00eicgZmlsbD0nI2I5MWMxYycvPjxlbGxpcHNlIGN4PScxNS4yJyBjeT0nMi44JyByeD0nMS4xJyByeT0nMC43JyBmaWxsPScjMTExMTExJy8+PGNpcmNsZSBjeD0nMTcuOCcgY3k9JzQuMicgcj0nMS4zJyBmaWxsPScjZmFjYzE1Jy8+PHBhdGggZD0nTTE2IDQuOHEyLjUtMS4yIDQuOC44JyBzdHJva2U9JyMxMTExMTEnIHN0cm9rZS13aWR0aD0nMC44NScgc3Ryb2tlLWxpbmVjYXA9J3JvdW5kJy8+PHJlY3QgeD0nNycgeT0nMTAnIHdpZHRoPScyNCcgaGVpZ2h0PScxLjInIHJ4PScwLjQnIGZpbGw9JyMxMTExMTEnLz48cGF0aCBkPSdNOSA3LjJjMC0xLjggNC0yIDktMS44IDUgLjIgOSAxLjQgMTUgMy4ybDQuNSAxdjFoLTQuNWMtMS0xLjItNC0xLjItNSAwSDEyYy0xLTEuMi00LTEuMi01IDB6JyBmaWxsPScjZGMyNjI2Jy8+PHBhdGggZD0nTTE2IDYuOGwxNCAxLjQnIHN0cm9rZT0nI2ZmZmZmZicgc3Ryb2tlLXdpZHRoPScwLjUnIHN0cm9rZS1saW5lY2FwPSdyb3VuZCcgb3BhY2l0eT0nMC44NScvPjxwYXRoIGQ9J00zNSAxMC4yaDQuNScgc3Ryb2tlPScjMTExMTExJyBzdHJva2Utd2lkdGg9JzAuOScgc3Ryb2tlLWxpbmVjYXA9J3JvdW5kJy8+PHBhdGggZD0nTTM2LjUgOC4yaDN2My4zbC0yLjUtLjV6JyBmaWxsPScjYjkxYzFjJy8+PGNpcmNsZSBjeD0nNy41JyBjeT0nOS41JyByPSczLjUnIGZpbGw9JyMxMTExMTEnLz48Y2lyY2xlIGN4PSc3LjUnIGN5PSc5LjUnIHI9JzMnIHN0cm9rZT0nIzI2MjYyNicgc3Ryb2tlLXdpZHRoPScwLjUnIGZpbGw9J25vbmUnLz48Y2lyY2xlIGN4PSc3LjUnIGN5PSc5LjUnIHI9JzIuNScgc3Ryb2tlPScjZWY0NDQ0JyBzdHJva2Utd2lkdGg9JzAuMzUnIGZpbGw9J25vbmUnLz48Y2lyY2xlIGN4PSc3LjUnIGN5PSc5LjUnIHI9JzEuNicgZmlsbD0nIzMzNDE1NScvPjxjaXJjbGUgY3g9JzcuNScgY3k9JzkuNScgcj0nMC42JyBmaWxsPScjZmFjYzE1Jy8+PGNpcmNsZSBjeD0nMzAuNScgY3k9JzkuNScgcj0nMy4yJyBmaWxsPScjMTExMTExJy8+PGNpcmNsZSBjeD0nMzAuNScgY3k9JzkuNScgcj0nMi43JyBzdHJva2U9JyMyNjI2MjYnIHN0cm9rZS13aWR0aD0nMC41JyBmaWxsPSdub25lJy8+PGNpcmNsZSBjeD0nMzAuNScgY3k9JzkuNScgcj0nMi4yJyBzdHJva2U9JyNlZjQ0NDQnIHN0cm9rZS13aWR0aD0nMC4zNScgZmlsbD0nbm9uZScvPjxjaXJjbGUgY3g9JzMwLjUnIGN5PSc5LjUnIHI9JzEuNScgZmlsbD0nIzMzNDE1NScvPjxjaXJjbGUgY3g9JzMwLjUnIGN5PSc5LjUnIHI9JzAuNScgZmlsbD0nI2ZhY2MxNScvPjwvc3ZnPg=="
+                  alt="🏎️"
                   className="w-7 h-3.5 shrink-0 f1-realistic-motion"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                  aria-label="Ferrari Red F1 Race Car"
-                >
-                  {/* Rear Wing Endplate & Wing Blades */}
-                  <rect x="1" y="2" width="2.5" height="5.5" rx="0.5" fill="#b91c1c" />
-                  <path d="M 2 2.5 L 5.5 2.5 L 5.5 4.5 L 2 4.5 Z" fill="#111111" />
-                  <path d="M 3 4.5 L 6 7.5" stroke="#111111" strokeWidth="0.8" />
-                  
-                  {/* Shark Fin & Engine Cowl */}
-                  <path d="M 3.5 3.5 L 14 2 L 14 5.5 L 3.5 6 Z" fill="#dc2626" />
-                  
-                  {/* Airbox Intake */}
-                  <path d="M 13 2 Q 16 1.5 17 3 L 17 5.5 L 13 5.5 Z" fill="#b91c1c" />
-                  <ellipse cx="15.2" cy="2.8" rx="1.1" ry="0.7" fill="#111111" />
-                  
-                  {/* Driver Helmet & Halo Protection System */}
-                  <circle cx="17.8" cy="4.2" r="1.3" fill="#facc15" />
-                  <path d="M 16 4.8 Q 18.5 3.6 20.8 5.6" stroke="#111111" strokeWidth="0.85" strokeLinecap="round" />
-                  
-                  {/* Underfloor / Carbon Diffuser */}
-                  <rect x="7" y="10" width="24" height="1.2" rx="0.4" fill="#111111" />
-                  
-                  {/* Main Chassis / Sidepod / Nose Cone (Ferrari Red #dc2626) */}
-                  <path
-                    d="M 9 7.2 C 9 5.4, 13 5.2, 18 5.4 C 23 5.6, 27 6.8, 33 8.6 L 37.5 9.6 L 37.5 10.6 L 33 10.6 C 32 9.4, 29 9.4, 28 10.6 L 12 10.6 C 11 9.4, 8 9.4, 7 10.6 Z"
-                    fill="#dc2626"
-                  />
-                  
-                  {/* Aerodynamic highlight / white Italian racing stripe */}
-                  <path d="M 16 6.8 L 30 8.2" stroke="#ffffff" strokeWidth="0.5" strokeLinecap="round" opacity="0.85" />
-                  
-                  {/* Front Wing Assembly & Endplate */}
-                  <path d="M 35 10.2 L 39.5 10.2" stroke="#111111" strokeWidth="0.9" strokeLinecap="round" />
-                  <path d="M 36.5 8.2 L 39.5 8.2 L 39.5 11.5 L 37 11 Z" fill="#b91c1c" />
-                  
-                  {/* Rear Wheel (Black Racing Tire #111111 with Red Pirelli Accent & Rim) */}
-                  <circle cx="7.5" cy="9.5" r="3.5" fill="#111111" />
-                  <circle cx="7.5" cy="9.5" r="3" stroke="#262626" strokeWidth="0.5" fill="none" />
-                  <circle cx="7.5" cy="9.5" r="2.5" stroke="#ef4444" strokeWidth="0.35" fill="none" />
-                  <circle cx="7.5" cy="9.5" r="1.6" fill="#334155" />
-                  <circle cx="7.5" cy="9.5" r="0.6" fill="#facc15" />
-                  
-                  {/* Front Wheel (Black Racing Tire #111111 with Red Pirelli Accent & Rim) */}
-                  <circle cx="30.5" cy="9.5" r="3.2" fill="#111111" />
-                  <circle cx="30.5" cy="9.5" r="2.7" stroke="#262626" strokeWidth="0.5" fill="none" />
-                  <circle cx="30.5" cy="9.5" r="2.2" stroke="#ef4444" strokeWidth="0.35" fill="none" />
-                  <circle cx="30.5" cy="9.5" r="1.5" fill="#334155" />
-                  <circle cx="30.5" cy="9.5" r="0.5" fill="#facc15" />
-                </svg>
+                />
               ) : (
                 <RefreshCw className="w-3.5 h-3.5 text-slate-600" />
               )}
