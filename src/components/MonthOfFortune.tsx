@@ -1665,6 +1665,38 @@ export const StarFieldMap: React.FC<StarFieldMapProps> = ({
   const starsMap = STAR_CATALOG[zodiac.name] || {};
   const constellationData = ZODIAC_CONSTELLATIONS[zodiac.name] || ZODIAC_CONSTELLATIONS.Aries;
 
+  // Automatically determine if this constellation is the ruling constellation for the current month
+  const isCurrentMonthRuling = useMemo(() => {
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentRulingSign = getZodiacSign(currentMonth, now.getDate());
+    return parsedBirthday.month === currentMonth || zodiac.name === currentRulingSign.name;
+  }, [parsedBirthday.month, zodiac.name]);
+
+  // Subtle parallax coordinates for cosmic depth
+  const [parallaxOffset, setParallaxOffset] = useState({ x: 0, y: 0 });
+
+  const handleCanvasMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return;
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    // Normalized -1 to 1 offset from center
+    const normX = (x - centerX) / centerX;
+    const normY = (y - centerY) / centerY;
+    // Subtle parallax motion in opposite direction of mouse movement
+    setParallaxOffset({
+      x: -normX * 9,
+      y: -normY * 7
+    });
+  };
+
+  const handleCanvasMouseLeave = () => {
+    setParallaxOffset({ x: 0, y: 0 });
+  };
+
   const [activeStar, setActiveStar] = useState<{
     name: string;
     mag: string;
@@ -1704,9 +1736,20 @@ export const StarFieldMap: React.FC<StarFieldMapProps> = ({
       </div>
 
       {/* SVG Canvas Area */}
-      <div className="relative p-3 bg-[radial-gradient(ellipse_at_center,#0f172a_0%,#020617_100%)] min-h-[220px] flex items-center justify-center overflow-hidden">
+      <div 
+        className="relative p-3 bg-[radial-gradient(ellipse_at_center,#0f172a_0%,#020617_100%)] min-h-[220px] flex items-center justify-center overflow-hidden"
+        onMouseMove={handleCanvasMouseMove}
+        onMouseLeave={handleCanvasMouseLeave}
+      >
         {/* Subtle Celestial Grid Background */}
-        <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-40">
+        <div 
+          className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-40"
+          style={{
+            transform: `translate(${parallaxOffset.x * 0.2}px, ${parallaxOffset.y * 0.2}px)`,
+            transition: 'transform 0.3s cubic-bezier(0.2, 0.8, 0.4, 1)',
+            willChange: 'transform'
+          }}
+        >
           <div className="w-[320px] h-[320px] rounded-full border border-indigo-500/15" />
           <div className="w-[200px] h-[200px] rounded-full border border-dashed border-purple-500/20" />
           <div className="w-full h-[1px] bg-indigo-500/10 absolute" />
@@ -1732,6 +1775,31 @@ export const StarFieldMap: React.FC<StarFieldMapProps> = ({
                           drop-shadow(0 0 calc(var(--star-glow-spread, 6px) * 1.8) rgba(56, 189, 248, 0.85));
                 }
               }
+              @keyframes current-month-star-pulse {
+                0%, 100% {
+                  opacity: var(--star-min-opacity, 0.35);
+                  transform: scale(var(--star-min-scale, 0.9));
+                  filter: drop-shadow(0 0 var(--star-glow-spread, 6px) rgba(251, 191, 36, 0.9))
+                          drop-shadow(0 0 calc(var(--star-glow-spread, 6px) * 1.8) rgba(245, 158, 11, 0.8));
+                }
+                50% {
+                  opacity: var(--star-peak-opacity, 1);
+                  transform: scale(var(--star-peak-scale, 1.5));
+                  filter: drop-shadow(0 0 calc(var(--star-glow-spread, 6px) * 1.8) rgba(255, 255, 255, 1))
+                          drop-shadow(0 0 calc(var(--star-glow-spread, 6px) * 3) rgba(251, 191, 36, 1))
+                          drop-shadow(0 0 calc(var(--star-glow-spread, 6px) * 4.2) rgba(244, 63, 94, 0.9));
+                }
+              }
+              @keyframes current-month-line-pulse {
+                0%, 100% {
+                  stroke: rgba(251, 191, 36, 0.85);
+                  filter: drop-shadow(0 0 3px rgba(245, 158, 11, 0.85)) drop-shadow(0 0 8px rgba(239, 68, 68, 0.65));
+                }
+                50% {
+                  stroke: rgba(254, 240, 138, 1);
+                  filter: drop-shadow(0 0 8px rgba(253, 224, 71, 1)) drop-shadow(0 0 16px rgba(245, 158, 11, 0.95)) drop-shadow(0 0 22px rgba(244, 63, 94, 0.8));
+                }
+              }
             `}</style>
             <filter id="starFieldGlow" x="-20%" y="-20%" width="140%" height="140%">
               <feGaussianBlur stdDeviation="1.8" result="blur" />
@@ -1743,146 +1811,166 @@ export const StarFieldMap: React.FC<StarFieldMapProps> = ({
           </defs>
 
           {/* Background Ambient Stars */}
-          {[
-            { x: 30, y: 35, r: 1 }, { x: 80, y: 25, r: 1.2 }, { x: 150, y: 45, r: 0.9 },
-            { x: 220, y: 20, r: 1.1 }, { x: 310, y: 35, r: 1.3 }, { x: 400, y: 25, r: 1 },
-            { x: 490, y: 40, r: 1.2 }, { x: 35, y: 180, r: 1 }, { x: 110, y: 195, r: 1.2 },
-            { x: 260, y: 200, r: 0.9 }, { x: 380, y: 190, r: 1.3 }, { x: 500, y: 185, r: 1.1 }
-          ].map((st, i) => {
-            const bgRand = ((i * 47 + 13) % 100) / 100;
-            const bgDuration = (1.9 + bgRand * 2.2).toFixed(2);
-            const bgDelay = (((i * 67 + 29) % 100) / 100 * 2.6).toFixed(2);
-            return (
-              <circle
-                key={`bg-dot-${i}`}
-                cx={st.x}
-                cy={st.y}
-                r={st.r}
-                fill="rgba(255, 255, 255, 0.45)"
-                style={{
-                  animation: `star-organic-twinkle ${bgDuration}s ease-in-out infinite ${bgDelay}s`,
-                  transformBox: 'fill-box',
-                  transformOrigin: 'center',
-                  ['--star-min-opacity' as any]: (0.15 + bgRand * 0.2).toFixed(2),
-                  ['--star-peak-opacity' as any]: (0.65 + bgRand * 0.35).toFixed(2),
-                  ['--star-peak-scale' as any]: (1.1 + bgRand * 0.3).toFixed(2),
-                  ['--star-glow-spread' as any]: '4px'
-                }}
-              />
-            );
-          })}
-
-          {/* Ecliptic Curve Guide */}
-          <path
-            d="M10 160 Q270 90 530 50"
-            stroke="rgba(251, 191, 36, 0.25)"
-            strokeWidth="0.8"
-            strokeDasharray="3 3"
-          />
-
-          {/* Constellation Connection Paths */}
-          <g>
-            {constellationData.paths.map((p, i) => {
-              const scaledPath = p.replace(/(\d+)\s+(\d+)/g, (_, x, y) => {
-                const nx = Number(x) * 1.9 + 80;
-                const ny = Number(y) * 0.95 + 15;
-                return `${nx} ${ny}`;
-              });
-
+          <g
+            style={{
+              transform: `translate(${parallaxOffset.x * 0.4}px, ${parallaxOffset.y * 0.4}px)`,
+              transition: 'transform 0.25s cubic-bezier(0.2, 0.8, 0.4, 1)',
+              willChange: 'transform'
+            }}
+          >
+            {[
+              { x: 30, y: 35, r: 1 }, { x: 80, y: 25, r: 1.2 }, { x: 150, y: 45, r: 0.9 },
+              { x: 220, y: 20, r: 1.1 }, { x: 310, y: 35, r: 1.3 }, { x: 400, y: 25, r: 1 },
+              { x: 490, y: 40, r: 1.2 }, { x: 35, y: 180, r: 1 }, { x: 110, y: 195, r: 1.2 },
+              { x: 260, y: 200, r: 0.9 }, { x: 380, y: 190, r: 1.3 }, { x: 500, y: 185, r: 1.1 }
+            ].map((st, i) => {
+              const bgRand = ((i * 47 + 13) % 100) / 100;
+              const bgDuration = (1.9 + bgRand * 2.2).toFixed(2);
+              const bgDelay = (((i * 67 + 29) % 100) / 100 * 2.6).toFixed(2);
               return (
-                <path
-                  key={`path-${i}`}
-                  d={scaledPath}
-                  stroke="rgba(56, 189, 248, 0.75)"
-                  strokeWidth="1.6"
-                  strokeDasharray="4 2"
-                  filter="url(#starFieldGlow)"
-                  className="animate-constellation-lines"
+                <circle
+                  key={`bg-dot-${i}`}
+                  cx={st.x}
+                  cy={st.y}
+                  r={st.r}
+                  fill="rgba(255, 255, 255, 0.45)"
+                  style={{
+                    animation: `star-organic-twinkle ${bgDuration}s ease-in-out infinite ${bgDelay}s`,
+                    transformBox: 'fill-box',
+                    transformOrigin: 'center',
+                    ['--star-min-opacity' as any]: (0.15 + bgRand * 0.2).toFixed(2),
+                    ['--star-peak-opacity' as any]: (0.65 + bgRand * 0.35).toFixed(2),
+                    ['--star-peak-scale' as any]: (1.1 + bgRand * 0.3).toFixed(2),
+                    ['--star-glow-spread' as any]: '4px'
+                  }}
                 />
               );
             })}
           </g>
 
-          {/* Constellation Stars with Randomized Organic Twinkle Intensity */}
-          {constellationData.stars.map((s, idx) => {
-            const cx = s.x * 1.9 + 80;
-            const cy = s.y * 0.95 + 15;
-            const starInfo = s.name ? starsMap[s.name] : null;
-            const isSelected = activeStar?.name === s.name;
+          {/* Ruling Constellation Cosmic Layer (Parallax shift in opposite direction of mouse) */}
+          <g
+            style={{
+              transform: `translate(${parallaxOffset.x}px, ${parallaxOffset.y}px)`,
+              transition: 'transform 0.2s cubic-bezier(0.2, 0.8, 0.4, 1)',
+              willChange: 'transform'
+            }}
+          >
+            {/* Ecliptic Curve Guide */}
+            <path
+              d="M10 160 Q270 90 530 50"
+              stroke="rgba(251, 191, 36, 0.25)"
+              strokeWidth="0.8"
+              strokeDasharray="3 3"
+            />
 
-            // Randomized twinkle intensity and timing factor for an organic celestial look
-            const randFactor = ((idx * 37 + 19) % 100) / 100;
-            const duration = (2.1 + randFactor * 2.4).toFixed(2); // 2.1s - 4.5s
-            const delay = (((idx * 59 + 23) % 100) / 100 * 2.8).toFixed(2); // 0.0s - 2.8s
-            const minOpacity = (0.2 + randFactor * 0.25).toFixed(2); // 0.20 - 0.45
-            const peakScale = (1.25 + randFactor * 0.4).toFixed(2); // 1.25 - 1.65
-            const glowSpread = Math.round(5 + randFactor * 7); // 5px - 12px
+            {/* Constellation Connection Paths */}
+            <g>
+              {constellationData.paths.map((p, i) => {
+                const scaledPath = p.replace(/(\d+)\s+(\d+)/g, (_, x, y) => {
+                  const nx = Number(x) * 1.9 + 80;
+                  const ny = Number(y) * 0.95 + 15;
+                  return `${nx} ${ny}`;
+                });
 
-            return (
-              <g
-                key={`star-${idx}`}
-                className="cursor-pointer"
-                style={{
-                  animation: `star-organic-twinkle ${duration}s ease-in-out infinite ${delay}s`,
-                  transformBox: 'fill-box',
-                  transformOrigin: 'center',
-                  ['--star-min-opacity' as any]: minOpacity,
-                  ['--star-peak-opacity' as any]: '1',
-                  ['--star-peak-scale' as any]: peakScale,
-                  ['--star-glow-spread' as any]: `${glowSpread}px`
-                }}
-                onClick={() => s.name && starInfo && setActiveStar({ name: s.name, ...starInfo })}
-                onMouseEnter={() => s.name && starInfo && setActiveStar({ name: s.name, ...starInfo })}
-              >
-                {/* Active Focus Halo */}
-                {isSelected && (
+                return (
+                  <path
+                    key={`path-${i}`}
+                    d={scaledPath}
+                    stroke={isCurrentMonthRuling ? "rgba(251, 191, 36, 0.9)" : "rgba(56, 189, 248, 0.75)"}
+                    strokeWidth={isCurrentMonthRuling ? "2" : "1.6"}
+                    strokeDasharray="4 2"
+                    filter={isCurrentMonthRuling ? undefined : "url(#starFieldGlow)"}
+                    style={isCurrentMonthRuling ? {
+                      animation: 'current-month-line-pulse 2.6s ease-in-out infinite'
+                    } : undefined}
+                    className="animate-constellation-lines"
+                  />
+                );
+              })}
+            </g>
+
+            {/* Constellation Stars with Randomized Organic Twinkle Intensity & Current Month Highlight */}
+            {constellationData.stars.map((s, idx) => {
+              const cx = s.x * 1.9 + 80;
+              const cy = s.y * 0.95 + 15;
+              const starInfo = s.name ? starsMap[s.name] : null;
+              const isSelected = activeStar?.name === s.name;
+
+              // Randomized twinkle intensity and timing factor for an organic celestial look
+              const randFactor = ((idx * 37 + 19) % 100) / 100;
+              const duration = (2.1 + randFactor * 2.4).toFixed(2); // 2.1s - 4.5s
+              const delay = (((idx * 59 + 23) % 100) / 100 * 2.8).toFixed(2); // 0.0s - 2.8s
+              const minOpacity = (0.2 + randFactor * 0.25).toFixed(2); // 0.20 - 0.45
+              const peakScale = (1.25 + randFactor * 0.4).toFixed(2); // 1.25 - 1.65
+              const glowSpread = Math.round(5 + randFactor * 7); // 5px - 12px
+
+              return (
+                <g
+                  key={`star-${idx}`}
+                  className="cursor-pointer"
+                  style={{
+                    animation: `${isCurrentMonthRuling ? 'current-month-star-pulse' : 'star-organic-twinkle'} ${duration}s ease-in-out infinite ${delay}s`,
+                    transformBox: 'fill-box',
+                    transformOrigin: 'center',
+                    ['--star-min-opacity' as any]: minOpacity,
+                    ['--star-peak-opacity' as any]: '1',
+                    ['--star-peak-scale' as any]: peakScale,
+                    ['--star-glow-spread' as any]: `${glowSpread}px`
+                  }}
+                  onClick={() => s.name && starInfo && setActiveStar({ name: s.name, ...starInfo })}
+                  onMouseEnter={() => s.name && starInfo && setActiveStar({ name: s.name, ...starInfo })}
+                >
+                  {/* Active Focus Halo */}
+                  {isSelected && (
+                    <circle
+                      cx={cx}
+                      cy={cy}
+                      r={s.r * 3.2}
+                      fill="none"
+                      stroke={isCurrentMonthRuling ? "#F59E0B" : "#38BDF8"}
+                      strokeWidth="1.4"
+                      strokeDasharray="2 2"
+                      className="animate-spin-celestial"
+                    />
+                  )}
+
+                  {/* Outer Glow */}
                   <circle
                     cx={cx}
                     cy={cy}
-                    r={s.r * 3.2}
-                    fill="none"
-                    stroke="#38BDF8"
-                    strokeWidth="1.4"
-                    strokeDasharray="2 2"
-                    className="animate-spin-celestial"
+                    r={isCurrentMonthRuling ? s.r * 2.6 : s.r * 2.2}
+                    fill={isCurrentMonthRuling ? "rgba(251, 191, 36, 0.45)" : "rgba(56, 189, 248, 0.35)"}
                   />
-                )}
 
-                {/* Outer Glow */}
-                <circle
-                  cx={cx}
-                  cy={cy}
-                  r={s.r * 2.2}
-                  fill="rgba(56, 189, 248, 0.35)"
-                />
+                  {/* Inner White Core */}
+                  <circle
+                    cx={cx}
+                    cy={cy}
+                    r={s.r * 1.2}
+                    fill="#FFFFFF"
+                    stroke={isCurrentMonthRuling ? "rgba(251, 146, 60, 0.95)" : "rgba(192, 132, 252, 0.9)"}
+                    strokeWidth={isCurrentMonthRuling ? 1.2 : 0.8}
+                  />
 
-                {/* Inner White Core */}
-                <circle
-                  cx={cx}
-                  cy={cy}
-                  r={s.r * 1.2}
-                  fill="#FFFFFF"
-                  stroke="rgba(192, 132, 252, 0.9)"
-                  strokeWidth="0.8"
-                />
-
-                {/* Star Label */}
-                {s.name && (
-                  <text
-                    x={cx + 8}
-                    y={cy - 5}
-                    fill={isSelected ? '#FDE047' : '#E2E8F0'}
-                    fontSize="10"
-                    fontWeight="bold"
-                    fontFamily="sans-serif"
-                    className="transition-colors drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]"
-                  >
-                    {s.name}
-                  </text>
-                )}
-              </g>
-            );
-          })}
+                  {/* Star Label */}
+                  {s.name && (
+                    <text
+                      x={cx + 8}
+                      y={cy - 5}
+                      fill={isSelected ? '#FDE047' : isCurrentMonthRuling ? '#FEF08A' : '#E2E8F0'}
+                      fontSize="10"
+                      fontWeight="bold"
+                      fontFamily="sans-serif"
+                      className="transition-colors drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]"
+                    >
+                      {s.name}
+                    </text>
+                  )}
+                </g>
+              );
+            })}
+          </g>
         </svg>
       </div>
 
