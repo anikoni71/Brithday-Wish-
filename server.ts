@@ -3,6 +3,7 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
+import { generateDynamicAstrologyPayload } from "./src/services/ephemerisService";
 
 dotenv.config();
 
@@ -2609,6 +2610,71 @@ app.get("/api/calendar/export.ics", async (_req, res) => {
   } catch (err: any) {
     console.error("Error generating .ics file:", err);
     res.status(500).send("Error generating iCalendar file.");
+  }
+});
+
+// =========================================================================
+// PROFESSIONAL ASTROLOGY & EPHEMERIS CALCULATION ENDPOINTS
+// =========================================================================
+
+// POST /api/astrology/live-fortune - High-Precision Swiss Ephemeris & Planetary Transit Live Fortune
+app.post("/api/astrology/live-fortune", (req, res) => {
+  try {
+    const {
+      celebrantName = 'Celebrant',
+      birthday = '13th Sep',
+      birthTime = '12:00',
+      birthCity = 'Dhaka'
+    } = req.body;
+
+    const payload = generateDynamicAstrologyPayload(
+      celebrantName,
+      birthday,
+      birthTime,
+      birthCity
+    );
+
+    res.json({
+      success: true,
+      payload
+    });
+  } catch (error: any) {
+    console.error("Error in /api/astrology/live-fortune:", error);
+    res.status(500).json({
+      success: false,
+      error: error?.message || "Failed to generate ephemeris astrology payload"
+    });
+  }
+});
+
+// POST /api/astrology/natal-chart - Exact natal chart calculations (The Big Three, 12 Houses, Aspects)
+app.post("/api/astrology/natal-chart", (req, res) => {
+  try {
+    const {
+      celebrantName = 'Celebrant',
+      birthday = '13th Sep',
+      birthTime = '12:00',
+      birthCity = 'Dhaka'
+    } = req.body;
+
+    const payload = generateDynamicAstrologyPayload(
+      celebrantName,
+      birthday,
+      birthTime,
+      birthCity
+    );
+
+    res.json({
+      success: true,
+      natalChart: payload.natalChart,
+      activeTransits: payload.activeTransits
+    });
+  } catch (error: any) {
+    console.error("Error in /api/astrology/natal-chart:", error);
+    res.status(500).json({
+      success: false,
+      error: error?.message || "Failed to calculate natal chart"
+    });
   }
 });
 

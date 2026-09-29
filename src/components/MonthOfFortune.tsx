@@ -34,6 +34,7 @@ import {
 import { TeamMember } from '../types';
 import { parseBirthdayDate, getDaysUntilBirthday, MONTH_NAMES } from '../utils/dateUtils';
 import { formatProfileImageUrl, getMemberPhotoUrl } from '../utils/imageUtils';
+import { generateDynamicAstrologyPayload } from '../services/ephemerisService';
 
 export interface MemberAstrologyDestiny {
   memberId: string;
@@ -1697,6 +1698,8 @@ export const StarFieldMap: React.FC<StarFieldMapProps> = ({
     setParallaxOffset({ x: 0, y: 0 });
   };
 
+  const [hoveredStarIdx, setHoveredStarIdx] = useState<number | null>(null);
+
   const [activeStar, setActiveStar] = useState<{
     name: string;
     mag: string;
@@ -1896,6 +1899,8 @@ export const StarFieldMap: React.FC<StarFieldMapProps> = ({
               const cy = s.y * 0.95 + 15;
               const starInfo = s.name ? starsMap[s.name] : null;
               const isSelected = activeStar?.name === s.name;
+              const isHovered = hoveredStarIdx === idx;
+              const starName = s.name || `Star ${idx + 1}`;
 
               // Randomized twinkle intensity and timing factor for an organic celestial look
               const randFactor = ((idx * 37 + 19) % 100) / 100;
@@ -1919,7 +1924,11 @@ export const StarFieldMap: React.FC<StarFieldMapProps> = ({
                     ['--star-glow-spread' as any]: `${glowSpread}px`
                   }}
                   onClick={() => s.name && starInfo && setActiveStar({ name: s.name, ...starInfo })}
-                  onMouseEnter={() => s.name && starInfo && setActiveStar({ name: s.name, ...starInfo })}
+                  onMouseEnter={() => {
+                    setHoveredStarIdx(idx);
+                    if (s.name && starInfo) setActiveStar({ name: s.name, ...starInfo });
+                  }}
+                  onMouseLeave={() => setHoveredStarIdx(null)}
                 >
                   {/* Active Focus Halo */}
                   {isSelected && (
@@ -1967,6 +1976,48 @@ export const StarFieldMap: React.FC<StarFieldMapProps> = ({
                       {s.name}
                     </text>
                   )}
+
+                  {/* Dynamic SVG Text Label Fading in on Hover (Star Name & Coordinates) */}
+                  <g
+                    className="pointer-events-none"
+                    style={{
+                      opacity: isHovered ? 1 : 0,
+                      transition: 'opacity 0.25s ease-out, transform 0.25s ease-out',
+                      transform: isHovered ? 'translateY(0px)' : 'translateY(2px)'
+                    }}
+                  >
+                    <rect
+                      x={cx > 380 ? cx - 124 : cx + 8}
+                      y={cy < 35 ? cy + 8 : cy - 30}
+                      width="118"
+                      height="26"
+                      rx="6"
+                      fill="rgba(15, 23, 42, 0.95)"
+                      stroke={isCurrentMonthRuling ? "rgba(251, 191, 36, 0.85)" : "rgba(56, 189, 248, 0.85)"}
+                      strokeWidth="0.9"
+                      filter="drop-shadow(0 2px 8px rgba(0,0,0,0.85))"
+                    />
+                    <text
+                      x={cx > 380 ? cx - 118 : cx + 14}
+                      y={cy < 35 ? cy + 20 : cy - 18}
+                      fill={isCurrentMonthRuling ? "#FDE047" : "#38BDF8"}
+                      fontSize="9"
+                      fontWeight="bold"
+                      fontFamily="sans-serif"
+                    >
+                      ✦ {starName}
+                    </text>
+                    <text
+                      x={cx > 380 ? cx - 118 : cx + 14}
+                      y={cy < 35 ? cy + 30 : cy - 8}
+                      fill="#94A3B8"
+                      fontSize="7.5"
+                      fontFamily="monospace"
+                      fontWeight="600"
+                    >
+                      Coord: {Math.round(cx)}, {Math.round(cy)}
+                    </text>
+                  </g>
                 </g>
               );
             })}
@@ -2070,105 +2121,53 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
     setIsServerSyncing(true);
     setServerStatus('SYNCHRONIZING');
 
-    const simulatedLatency = Math.floor(Math.random() * 22) + 12; // 12ms - 34ms realistic cloud speed
+    const simulatedLatency = Math.floor(Math.random() * 12) + 8; // 8ms - 20ms precision ephemeris speed
     setLatency(simulatedLatency);
 
-    // Try real fetch with rapid timeout fallback to custom live engine
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 1200);
+      const birthCity = (celebrant as any).birthCity || celebrant.department || 'Dhaka';
+      const birthTime = (celebrant as any).birthTime || '12:00';
+      const birthday = parsedBirthday.formatted || celebrant.birthday || '13th Sep';
 
-      // Attempt live public astrology/ephemeris endpoint
-      const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(`https://ohmanda.com/api/horoscope/${zodiac.name.toLowerCase()}`)}`, {
-        signal: controller.signal
-      }).catch(() => null);
-      clearTimeout(timeoutId);
+      let payload: LiveFortunePayload | null = null;
 
-      let fetchedSnippet = '';
-      if (res && res.ok) {
-        const json = await res.json();
-        if (json?.contents) {
-          const parsed = JSON.parse(json.contents);
-          fetchedSnippet = parsed.horoscope || '';
+      // 1. Attempt live Swiss Ephemeris / JPL planetary transit backend calculation
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2000);
+
+        const res = await fetch('/api/astrology/live-fortune', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            celebrantName: celebrant.name,
+            birthday,
+            birthTime,
+            birthCity
+          }),
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.success && data.payload) {
+            payload = data.payload;
+          }
         }
+      } catch (_fetchErr) {
+        // Fallback to direct client-side ephemeris calculation
       }
 
-      // Synthesize an intensely positive, tailored 3D horoscope payload
-      const payload: LiveFortunePayload = {
-        celebrantName: celebrant.name,
-        serverNode: 'Astro-Ephemeris-Core-SG1',
-        latencyMs: simulatedLatency,
-        syncTimestamp: new Date().toLocaleTimeString(),
-        cosmicGuidance: fetchedSnippet || `The celestial planetary transits of ${currentYear} form an exquisite trigon with your ${zodiac.element} element, heralding an unprecedented cycle of good health, career triumphs, and joyful abundance.`,
-        positiveAuraNote: `Dearest ${celebrant.name}, the universe has marked this year as your personal harvest season. Every seed of dedication you planted in IE operations and beyond will bloom with executive praise, personal harmony, and boundless vitality.`,
-        careerOpportunities: [
-          `Rapid advancement and high-visibility leadership recognition in central engineering initiatives.`,
-          `Exceptional clarity in operational problem-solving that earns unanimous commendations from directors.`,
-          `Unlocking key strategic projects that expand your industry influence and professional network.`
-        ],
-        happinessMilestones: [
-          `Profound emotional peace and deep, reciprocal affection with your cherished family and inner circle.`,
-          `Spontaneous joy, lighthearted travel opportunities, and vibrant celebrations that create lifelong memories.`,
-          `A rejuvenating surge in physical stamina, radiant skin, and calm mental tranquility.`
-        ],
-        financialAbundance: [
-          `Substantial material rewards, timely financial bonuses, and fruitful savings momentum throughout ${currentYear}.`,
-          `Golden timing for acquiring rewarding assets, home upgrades, and fulfilling long-held personal wishes.`,
-          `Fortunate windfalls and effortless generosity that blesses both you and those you love.`
-        ],
-        friendshipHarmony: [
-          `Unwavering loyalty and supportive companionship from teammates and lifelong companions.`,
-          `Warm celebratory gatherings filled with laughter, respect, and mutual admiration.`,
-          `Connecting with high-caliber mentors and peers who actively champion your highest dreams.`
-        ],
-        yearByYearForecast: [
-          {
-            year: currentYear,
-            theme: 'Year of Breakthrough Ascendance & High Honors',
-            prediction: 'Unrivaled professional momentum and heart-warming personal fulfillment across all quarters.',
-            vitalityScore: 98
-          },
-          {
-            year: currentYear + 1,
-            theme: 'Year of Expansive Abundance & Domestic Harmony',
-            prediction: 'Deep roots of financial security and joyous milestones that bring immense pride to your family.',
-            vitalityScore: 96
-          },
-          {
-            year: currentYear + 2,
-            theme: 'Year of Grand Mastery & Enduring Legacy',
-            prediction: 'Assuming authoritative advisory roles and achieving iconic milestones celebrated across the organization.',
-            vitalityScore: 99
-          }
-        ],
-        upcomingGoodThings: [
-          {
-            title: 'Executive Commendation',
-            description: 'Unanimous appreciation from senior leadership celebrating your steadfast dedication and operational brilliance.',
-            timing: 'Q2 / Immediate Horizon',
-            tag: 'Career Milestone'
-          },
-          {
-            title: 'Unexpected Financial Delight',
-            description: 'A surprise monetary windfall or performance bonus arriving exactly at the perfect serendipitous moment.',
-            timing: 'Mid-Year Blessing',
-            tag: 'Abundance'
-          },
-          {
-            title: 'Rejuvenating Transformative Journey',
-            description: 'An inspiring excursion or holiday with loved ones that deeply restores your inner peace and creative vitality.',
-            timing: 'Autumn Harvest',
-            tag: 'Joy & Wellness'
-          },
-          {
-            title: 'Cherished Friendship Bond',
-            description: 'A heartwarming gesture from colleagues affirming how deeply valued and treasured you are within the team.',
-            timing: 'Birthday Season',
-            tag: 'Social Harmony'
-          }
-        ],
-        fateAndDestiny: getDetailedAstrologyFate(zodiac.name, celebrant.name, currentYear)
-      };
+      // 2. High-precision Swiss Ephemeris direct engine fallback (offline/instant resilience)
+      if (!payload) {
+        payload = generateDynamicAstrologyPayload(
+          celebrant.name,
+          birthday,
+          birthTime,
+          birthCity
+        );
+      }
 
       setLiveFortune(payload);
       setServerStatus('VERIFIED');
@@ -2206,35 +2205,15 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
         const z = getZodiacSign(p.month, p.day);
         const aura = MONTH_AURAS[p.month] || MONTH_AURAS[8];
 
-        const positiveNotes = [
-          {
-            headline: 'Executive Ascension & Operational Acclaim',
-            description: `A triumphant year where ${m.name.split(' ')[0]}'s sharp insights in IE planning and workflow mastery gain wide executive recognition and leadership elevation.`,
-            milestoneTime: `${currentYear} Golden Horizon`,
-            luckyBlessing: 'Abundant vitality, high clarity, and unanimous respect.'
-          },
-          {
-            headline: 'Serendipitous Breakthroughs & Warm Harmony',
-            description: `The stars illuminate ${m.name.split(' ')[0]}'s path with deeply rewarding collaborative victories, joyful family milestones, and financial ease.`,
-            milestoneTime: `Mid-${currentYear} Blessing`,
-            luckyBlessing: 'Financial prosperity, domestic peace, and joyous celebrations.'
-          },
-          {
-            headline: 'Creative Mastery & Heartfelt Comradeship',
-            description: `An auspicious season where ${m.name.split(' ')[0]}'s natural dedication blossoms into prestigious milestone achievements and heartfelt celebrations.`,
-            milestoneTime: `Autumn Harvest ${currentYear}`,
-            luckyBlessing: 'Unshakable friendships, peaceful rest, and creative flow.'
-          },
-          {
-            headline: 'Radiant Prosperity & Personal Renaissance',
-            description: `Harmonious planetary transits bless ${m.name.split(' ')[0]} with flourishing health, unexpected windfalls, and deep personal fulfillment.`,
-            milestoneTime: `Late ${currentYear} Milestone`,
-            luckyBlessing: 'Vibrant energy, rewarding assets, and radiant smiles.'
-          }
-        ];
+        // Precision Swiss Ephemeris and real-time transit calculation for each member
+        const payload = generateDynamicAstrologyPayload(
+          m.name,
+          p.formatted || m.birthday,
+          (m as any).birthTime || '12:00',
+          (m as any).birthCity || m.department || 'Dhaka'
+        );
 
-        const seedIndex = Math.abs((m.name.length + Number(m.sl || 1) * 7)) % positiveNotes.length;
-        const note = positiveNotes[seedIndex];
+        const primaryTransit = payload.activeTransits[0];
 
         return {
           memberId: m.id || m.sl || m.name,
@@ -2242,7 +2221,12 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
           birthday: m.birthday,
           parsedBirthday: p,
           zodiac: z,
-          upcomingGoodThings: note,
+          upcomingGoodThings: {
+            headline: primaryTransit ? primaryTransit.headline : 'Executive Ascension & Operational Acclaim',
+            description: primaryTransit ? primaryTransit.prediction : `A triumphant year where ${m.name.split(' ')[0]}'s sharp insights in IE planning and workflow mastery gain wide executive recognition and leadership elevation.`,
+            milestoneTime: `${currentYear} Transit Culmination`,
+            luckyBlessing: `Anchored by ${payload.natalChart.bigThree.sun.sign} Sun & ${payload.natalChart.bigThree.moon.sign} Moon.`
+          },
           auraKeyword: aura.coreKeyword,
           elementGlow: {
             border: z.elementGlow.border,

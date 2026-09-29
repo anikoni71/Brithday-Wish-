@@ -315,7 +315,7 @@ export const Header: React.FC<HeaderProps> = ({
             ) : null}
           </button>
 
-          {/* Month of Fortune Astrological Tab */}
+          {/* Astrology & Fortune Astrological Tab */}
           <button
             onClick={() => setActiveTab('fortune')}
             className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-t-lg border-b-2 transition whitespace-nowrap cursor-pointer ${
@@ -325,7 +325,7 @@ export const Header: React.FC<HeaderProps> = ({
             }`}
           >
             <Sparkles className={`w-4 h-4 ${activeTab === 'fortune' ? 'text-purple-600 animate-pulse' : 'text-slate-500'}`} />
-            Month of Fortune
+            Astrology & Fortune
             <span className="ml-1 px-1.5 py-0.2 rounded-full text-[9px] bg-purple-100 text-purple-900 border border-purple-300 font-bold flex items-center gap-1">
               <Moon className="w-2.5 h-2.5 text-purple-600" />
               Aura
