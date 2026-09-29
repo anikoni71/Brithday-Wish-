@@ -2620,16 +2620,21 @@ app.get("/api/calendar/export.ics", async (_req, res) => {
 // POST /api/astrology/live-fortune - High-Precision Swiss Ephemeris & Planetary Transit Live Fortune
 app.post("/api/astrology/live-fortune", (req, res) => {
   try {
+    // Cache busting headers to prevent cross-user data leakage
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+
     const {
       celebrantName = 'Celebrant',
-      birthday = '13th Sep',
+      birthday = '',
       birthTime = '12:00',
       birthCity = 'Dhaka'
     } = req.body;
 
     const payload = generateDynamicAstrologyPayload(
       celebrantName,
-      birthday,
+      birthday || '13th Sep',
       birthTime,
       birthCity
     );
@@ -2650,16 +2655,21 @@ app.post("/api/astrology/live-fortune", (req, res) => {
 // POST /api/astrology/natal-chart - Exact natal chart calculations (The Big Three, 12 Houses, Aspects)
 app.post("/api/astrology/natal-chart", (req, res) => {
   try {
+    // Cache busting headers
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+
     const {
       celebrantName = 'Celebrant',
-      birthday = '13th Sep',
+      birthday = '',
       birthTime = '12:00',
       birthCity = 'Dhaka'
     } = req.body;
 
     const payload = generateDynamicAstrologyPayload(
       celebrantName,
-      birthday,
+      birthday || '13th Sep',
       birthTime,
       birthCity
     );

@@ -146,6 +146,7 @@ export interface LiveFortunePayload {
     }[];
     cosmicDecree: string;
   };
+  natalChart?: any;
 }
 
 // ============================================================================
@@ -1344,45 +1345,13 @@ export function getDetailedAstrologyFate(zodiacName: string, celebrantName: stri
     }
   };
 
-  const selected = fateMatrix[zodiacName] || fateMatrix.Virgo;
-
-  return {
-    chapterTitle: `The Sacred Chronicle of ${celebrantName} • House of ${zodiacName}`,
-    fateNote: selected.forecast,
-    theYearAhead: {
-      alignment: selected.alignment,
-      forecast: selected.forecast,
-      luckFactor: selected.luckFactor
-    },
-    careerAndSuccess: {
-      title: 'Career & Success Fate',
-      predictions: selected.careerPredictions,
-      growthLeap: selected.growthLeap
-    },
-    personalJoyAndPeace: {
-      title: 'Personal Joy & Milestones',
-      milestones: selected.joyMilestones,
-      friendshipBlessing: selected.friendshipBlessing
-    },
-    destinyMilestones: [
-      {
-        quarter: `Q1–Q2 ${currentYear}`,
-        milestone: 'The Great Ascendance',
-        blessing: selected.careerPredictions[0] || 'Leadership elevation and high-trust mandate.'
-      },
-      {
-        quarter: `Q3 ${currentYear}`,
-        milestone: 'The Golden Harvest',
-        blessing: 'Material bonuses, asset appreciation, and deep emotional contentment.'
-      },
-      {
-        quarter: `Q4 ${currentYear} & ${currentYear + 1}`,
-        milestone: 'The Sovereign Horizon',
-        blessing: selected.joyMilestones[0] || 'Expansive journeys, vibrant health, and lasting respect.'
-      }
-    ],
-    cosmicDecree: selected.cosmicDecree
-  };
+  const dynamicPayload = generateDynamicAstrologyPayload(
+    celebrantName,
+    '13th Sep',
+    '12:00',
+    'Dhaka'
+  );
+  return dynamicPayload.fateAndDestiny;
 }
 
 // ============================================================================
@@ -2115,11 +2084,15 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
   const [serverStatus, setServerStatus] = useState<'CONNECTED' | 'SYNCHRONIZING' | 'VERIFIED'>('CONNECTED');
   const [latency, setLatency] = useState<number>(14);
   const [liveFortune, setLiveFortune] = useState<LiveFortunePayload | null>(null);
+  const activeCelebrantKeyRef = useRef<string>('');
 
   // Real-Time Global Astrology Server Fetching Engine
-  const fetchLiveFortune = async (celebrant: TeamMember) => {
-    setIsServerSyncing(true);
-    setServerStatus('SYNCHRONIZING');
+  const fetchLiveFortune = async (celebrant: TeamMember, quietSync = false, expectedKey?: string) => {
+    const currentKey = expectedKey || celebrant.id || celebrant.sl || celebrant.name;
+    if (!quietSync) {
+      setIsServerSyncing(true);
+      setServerStatus('SYNCHRONIZING');
+    }
 
     const simulatedLatency = Math.floor(Math.random() * 12) + 8; // 8ms - 20ms precision ephemeris speed
     setLatency(simulatedLatency);
@@ -2127,7 +2100,8 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
     try {
       const birthCity = (celebrant as any).birthCity || celebrant.department || 'Dhaka';
       const birthTime = (celebrant as any).birthTime || '12:00';
-      const birthday = parsedBirthday.formatted || celebrant.birthday || '13th Sep';
+      const parsedB = parseBirthdayDate(celebrant.birthday);
+      const birthday = parsedB?.formatted || celebrant.birthday || '13th Sep';
 
       let payload: LiveFortunePayload | null = null;
 
@@ -2136,14 +2110,22 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 2000);
 
-        const res = await fetch('/api/astrology/live-fortune', {
+        // Cache busting token unique to user session and timestamp
+        const cacheBuster = `${encodeURIComponent(celebrant.id || celebrant.sl || celebrant.name)}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+
+        const res = await fetch(`/api/astrology/live-fortune?_cb=${cacheBuster}`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache'
+          },
           body: JSON.stringify({
             celebrantName: celebrant.name,
             birthday,
             birthTime,
-            birthCity
+            birthCity,
+            userId: celebrant.id || celebrant.sl || celebrant.name
           }),
           signal: controller.signal
         });
@@ -2169,21 +2151,78 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
         );
       }
 
-      setLiveFortune(payload);
-      setServerStatus('VERIFIED');
+      // Commit only if user hasn't switched to a different celebrant while fetching
+      if (activeCelebrantKeyRef.current === currentKey) {
+        setLiveFortune(payload);
+        setServerStatus('VERIFIED');
+      }
     } catch (_err) {
-      setServerStatus('CONNECTED');
+      if (activeCelebrantKeyRef.current === currentKey) {
+        setServerStatus('CONNECTED');
+      }
     } finally {
-      setIsServerSyncing(false);
+      if (!quietSync && activeCelebrantKeyRef.current === currentKey) {
+        setIsServerSyncing(false);
+      }
     }
   };
 
-  // Trigger live auto-sync whenever the active celebrant changes
+  // Trigger live auto-sync whenever the active celebrant changes (clears previous user's fortune immediately)
   useEffect(() => {
     if (activeCelebrant) {
-      fetchLiveFortune(activeCelebrant);
+      const cKey = activeCelebrant.id || activeCelebrant.sl || activeCelebrant.name;
+      activeCelebrantKeyRef.current = cKey;
+
+      // 1. Immediately clear previous user's astrological data & forecast arrays from memory
+      setLiveFortune(null);
+
+      // 2. Immediately rebuild fresh unique astrological baseline for current celebrant
+      const birthCity = (activeCelebrant as any).birthCity || activeCelebrant.department || 'Dhaka';
+      const birthTime = (activeCelebrant as any).birthTime || '12:00';
+      const parsedB = parseBirthdayDate(activeCelebrant.birthday);
+      const birthday = parsedB?.formatted || activeCelebrant.birthday || '13th Sep';
+
+      const freshPayload = generateDynamicAstrologyPayload(
+        activeCelebrant.name,
+        birthday,
+        birthTime,
+        birthCity
+      );
+      setLiveFortune(freshPayload);
+
+      // 3. Trigger server ephemeris verification
+      fetchLiveFortune(activeCelebrant, false, cKey);
+    } else {
+      setLiveFortune(null);
     }
-  }, [activeCelebrant, currentYear, zodiac.name]);
+  }, [activeCelebrant?.id, activeCelebrant?.sl, activeCelebrant?.name, activeCelebrant?.birthday]);
+
+  // Real-Time Global Server Connection & Continuous Updates (45s living feed polling)
+  useEffect(() => {
+    if (!activeCelebrant) return;
+    const interval = setInterval(() => {
+      fetchLiveFortune(activeCelebrant, true);
+    }, 45000);
+    return () => clearInterval(interval);
+  }, [activeCelebrant?.id, activeCelebrant?.sl, activeCelebrant?.name, activeCelebrant?.birthday]);
+
+  // Memoized Dasha lifecycle details from ephemeris data
+  const dashaInfo = useMemo(() => {
+    if (liveFortune?.natalChart?.vedicMetrics?.currentDasha) {
+      return liveFortune.natalChart.vedicMetrics.currentDasha;
+    }
+    if (activeCelebrant) {
+      const p = parsedBirthday.formatted || activeCelebrant.birthday;
+      const bPayload = generateDynamicAstrologyPayload(
+        activeCelebrant.name,
+        p,
+        (activeCelebrant as any).birthTime || '12:00',
+        (activeCelebrant as any).birthCity || activeCelebrant.department || 'Dhaka'
+      );
+      return bPayload.natalChart.vedicMetrics.currentDasha;
+    }
+    return null;
+  }, [liveFortune, activeCelebrant, parsedBirthday]);
 
   // Constellation coordinate angle for the 3D Zodiac compass
   const constellationAngle = useMemo(() => {
@@ -2225,7 +2264,7 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
             headline: primaryTransit ? primaryTransit.headline : 'Executive Ascension & Operational Acclaim',
             description: primaryTransit ? primaryTransit.prediction : `A triumphant year where ${m.name.split(' ')[0]}'s sharp insights in IE planning and workflow mastery gain wide executive recognition and leadership elevation.`,
             milestoneTime: `${currentYear} Transit Culmination`,
-            luckyBlessing: `Anchored by ${payload.natalChart.bigThree.sun.sign} Sun & ${payload.natalChart.bigThree.moon.sign} Moon.`
+            luckyBlessing: `Janma Rashi: ${payload.natalChart.vedicMetrics.janmaRashi.rashi} (${payload.natalChart.vedicMetrics.janmaRashi.nakshatra} Pada ${payload.natalChart.vedicMetrics.janmaRashi.pada}) • Dasha: ${payload.natalChart.vedicMetrics.currentDasha.mahadasha.lord}-${payload.natalChart.vedicMetrics.currentDasha.antardasha.lord}.`
           },
           auraKeyword: aura.coreKeyword,
           elementGlow: {
@@ -2624,9 +2663,18 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
                   "{liveFortune?.positiveAuraNote}"
                 </p>
 
-                <p className="text-xs text-indigo-200 leading-relaxed font-normal">
-                  {liveFortune?.cosmicGuidance}
-                </p>
+                <div className="flex items-start gap-2 pt-0.5">
+                  {/* CSS-Animated Planetary Icon indicating active planetary transit influence */}
+                  <span 
+                    className="inline-flex items-center justify-center w-5 h-5 rounded-md bg-indigo-950/80 border border-indigo-400/40 text-amber-300 text-xs font-bold icon-breathing shrink-0 mt-0.5 shadow-xs" 
+                    title="Active Ephemeris Transit Influence"
+                  >
+                    ♃
+                  </span>
+                  <p className="text-xs text-indigo-200 leading-relaxed font-normal">
+                    {liveFortune?.cosmicGuidance}
+                  </p>
+                </div>
               </div>
 
               {/* Destiny & Fate Outline (Book of Fate Section) */}
@@ -2720,17 +2768,79 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
                 {/* The Year Ahead (Astrological Alignment & Forecast) */}
                 <div className="p-4 rounded-xl bg-slate-950/70 border border-purple-500/30 space-y-2">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
-                    <span className="text-xs sm:text-sm font-black bg-gradient-to-r from-amber-200 via-purple-100 to-cyan-200 bg-clip-text text-transparent">
-                      The Year Ahead • {liveFortune?.fateAndDestiny?.theYearAhead.alignment}
+                    <span className="text-xs sm:text-sm font-black bg-gradient-to-r from-amber-200 via-purple-100 to-cyan-200 bg-clip-text text-transparent flex items-center gap-2">
+                      {/* CSS-Animated Planetary Icon with gentle breathing pulse indicating active planetary transit */}
+                      <span 
+                        className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-300 text-xs font-bold icon-breathing shrink-0 shadow-xs" 
+                        title="Active Planetary Transit Influence"
+                      >
+                        ♃
+                      </span>
+                      <span>The Year Ahead • {liveFortune?.fateAndDestiny?.theYearAhead.alignment}</span>
                     </span>
                     <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 self-start sm:self-auto">
                       {liveFortune?.fateAndDestiny?.theYearAhead.luckFactor}
                     </span>
                   </div>
-                  <p className="text-xs sm:text-sm text-slate-100 font-serif italic leading-relaxed">
-                    "{liveFortune?.fateAndDestiny?.theYearAhead.forecast}"
-                  </p>
+                  <div className="flex items-start gap-2.5">
+                    <span 
+                      className="inline-flex items-center justify-center w-6 h-6 rounded-lg bg-purple-900/60 border border-purple-400/40 text-amber-300 text-xs font-bold icon-breathing shrink-0 mt-0.5 shadow-xs" 
+                      title="Active Planetary Influence"
+                    >
+                      🪐
+                    </span>
+                    <p className="text-xs sm:text-sm text-slate-100 font-serif italic leading-relaxed">
+                      "{liveFortune?.fateAndDestiny?.theYearAhead.forecast}"
+                    </p>
+                  </div>
                 </div>
+
+                {/* Active Planetary Transits (Gochara Predictions) */}
+                {liveFortune?.activeTransits && liveFortune.activeTransits.length > 0 && (
+                  <div className="p-3.5 rounded-xl bg-slate-950/70 border border-purple-500/30 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-black uppercase tracking-wider text-purple-300 flex items-center gap-1.5">
+                        <Orbit className="w-3.5 h-3.5 text-amber-300 animate-spin-slow" />
+                        <span>Active Planetary Transits & Predictions</span>
+                      </span>
+                      <span className="text-[10px] font-mono text-cyan-300">Live Ephemeris Influence</span>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {liveFortune.activeTransits.map((transit, idx) => {
+                        const planetMap: Record<string, { glyph: string; color: string; border: string; bg: string }> = {
+                          Jupiter: { glyph: '♃', color: 'text-amber-300', border: 'border-amber-400/40', bg: 'bg-amber-950/60' },
+                          Saturn: { glyph: '♄', color: 'text-indigo-300', border: 'border-indigo-400/40', bg: 'bg-indigo-950/60' },
+                          Rahu: { glyph: '☊', color: 'text-purple-300', border: 'border-purple-400/40', bg: 'bg-purple-950/60' },
+                          Ketu: { glyph: '☋', color: 'text-teal-300', border: 'border-teal-400/40', bg: 'bg-teal-950/60' },
+                          Mars: { glyph: '♂', color: 'text-rose-300', border: 'border-rose-400/40', bg: 'bg-rose-950/60' },
+                          Sun: { glyph: '☉', color: 'text-amber-400', border: 'border-amber-400/40', bg: 'bg-amber-950/60' },
+                          Venus: { glyph: '♀', color: 'text-pink-300', border: 'border-pink-400/40', bg: 'bg-pink-950/60' },
+                          Mercury: { glyph: '☿', color: 'text-emerald-300', border: 'border-emerald-400/40', bg: 'bg-emerald-950/60' },
+                          Moon: { glyph: '☽', color: 'text-cyan-300', border: 'border-cyan-400/40', bg: 'bg-cyan-950/60' },
+                        };
+                        const pConf = planetMap[transit.transitPlanet] || { glyph: '🪐', color: 'text-amber-300', border: 'border-purple-400/40', bg: 'bg-purple-950/60' };
+                        return (
+                          <div key={idx} className="p-2.5 rounded-lg bg-slate-900/90 border border-slate-800/80 flex items-start gap-2.5 hover:border-purple-500/40 transition">
+                            {/* CSS-Animated Planetary Icon with gentle breathing pulse animation */}
+                            <span 
+                              className={`w-7 h-7 rounded-lg ${pConf.bg} border ${pConf.border} flex items-center justify-center shrink-0 icon-breathing shadow-xs`}
+                              title={`Active ${transit.transitPlanet} Planetary Influence`}
+                            >
+                              <span className={`text-sm font-bold ${pConf.color}`}>{pConf.glyph}</span>
+                            </span>
+                            <div className="space-y-0.5 min-w-0">
+                              <div className="flex items-center justify-between gap-1">
+                                <span className="text-[11px] font-bold text-white truncate">{transit.headline}</span>
+                                <span className="text-[9px] font-mono text-emerald-400 shrink-0">Impact: {transit.impactScore}%</span>
+                              </div>
+                              <p className="text-[11px] text-slate-300 leading-snug">{transit.prediction}</p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
                 {/* Specific Fate Breakdown: Career & Success vs Personal Joy & Milestones */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -2980,21 +3090,195 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {liveFortune?.yearByYearForecast.map((item) => (
-              <div
-                key={item.year}
-                className="p-4 rounded-2xl bg-slate-950/90 border border-slate-700/80 hover:border-indigo-400/60 transition shadow-inner space-y-2"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-lg font-black text-amber-300">{item.year}</span>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">
-                    Vitality {item.vitalityScore}%
+            {liveFortune?.yearByYearForecast.map((item, idx) => {
+              const yearPlanets = ['♃', '♄', '☉'];
+              const yearPlanet = yearPlanets[idx % yearPlanets.length];
+              return (
+                <div
+                  key={item.year}
+                  className="p-4 rounded-2xl bg-slate-950/90 border border-slate-700/80 hover:border-indigo-400/60 transition shadow-inner space-y-2"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      {/* CSS-Animated Planetary Icon with gentle breathing pulse */}
+                      <span 
+                        className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-300 text-xs font-bold icon-breathing shrink-0 shadow-xs" 
+                        title="Active Planetary Transit Influence"
+                      >
+                        {yearPlanet}
+                      </span>
+                      <span className="text-lg font-black text-amber-300">{item.year}</span>
+                    </div>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">
+                      Vitality {item.vitalityScore}%
+                    </span>
+                  </div>
+                  <div className="text-xs font-extrabold text-white flex items-center gap-1.5">
+                    <span className="text-purple-300 text-xs icon-breathing">🪐</span>
+                    <span>{item.theme}</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-amber-300 text-xs icon-breathing shrink-0 mt-0.5">✦</span>
+                    <p className="text-xs text-slate-300 leading-relaxed">{item.prediction}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Personalized Dasha Lifecycle Card */}
+        <div 
+          id="personalized-dasha-lifecycle-card" 
+          className="p-6 rounded-3xl bg-slate-900/80 border border-purple-500/30 shadow-xl text-white space-y-4 relative overflow-hidden shimmer-glare"
+        >
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-purple-500/20">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-purple-950/80 border border-purple-400/40 flex items-center justify-center text-purple-300 shadow-inner">
+                <Layers className="w-5 h-5 text-amber-300 animate-pulse" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base font-black text-white">Personalized Dasha Lifecycle</h3>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-500/20 text-purple-300 border border-purple-400/30">
+                    Vimshottari 120-Year Horizon
                   </span>
                 </div>
-                <div className="text-xs font-extrabold text-white">{item.theme}</div>
-                <p className="text-xs text-slate-300 leading-relaxed">{item.prediction}</p>
+                <p className="text-xs text-slate-300">
+                  Planetary life chapters calculated from {activeCelebrant?.name || 'Celebrant'}'s Moon Nakshatra & Lahiri Sidereal Ephemeris.
+                </p>
               </div>
-            ))}
+            </div>
+
+            {/* Current Active Period Indicator Pill */}
+            {dashaInfo && (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-950/90 border border-purple-400/40 text-xs font-mono">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                <span className="text-slate-300">Active Era:</span>
+                <strong className="text-amber-300 font-bold">
+                  {dashaInfo.mahadasha.lord}–{dashaInfo.antardasha.lord}
+                </strong>
+                <span className="text-slate-400 text-[10px]">
+                  ({dashaInfo.antardasha.startDate} – {dashaInfo.antardasha.endDate})
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Current Active Era Highlight Banner */}
+          {dashaInfo && (
+            <div className="p-4 rounded-2xl bg-gradient-to-r from-purple-950/70 via-slate-950/90 to-indigo-950/70 border border-purple-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-inner">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-xs font-bold text-amber-300">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Governing Energy: {dashaInfo.mahadasha.lord} Mahadasha ({dashaInfo.mahadasha.startYear}–{dashaInfo.mahadasha.endYear})</span>
+                  <span>•</span>
+                  <span>Sub-Phase: {dashaInfo.antardasha.lord} Antardasha</span>
+                </div>
+                <p className="text-xs text-slate-200 leading-relaxed">
+                  {dashaInfo.antardasha.predictionFocus}
+                </p>
+              </div>
+              <div className="text-[10px] font-mono text-cyan-300 px-3 py-1 rounded-lg bg-cyan-950/60 border border-cyan-800/40 shrink-0 self-start sm:self-auto">
+                Pratyantar: {dashaInfo.pratyantardasha.lord}
+              </div>
+            </div>
+          )}
+
+          {/* Vertical Scrollable Timeline List with Visual Markers */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-xs text-slate-400 px-1">
+              <span>Chronological Life Phases & Major Dasha Shifts</span>
+              <span className="text-[10px] font-mono text-purple-300">Scroll to explore timeline ↓</span>
+            </div>
+
+            <div 
+              className="max-h-[300px] overflow-y-auto space-y-2.5 pr-2 overscroll-contain select-none"
+              style={{
+                scrollbarWidth: 'thin',
+                scrollbarColor: 'rgba(168, 85, 247, 0.4) rgba(2, 6, 23, 0.6)'
+              }}
+            >
+              {dashaInfo?.lifecycle && dashaInfo.lifecycle.length > 0 ? (
+                dashaInfo.lifecycle.map((phase) => (
+                  <div key={phase.id} className="space-y-1.5">
+                    {/* Visual Marker for Major Dasha Changes */}
+                    {phase.isMajorChange && (
+                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/20 via-purple-500/20 to-indigo-500/20 border border-amber-400/40 text-[11px] font-black text-amber-200 shadow-md">
+                        <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-spin" />
+                        <span>✦ MAJOR DASHA TRANSITION: Entering {phase.mahadashaLord} Mahadasha Era ({phase.startYear} – {phase.endYear})</span>
+                        <span className="text-[9px] font-mono text-purple-300 ml-auto hidden sm:inline">Vedic Life Shift</span>
+                      </div>
+                    )}
+
+                    {/* Phase Card */}
+                    <div
+                      className={`p-3.5 rounded-2xl border transition-all ${
+                        phase.isActive
+                          ? 'bg-gradient-to-r from-purple-950/90 via-slate-900 to-indigo-950/90 border-purple-400 ring-2 ring-purple-400/40 shadow-xl'
+                          : phase.isMajorChange
+                          ? 'bg-slate-950/90 border-amber-500/40 hover:border-amber-400/70'
+                          : 'bg-slate-950/70 border-slate-800/90 hover:border-slate-700'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        {/* Left: Planetary Visual Marker Node */}
+                        <div className="flex items-center gap-2.5">
+                          <div
+                            className={`w-7 h-7 rounded-xl flex items-center justify-center font-bold text-xs shadow-inner ${
+                              phase.isActive
+                                ? 'bg-purple-600 text-white ring-2 ring-purple-300 animate-pulse'
+                                : phase.isMajorChange
+                                ? 'bg-amber-600/30 text-amber-300 border border-amber-500/50'
+                                : 'bg-slate-800 text-slate-300 border border-slate-700'
+                            }`}
+                          >
+                            <span>{phase.glyph || '✦'}</span>
+                          </div>
+
+                          <div>
+                            <div className="text-xs font-black text-white flex items-center gap-2">
+                              <span>{phase.mahadashaLord} – {phase.antardashaLord}</span>
+                              <span className="text-[10px] font-normal text-slate-400">({phase.sanskritName})</span>
+                            </div>
+                            <div className="text-[10px] text-purple-300 font-medium">
+                              {phase.theme}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Right: Dates & Status Badge */}
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-mono text-slate-300 bg-slate-900 px-2 py-0.5 rounded-md border border-slate-700">
+                            {phase.startDateStr} – {phase.endDateStr}
+                          </span>
+                          {phase.isActive && (
+                            <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 animate-pulse">
+                              ● Current Era
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Feel-Good Positive Life Event Narrative */}
+                      <p className="text-xs text-slate-300 mt-2 leading-relaxed">
+                        {phase.lifeEventFocus}
+                      </p>
+
+                      <div className="mt-1.5 flex items-center justify-between text-[10px] text-slate-400 pt-1.5 border-t border-slate-800/80">
+                        <span className="text-indigo-300">{phase.yogakarakaBlessing}</span>
+                        <span className="font-mono text-emerald-400">Auspicious Index: {phase.favorableScore}%</span>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="p-4 rounded-xl bg-slate-950/60 text-center text-xs text-slate-400">
+                  Calculating personalized Vedic timeline...
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -3192,14 +3476,23 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
                   {/* Upcoming Good Things & Personalized Note */}
                   <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 space-y-1.5 text-xs">
                     <div className="flex items-center justify-between">
-                      <span className="font-extrabold text-purple-600 dark:text-purple-400 text-[11px] flex items-center gap-1">
-                        <Sparkles className="w-3 h-3 text-amber-400" />
+                      <span className="font-extrabold text-purple-600 dark:text-purple-400 text-[11px] flex items-center gap-1.5">
+                        {/* CSS-Animated Planetary Icon with gentle breathing pulse indicating active transit influence */}
+                        <span 
+                          className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-purple-500/20 border border-purple-400/40 text-purple-500 dark:text-purple-300 text-[10px] font-bold icon-breathing shrink-0" 
+                          title="Active Planetary Transit Influence"
+                        >
+                          🪐
+                        </span>
                         <span>{destiny.upcomingGoodThings.headline}</span>
                       </span>
                     </div>
-                    <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed font-normal">
-                      {destiny.upcomingGoodThings.description}
-                    </p>
+                    <div className="flex items-start gap-1.5">
+                      <span className="text-[10px] text-amber-500 dark:text-amber-400 icon-breathing shrink-0 mt-0.5">✨</span>
+                      <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed font-normal">
+                        {destiny.upcomingGoodThings.description}
+                      </p>
+                    </div>
                     <div className="pt-1 text-[10px] text-amber-600 dark:text-amber-300 font-medium flex items-center gap-1">
                       <span>🌟 Blessing:</span>
                       <span className="italic truncate">{destiny.upcomingGoodThings.luckyBlessing}</span>
