@@ -1852,27 +1852,27 @@ export function generateDynamicAstrologyPayload(
   const cosmicGuidance = `Vedic Gochara & Ephemeris Readout: Transiting Guru (Jupiter) in ${primaryGochara.currentSign} energizes your ${primaryGochara.houseFromMoon}th House from Janma Rashi with a fortified Sarvashtakavarga score of ${ashtakavarga.careerHouse10SAV} SAV points. Shani Gochara stabilizes executive workflows while active Vimshottari Dasha (${currentDasha.summary}) awakens pivotal leadership milestones. ${primaryGochara.prediction}`;
 
   const careerOpportunities = [
-    `Elevation into strategic engineering steering mandates in ${tenthHouse.rashi} (${ashtakavarga.careerHouse10SAV} SAV points), with ${tenthLord} lordship guiding your D10 Dashamsha in ${sunP.d10DashamshaRashi} toward executive authority.`,
-    `Transiting ${primaryGochara.planet} in your ${primaryGochara.houseFromMoon}th House from Janma Rashi during this active ${currentDasha.mahadasha.lord}–${currentDasha.antardasha.lord} Dasha (${currentDasha.antardasha.startDate} to ${currentDasha.antardasha.endDate}) dissolves operational bottlenecks and secures direct director commendations for ${firstName}.`,
-    `Catalyzed by ${primaryYoga.name} and natal ${moonP.nakshatra.name} Pada ${moonP.nakshatra.pada} (${moonP.nakshatra.lord} lordship), ${firstName} is entrusted with high-stakes central initiatives, establishing departmental benchmarks across ${currentYear}.`
+    `Because ${firstName}'s specific ruling Nakshatra is ${moonP.nakshatra.name} (Pada ${moonP.nakshatra.pada}) and your active Dasha lord is ${currentDasha.mahadasha.lord} (${currentDasha.antardasha.lord} Bhukti), your career fate in ${tenthHouse.rashi} (${ashtakavarga.careerHouse10SAV} SAV points) triggers on ${currentDasha.antardasha.endDate} with executive elevation guided by ${tenthLord}.`,
+    `Because transiting ${primaryGochara.planet} in your ${primaryGochara.houseFromMoon}th House from Janma Rashi harmonizes with ${currentDasha.antardasha.lord} Bhukti (${currentDasha.antardasha.startDate} to ${currentDasha.antardasha.endDate}), your operational intuition resolves critical bottlenecks, earning direct director commendations.`,
+    `Empowered by ${primaryYoga.name} and natal ${moonP.nakshatra.name} (${moonP.nakshatra.lord} lordship), ${firstName} is entrusted with high-stakes central initiatives, establishing departmental benchmarks across ${currentYear}.`
   ];
 
   const happinessMilestones = [
-    `Deep emotional sanctuary and tranquil mental clarity anchored by your Janma Rashi in ${moonP.rashi} (${moonP.nakshatra.name} Pada ${moonP.nakshatra.pada}) and D9 Navamsha in ${moonP.d9NavamshaRashi}, bringing profound harmony to your living space.`,
-    `Fortified by ${fourthHouse.savPoints} SAV points in your 4th Sukha Bhava (${fourthHouse.rashi}, ruled by ${fourthLord}), the active ${currentDasha.antardasha.lord} Bhukti sparks delightful home upgrades, festive family milestones, and peaceful restorative rejuvenation.`,
-    `Radiant physical vitality and refreshed stamina powered by your ${lagnaDetails.rashi} Lagna (${firstHouse.savPoints} SAV points, ruled by ${lagnaLord}), creating sound sleep, mental buoyancy, and unforgettable celebratory galas.`
+    `Because your Janma Rashi is ${moonP.rashi} (${moonP.glyphSign}) anchored in ${moonP.nakshatra.name} (Pada ${moonP.nakshatra.pada}, ruled by ${moonP.nakshatra.lord}) and D9 Navamsha in ${moonP.d9NavamshaRashi}, profound emotional sanctuary and serene mental peace trigger on ${currentDasha.antardasha.startDate}.`,
+    `Because your 4th Sukha Bhava in ${fourthHouse.rashi} (${fourthHouse.savPoints} SAV points, ruled by ${fourthLord}) is activated by ${currentDasha.antardasha.lord} Bhukti, fulfilling home upgrades, joyful celebrations, and restorative serenity manifest by ${currentDasha.antardasha.endDate}.`,
+    `Backed by ${lagnaDetails.rashi} Lagna (${firstHouse.savPoints} SAV points, ruled by ${lagnaLord}), radiant physical vitality, deep restorative sleep, and contagious mental clarity flourish throughout ${currentYear}.`
   ];
 
   const financialAbundance = [
-    `Substantial material rewards, timely financial bonuses, and fruitful savings momentum backed by ${ashtakavarga.wealthHouse2SAV} SAV points in the 2nd Dhana Bhava (${secondHouse.rashi}, ruled by ${secondLord}).`,
-    `Transiting ${primaryGochara.planet} energizing your ${primaryGochara.houseFromMoon}th House during ${currentDasha.mahadasha.lord} Mahadasha opens golden windows for asset appreciation, rewarding investments, and fulfilling long-held dreams.`,
-    `Fortunate monetary windfalls and generous abundance supported by ${ashtakavarga.gainsHouse11SAV} SAV points in ${eleventhHouse.rashi} (ruled by ${eleventhLord}), ensuring lasting financial peace for ${firstName} and loved ones.`
+    `Because your 2nd Dhana Bhava is in ${secondHouse.rashi} (${ashtakavarga.wealthHouse2SAV} SAV points, ruled by ${secondLord}) under ${currentDasha.mahadasha.lord} Mahadasha, substantial material rewards and timely financial bonuses trigger on ${currentDasha.antardasha.endDate}.`,
+    `Because transiting ${primaryGochara.planet} energizes your ${primaryGochara.houseFromMoon}th House from Janma Rashi during ${currentDasha.antardasha.lord} Bhukti (${currentDasha.antardasha.startDate} to ${currentDasha.antardasha.endDate}), golden windows for asset appreciation and long-held acquisitions open.`,
+    `Fortunate monetary windfalls and effortless generosity supported by ${ashtakavarga.gainsHouse11SAV} SAV points in your 11th Labha Bhava (${eleventhHouse.rashi}, ruled by ${eleventhLord}) guarantee lasting prosperity for ${firstName} and loved ones.`
   ];
 
   const friendshipHarmony = [
-    `Unwavering loyalty and supportive companionship from colleagues in the 11th Labha Bhava (${eleventhHouse.rashi}, SAV: ${ashtakavarga.gainsHouse11SAV} pts), honoring ${firstName}'s dedication to collective success.`,
-    `Harmonious cross-functional alliances and deep mutual trust anchored by your 7th Bhava in ${seventhHouse.rashi} (${seventhHouse.savPoints} SAV points, ruled by ${seventhLord}), turning collaborators into lifelong friends.`,
-    `Warm celebratory gatherings and heartfelt tributes during your ${formattedBdayStr} season, connecting ${firstName} with high-caliber mentors who actively champion your highest dreams.`
+    `Because your 11th Labha Bhava is anchored in ${eleventhHouse.rashi} (${ashtakavarga.gainsHouse11SAV} SAV points, ruled by ${eleventhLord}), unwavering loyalty and supportive camaraderie from teammates surround ${firstName}.`,
+    `Because your 7th Bhava of Strategic Alliances in ${seventhHouse.rashi} (${seventhHouse.savPoints} SAV points, ruled by ${seventhLord}) harmonizes with ${currentDasha.antardasha.lord} Bhukti, mutual trust turns key collaborators into lifelong friends.`,
+    `Warm celebratory gatherings and heartfelt tributes during your ${formattedBdayStr} season connect ${firstName} with high-caliber mentors who actively champion your highest aspirations.`
   ];
 
   // Future Dasha phases for multi-year roadmap
@@ -1912,26 +1912,26 @@ export function generateDynamicAstrologyPayload(
   const upcomingGoodThings = [
     {
       title: `Executive Steering Elevation in ${tenthHouse.rashi}`,
-      description: `Direct director appreciation celebrating ${firstName}'s architectural precision under active ${currentDasha.mahadasha.lord}–${currentDasha.antardasha.lord} Dasha (10th Karma Bhava: ${ashtakavarga.careerHouse10SAV} SAV points).`,
-      timing: `Active through ${currentDasha.antardasha.endDate}`,
+      description: `Because your specific ruling Nakshatra is ${moonP.nakshatra.name} (Pada ${moonP.nakshatra.pada}) and your Dasha lord is ${currentDasha.mahadasha.lord} (${currentDasha.antardasha.lord} Bhukti), your career fate in ${tenthHouse.rashi} (${ashtakavarga.careerHouse10SAV} SAV pts) triggers on ${currentDasha.antardasha.endDate}.`,
+      timing: `Exact Trigger: ${currentDasha.antardasha.endDate}`,
       tag: 'Career Milestone'
     },
     {
       title: `Fortunate Material Growth in ${secondHouse.rashi}`,
-      description: `A timely monetary windfall or performance bonus arriving as ${primaryGochara.planet} transits your ${primaryGochara.houseFromMoon}th House (2nd Dhana Bhava: ${ashtakavarga.wealthHouse2SAV} SAV points).`,
-      timing: `Mid-${currentYear} Blessing`,
+      description: `Because transiting ${primaryGochara.planet} illuminates your ${primaryGochara.houseFromMoon}th House during ${currentDasha.antardasha.lord} Bhukti (${currentDasha.antardasha.startDate} – ${currentDasha.antardasha.endDate}), a timely performance bonus and asset growth in ${secondHouse.rashi} (${ashtakavarga.wealthHouse2SAV} SAV pts) trigger on ${currentDasha.antardasha.endDate}.`,
+      timing: `Exact Milestone: ${currentDasha.antardasha.endDate}`,
       tag: 'Abundance'
     },
     {
-      title: `Transformative Rejuvenation & Travel in ${moonP.rashi}`,
-      description: `An inspiring holiday and physical vitality renewal that restores inner peace, blessed by Chandra in ${moonP.nakshatra.name} Pada ${moonP.nakshatra.pada}.`,
-      timing: `Q3 ${currentYear} Horizon`,
+      title: `Transformative Rejuvenation in ${moonP.rashi}`,
+      description: `Because your Janma Rashi is ${moonP.rashi} (${moonP.glyphSign}) anchored in ${moonP.nakshatra.name} (Pada ${moonP.nakshatra.pada}), an inspiring holiday and physical vitality renewal trigger on ${currentDasha.pratyantardasha.startDate}, dissolving all fatigue.`,
+      timing: `Exact Cycle: ${currentDasha.pratyantardasha.startDate} to ${currentDasha.pratyantardasha.endDate}`,
       tag: 'Joy & Wellness'
     },
     {
-      title: 'Cherished Comradeship & Team Tribute',
-      description: `A heartwarming tribute from colleagues affirming how deeply valued and treasured ${firstName} is within the Central IE Team (11th Bhava SAV: ${ashtakavarga.gainsHouse11SAV} points).`,
-      timing: `${formattedBdayStr} Season`,
+      title: `Cherished Comradeship & ${eleventhLord} Tribute in ${eleventhHouse.rashi}`,
+      description: `Because your 11th Labha Bhava in ${eleventhHouse.rashi} (${ashtakavarga.gainsHouse11SAV} SAV pts) is activated by ${eleventhLord}, a heartfelt tribute from Central IE colleagues triggers during your ${formattedBdayStr} season.`,
+      timing: `Exact Season: ${formattedBdayStr}`,
       tag: 'Social Harmony'
     }
   ];
@@ -1957,23 +1957,23 @@ export function generateDynamicAstrologyPayload(
     destinyMilestones: [
       {
         quarter: `Q1 ${currentYear}`,
-        milestone: `Strategic Inception & ${currentDasha.antardasha.lord} Bhukti`,
-        blessing: `Clear solutions and rapid execution win senior leadership praise, energized by ${lagnaDetails.rashi} Lagna clarity and ${currentDasha.pratyantardasha.lord} sub-trigger.`
+        milestone: `${tenthLord} Steering & ${currentDasha.antardasha.lord} Bhukti Inception`,
+        blessing: `Because ${firstName}'s ruling Nakshatra is ${moonP.nakshatra.name} (Pada ${moonP.nakshatra.pada}), career elevation in ${tenthHouse.rashi} (${ashtakavarga.careerHouse10SAV} SAV) triggers during ${currentDasha.antardasha.startDate} to ${currentDasha.pratyantardasha.endDate}.`
       },
       {
         quarter: `Q2 ${currentYear}`,
-        milestone: 'Karma Zenith & Material Reward',
-        blessing: `Financial ease, successful project launches, and team pride powered by ${ashtakavarga.careerHouse10SAV} SAV points in ${tenthHouse.rashi}.`
+        milestone: `${currentDasha.mahadasha.lord} Zenith in ${tenthHouse.rashi} (${tenthLord})`,
+        blessing: `Because active Dasha lord is ${currentDasha.mahadasha.lord} and 10th Bhava holds ${ashtakavarga.careerHouse10SAV} SAV points, landmark recognition and performance bonuses trigger by ${currentDasha.antardasha.endDate}.`
       },
       {
         quarter: `Q3 ${currentYear}`,
-        milestone: 'Autumn Harvest & Restorative Travel',
-        blessing: `Peaceful rejuvenation and warm bonding with loved ones, guided by Chandra in ${moonP.nakshatra.name} Pada ${moonP.nakshatra.pada}.`
+        milestone: `${moonP.nakshatra.name} Lunar Renewal & ${fourthLord} Sukha`,
+        blessing: `Chandra in ${moonP.nakshatra.name} Pada ${moonP.nakshatra.pada} (${moonP.rashi}) with 4th Bhava in ${fourthHouse.rashi} (${fourthHouse.savPoints} SAV) triggers profound personal harmony and restorative travel.`
       },
       {
         quarter: `Q4 ${currentYear}`,
-        milestone: 'Grand Triumphs & Birthday Harvest',
-        blessing: `Crowning annual milestones, lasting asset security, and triumphant celebrations (11th House SAV: ${ashtakavarga.gainsHouse11SAV} points).`
+        milestone: `${eleventhHouse.rashi} Labha (${eleventhLord}) & Birthday Harvest`,
+        blessing: `During ${formattedBdayStr} season, 11th Bhava gains (${ashtakavarga.gainsHouse11SAV} SAV) materialize culminating annual triumphs and lasting team acclaim for ${firstName}.`
       }
     ],
     cosmicDecree: northNodeDecree

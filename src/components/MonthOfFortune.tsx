@@ -35,6 +35,7 @@ import { TeamMember } from '../types';
 import { parseBirthdayDate, getDaysUntilBirthday, MONTH_NAMES } from '../utils/dateUtils';
 import { formatProfileImageUrl, getMemberPhotoUrl } from '../utils/imageUtils';
 import { generateDynamicAstrologyPayload } from '../services/ephemerisService';
+import { AstrologyDataService } from '../services/AstrologyDataService';
 
 export interface MemberAstrologyDestiny {
   memberId: string;
@@ -1112,244 +1113,21 @@ export const STAR_CATALOG: Record<string, Record<string, { mag: string; spectral
 };
 
 // ============================================================================
-// Helper: Detailed Astrological Fate & Destiny Generator
+// Helper: Detailed Astrological Fate & Destiny Generator (Dynamic Ephemeris Engine)
 // ============================================================================
-export function getDetailedAstrologyFate(zodiacName: string, celebrantName: string, currentYear: number) {
-  const firstName = celebrantName.split(' ')[0];
-
-  const fateMatrix: Record<string, {
-    alignment: string;
-    forecast: string;
-    luckFactor: string;
-    careerPredictions: string[];
-    growthLeap: string;
-    joyMilestones: string[];
-    friendshipBlessing: string;
-    cosmicDecree: string;
-  }> = {
-    Aries: {
-      alignment: 'Jupiter in Gemini trine Natal Sun & Mars Direct in Ascendant',
-      forecast: `A fiery epoch of rapid forward momentum. Jupiter's expansive trine dissolves past bottlenecks, infusing ${firstName}'s projects with swift execution and executive leadership praise throughout ${currentYear}.`,
-      luckFactor: '99% High Octane Momentum',
-      careerPredictions: [
-        'Elevation into high-stakes engineering steering mandates with direct director appreciation',
-        'Exceptional operational intuition that slashes project bottlenecks in record time',
-        'Unlocking key cross-functional initiatives that cement your organizational authority'
-      ],
-      growthLeap: 'Executive Mandate & Breakthrough Leadership',
-      joyMilestones: [
-        'Vibrant physical stamina, glowing athletic vitality, and sound sleep',
-        'Warm celebratory gatherings filled with shared laughter and team pride',
-        'Deep emotional peace from conquering long-held personal aspirations'
-      ],
-      friendshipBlessing: 'Surrounded by noble comrades who champion your boldest ideas.',
-      cosmicDecree: `Decreed: Walk boldly with unshakeable conviction, ${firstName}. The universe bends to amplify your noble fire.`
-    },
-    Taurus: {
-      alignment: 'Uranus Direct in Taurus trine Saturn in Capricorn & Venus Auspicious',
-      forecast: `A monumental cycle of permanent financial security and operational mastery. The structural trine between Venus, Saturn, and Uranus crystallizes ${firstName}'s patient dedication into lasting executive prestige.`,
-      luckFactor: '98% Unshakeable Prosperity',
-      careerPredictions: [
-        'Institutional recognition for establishing durable, fault-tolerant workflow frameworks',
-        'Commendations from top executive leadership for unwavering dependability under pressure',
-        'Securing substantial material bonuses and high-impact long-term project stewardship'
-      ],
-      growthLeap: 'Sovereign Stability & Material Prosperity',
-      joyMilestones: [
-        'Serene home sanctuary upgrades and deep contentment in personal surroundings',
-        'Restful rejuvenation that washes away fatigue and restores tranquil inner clarity',
-        'Cherished quality memories with lifelong companions and family members'
-      ],
-      friendshipBlessing: 'Beloved by your peers as the rock and anchor of the entire department.',
-      cosmicDecree: `Decreed: Your patient seeds have grown into towering cedar trees, ${firstName}. Reap your golden harvest in peace.`
-    },
-    Gemini: {
-      alignment: 'Jupiter Direct in Gemini trine Mercury with Pluto in Aquarius',
-      forecast: `A once-in-a-decade Jupiter transit through your home sign! The stars bestow magnetic charisma, sparkling intellect, and lightning-fast communication that turns every room ${firstName} enters into an inspired team.`,
-      luckFactor: '99% Cosmic Renaissance',
-      careerPredictions: [
-        'Key presentations and project showcases that receive standing ovations from leadership',
-        'Architecting innovative multi-stream workflows that accelerate departmental productivity',
-        'Rapid elevation into cross-functional ambassador and lead advisory responsibilities'
-      ],
-      growthLeap: 'Intellectual Renaissance & Broad Influence',
-      joyMilestones: [
-        'Inspiring excursions and travel opportunities to vibrant cultural destinations',
-        'Heart-to-heart conversational breakthroughs that forge lifelong bonds of trust',
-        'Playful mental agility, radiant youthful spirit, and effortless daily laughter'
-      ],
-      friendshipBlessing: 'Your magnetic warmth bridges diverse circles and brings joy to all.',
-      cosmicDecree: `Decreed: Voice your vision fearlessly, ${firstName}. Your words carry the spark that innovates the future.`
-    },
-    Cancer: {
-      alignment: 'Lunar Nodes trine Jupiter with Neptune harmonious in the 9th House',
-      forecast: `A sacred era of emotional empowerment, profound sanctuary, and abundant blessings. ${firstName}'s protective intuition operates at peak acuity, guiding vital team choices with wisdom and grace.`,
-      luckFactor: '97% Intuitive Grace & Protection',
-      careerPredictions: [
-        'Entrusted with vital confidential initiatives and high-trust stewardship mandates',
-        'Widespread commendations for empathetic leadership that elevates collective morale',
-        'Milestone achievements in systems planning that receive executive accolades'
-      ],
-      growthLeap: 'Honored Authority & Emotional Fortress',
-      joyMilestones: [
-        'Deep domestic bliss, festive family milestones, and heartfelt mutual gratitude',
-        'Rejuvenating waterside retreats that dissolve tension and restore glowing health',
-        'Feeling profoundly valued, protected, and cherished by your inner circle'
-      ],
-      friendshipBlessing: 'Surrounded by loyal allies who shield and honor your generous heart.',
-      cosmicDecree: `Decreed: Your deep empathy is a superpower, ${firstName}. You build sanctuaries that inspire greatness.`
-    },
-    Leo: {
-      alignment: 'Sun in Leo trine Mars with Jupiter illuminating the 11th House',
-      forecast: `Center-stage radiance and crowning triumphs. The celestial wheel aligns in royal harmony, elevating ${firstName}'s generous nature with prestigious visibility, public praise, and joyous rewards.`,
-      luckFactor: '99% Solar Triumph',
-      careerPredictions: [
-        'Prestigious executive honors and leading transformative flagship project launches',
-        'Commanding presence that motivates cross-functional teams toward historic excellence',
-        'Unanimous praise from directors for exceptional operational charisma and drive'
-      ],
-      growthLeap: 'Center-Stage Honors & Regal Ascendance',
-      joyMilestones: [
-        'Radiant physical aura, vibrant health, and unforgettable celebratory galas',
-        'Romantic and domestic harmony that fills your days with genuine joy',
-        'Heartfelt camaraderie with teammates who look to you for inspiration'
-      ],
-      friendshipBlessing: 'A golden beacon whose generosity lights up every room.',
-      cosmicDecree: `Decreed: Step proudly into your light, ${firstName}. The crown of achievement fits you with natural dignity.`
-    },
-    Virgo: {
-      alignment: 'Mercury in Virgo trine Saturn & Uranus in Earth Grand Trine',
-      forecast: `Crystalline clarity, analytical perfection, and effortless operational mastery. The rare Earth Grand Trine empowers ${firstName} to transform chaotic complexity into sublime, elegant efficiency.`,
-      luckFactor: '98% Precision Mastery',
-      careerPredictions: [
-        'Architectural breakthroughs in IE optimization that set benchmarks across the company',
-        'Prestigious operational excellence awards and high-level advisory invitations',
-        'Direct commendations for precision problem-solving that secures major budgets'
-      ],
-      growthLeap: 'Engineering Perfection & Process Mastery',
-      joyMilestones: [
-        'Optimal wellness, balanced bodily rhythms, and deeply restorative mental calm',
-        'Deep appreciation from peers and managers who rely upon your steadfast intellect',
-        'Tranquil moments in nature that recharge your creative and analytical batteries'
-      ],
-      friendshipBlessing: 'Treasured by all as the brilliant mind and loyal confidant.',
-      cosmicDecree: `Decreed: Your sharp eye sees what others miss, ${firstName}. Order and beauty follow your steps.`
-    },
-    Libra: {
-      alignment: 'Venus in Libra conjunct Mercury with Grand Air Trine to Jupiter',
-      forecast: `Sublime equilibrium, diplomatic triumph, and golden abundance. Opportunities arrive with effortless elegance, establishing win-win partnerships that elevate ${firstName}'s influence.`,
-      luckFactor: '98% Harmonic Equilibrium',
-      careerPredictions: [
-        'Flawless resolution of intricate multi-departmental negotiations with elegance',
-        'Establishing high-value strategic alliances that unlock mutual organizational wins',
-        'Executive praise for maintaining balance and calm poise during rapid scaling'
-      ],
-      growthLeap: 'Diplomatic Triumph & Golden Alliances',
-      joyMilestones: [
-        'Aesthetic fulfillment, artistic joys, and breathtaking cultural experiences',
-        'Deep reciprocal devotion and affection with beloved partners and close companions',
-        'Harmonious work-life rhythm that leaves ample space for laughter and relaxation'
-      ],
-      friendshipBlessing: 'The natural diplomat whose gracious presence heals friction and brings unity.',
-      cosmicDecree: `Decreed: You are the weaver of harmony, ${firstName}. Where you walk, peace and prosperity bloom.`
-    },
-    Scorpio: {
-      alignment: 'Pluto in Aquarius sextile Neptune with Mars commanding the 8th House',
-      forecast: `Alchemical transformation and supreme strategic strength. Obstacles in ${firstName}'s path dissolve and turn into pure opportunity, solidifying an unshakeable reputation for decisive brilliance.`,
-      luckFactor: '99% Strategic Invincibility',
-      careerPredictions: [
-        'Decisive leadership through high-complexity turnarounds with flawless execution',
-        'Unlocking deeply rooted workflow hurdles with surgical precision and insight',
-        'Executive promotion into strategic authority that commands universal respect'
-      ],
-      growthLeap: 'Strategic Supremacy & Unyielding Strength',
-      joyMilestones: [
-        'Profound personal renewal, shed baggage, and revitalized physical stamina',
-        'Fierce loyalty and unbreakable trust within your chosen inner circle of confidants',
-        'Soul-deep peace and confidence that comes from mastering difficult tests'
-      ],
-      friendshipBlessing: 'An indispensable pillar whose loyalty and insight are treasured for life.',
-      cosmicDecree: `Decreed: You turn raw pressure into flawless diamonds, ${firstName}. Nothing can halt your rise.`
-    },
-    Sagittarius: {
-      alignment: 'Jupiter in 7th House trine Sun & Chiron in benevolent aspect',
-      forecast: `Expansive horizons, transformative journeys, and golden optimism. The archer’s arrow flies straight and true, landing in fertile territories of skill mastery, high status, and exhilarating adventures.`,
-      luckFactor: '99% Expansive Fortune',
-      careerPredictions: [
-        'Leading division-wide expansion roadmaps with visionary energy and confidence',
-        'Visionary contributions and high-energy mentorship that motivates the whole team',
-        'Rapid milestone achievements that open doors to global or regional initiatives'
-      ],
-      growthLeap: 'Visionary Horizons & Boundless Momentum',
-      joyMilestones: [
-        'Thrilling travel excursions and discovery that greatly broaden your horizons',
-        'Contagious good humor and laughter that lifts team spirits during intense cycles',
-        'Deep philosophical contentment and spontaneous celebrations with loved ones'
-      ],
-      friendshipBlessing: 'A generous explorer who brings sunshine, hope, and laughter wherever you go.',
-      cosmicDecree: `Decreed: Aim for the highest star, ${firstName}. The universe guides your arrow to a golden bullseye.`
-    },
-    Capricorn: {
-      alignment: 'Saturn Direct sextile Jupiter with Mars anchoring the 10th House',
-      forecast: `The summit of achievement. Decades of disciplined effort crystallize into permanent authority, prestigious promotions, and generational stability for ${firstName}. Your reputation for excellence is unchallenged.`,
-      luckFactor: '99% Monumental Achievement',
-      careerPredictions: [
-        'Official elevation into high-level executive responsibilities and key programs',
-        'Masterminding enduring capital and workflow frameworks that outlast the season',
-        'Unanimous acclaim as the cornerstone of organizational integrity and reliability'
-      ],
-      growthLeap: 'Summit of Authority & Permanent Legacy',
-      joyMilestones: [
-        'Immense personal pride in enduring milestones and high-value accomplishments',
-        'Deep financial security and timely asset acquisitions bringing peace of mind',
-        'Dignified, serene rest and joyful celebration with family and trusted peers'
-      ],
-      friendshipBlessing: 'The monumental rock upon whom the entire team leans with absolute confidence.',
-      cosmicDecree: `Decreed: You have conquered the steepest mountain, ${firstName}. Enjoy the breathtaking view from the peak.`
-    },
-    Aquarius: {
-      alignment: 'Pluto Direct in Aquarius sextile Neptune & Jupiter',
-      forecast: `A generational renaissance of original innovation and futuristic breakthroughs. ${firstName}'s forward-looking insights shape the future of engineering, winning widespread admiration and support.`,
-      luckFactor: '98% Visionary Renaissance',
-      careerPredictions: [
-        'Architecting next-generation automation and intelligent workflow architectures',
-        'Prestigious recognition for progressive methodologies and visionary foresight',
-        'Building united coalitions of high-caliber engineers and creative thinkers'
-      ],
-      growthLeap: 'Futurist Pioneer & Systemic Innovation',
-      joyMilestones: [
-        'Liberating personal freedom, creative surges, and delightful original projects',
-        'Inspiring comradeship with visionary peers who stimulate your unique intellect',
-        'Radiant inner peace stemming from living in true alignment with your principles'
-      ],
-      friendshipBlessing: 'The visionary friend who inspires everyone around you to dream bigger.',
-      cosmicDecree: `Decreed: The future belongs to your visionary mind, ${firstName}. Pioneer your dreams without hesitation.`
-    },
-    Pisces: {
-      alignment: 'Neptune conjunct North Node with Jupiter in benevolent trigon',
-      forecast: `A sublime era of intuitive grace, creative fulfillment, and spiritual serenity. The universe wraps ${firstName} in protective benevolence, turning cherished dreams into tangible realities.`,
-      luckFactor: '99% Benevolent Serenity',
-      careerPredictions: [
-        'Intuitive problem-solving that unlocks crucial project breakthroughs seamlessly',
-        'Acclaimed leadership over creative, human-centered and empathetic initiatives',
-        'Honored mentorship that leaves an indelible positive impression across the roster'
-      ],
-      growthLeap: 'Intuitive Triumph & Serene Fulfillment',
-      joyMilestones: [
-        'Soul-deep tranquility, restorative waterside retreats, and profound love',
-        'Heartfelt artistic or poetic expression that brings joy to you and others',
-        'Radiant physical well-being and peaceful harmony with all your loved ones'
-      ],
-      friendshipBlessing: 'The gentle healer whose empathy and wisdom elevate everyone in the room.',
-      cosmicDecree: `Decreed: Your gentle heart carries the wisdom of the oceans, ${firstName}. Flow forward with total peace.`
-    }
-  };
-
+export function getDetailedAstrologyFate(
+  _zodiacName: string,
+  celebrantName: string,
+  _currentYear: number,
+  birthday: string = '13th Sep',
+  birthTime: string = '12:00',
+  birthCity: string = 'Dhaka'
+) {
   const dynamicPayload = generateDynamicAstrologyPayload(
     celebrantName,
-    '13th Sep',
-    '12:00',
-    'Dhaka'
+    birthday,
+    birthTime,
+    birthCity
   );
   return dynamicPayload.fateAndDestiny;
 }
@@ -2098,58 +1876,11 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
     setLatency(simulatedLatency);
 
     try {
-      const birthCity = (celebrant as any).birthCity || celebrant.department || 'Dhaka';
-      const birthTime = (celebrant as any).birthTime || '12:00';
-      const parsedB = parseBirthdayDate(celebrant.birthday);
-      const birthday = parsedB?.formatted || celebrant.birthday || '13th Sep';
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2500);
 
-      let payload: LiveFortunePayload | null = null;
-
-      // 1. Attempt live Swiss Ephemeris / JPL planetary transit backend calculation
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 2000);
-
-        // Cache busting token unique to user session and timestamp
-        const cacheBuster = `${encodeURIComponent(celebrant.id || celebrant.sl || celebrant.name)}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-
-        const res = await fetch(`/api/astrology/live-fortune?_cb=${cacheBuster}`, {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache'
-          },
-          body: JSON.stringify({
-            celebrantName: celebrant.name,
-            birthday,
-            birthTime,
-            birthCity,
-            userId: celebrant.id || celebrant.sl || celebrant.name
-          }),
-          signal: controller.signal
-        });
-        clearTimeout(timeoutId);
-
-        if (res.ok) {
-          const data = await res.json();
-          if (data && data.success && data.payload) {
-            payload = data.payload;
-          }
-        }
-      } catch (_fetchErr) {
-        // Fallback to direct client-side ephemeris calculation
-      }
-
-      // 2. High-precision Swiss Ephemeris direct engine fallback (offline/instant resilience)
-      if (!payload) {
-        payload = generateDynamicAstrologyPayload(
-          celebrant.name,
-          birthday,
-          birthTime,
-          birthCity
-        );
-      }
+      const payload = await AstrologyDataService.fetchLiveFortune(celebrant, controller.signal);
+      clearTimeout(timeoutId);
 
       // Commit only if user hasn't switched to a different celebrant while fetching
       if (activeCelebrantKeyRef.current === currentKey) {
@@ -2177,17 +1908,7 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
       setLiveFortune(null);
 
       // 2. Immediately rebuild fresh unique astrological baseline for current celebrant
-      const birthCity = (activeCelebrant as any).birthCity || activeCelebrant.department || 'Dhaka';
-      const birthTime = (activeCelebrant as any).birthTime || '12:00';
-      const parsedB = parseBirthdayDate(activeCelebrant.birthday);
-      const birthday = parsedB?.formatted || activeCelebrant.birthday || '13th Sep';
-
-      const freshPayload = generateDynamicAstrologyPayload(
-        activeCelebrant.name,
-        birthday,
-        birthTime,
-        birthCity
-      );
+      const freshPayload = AstrologyDataService.calculateDynamicPayload(activeCelebrant);
       setLiveFortune(freshPayload);
 
       // 3. Trigger server ephemeris verification
@@ -2212,17 +1933,11 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
       return liveFortune.natalChart.vedicMetrics.currentDasha;
     }
     if (activeCelebrant) {
-      const p = parsedBirthday.formatted || activeCelebrant.birthday;
-      const bPayload = generateDynamicAstrologyPayload(
-        activeCelebrant.name,
-        p,
-        (activeCelebrant as any).birthTime || '12:00',
-        (activeCelebrant as any).birthCity || activeCelebrant.department || 'Dhaka'
-      );
+      const bPayload = AstrologyDataService.calculateDynamicPayload(activeCelebrant);
       return bPayload.natalChart.vedicMetrics.currentDasha;
     }
     return null;
-  }, [liveFortune, activeCelebrant, parsedBirthday]);
+  }, [liveFortune, activeCelebrant]);
 
   // Constellation coordinate angle for the 3D Zodiac compass
   const constellationAngle = useMemo(() => {
@@ -2239,42 +1954,12 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
   const syncTeamDestinies = (membersList: TeamMember[]) => {
     setIsSyncingDestinies(true);
     setTimeout(() => {
-      const generated: MemberAstrologyDestiny[] = membersList.map((m) => {
-        const p = parseBirthdayDate(m.birthday) || { month: 8, monthNumber: 9, day: 13, formatted: m.birthday || 'TBD' };
-        const z = getZodiacSign(p.month, p.day);
-        const aura = MONTH_AURAS[p.month] || MONTH_AURAS[8];
-
-        // Precision Swiss Ephemeris and real-time transit calculation for each member
-        const payload = generateDynamicAstrologyPayload(
-          m.name,
-          p.formatted || m.birthday,
-          (m as any).birthTime || '12:00',
-          (m as any).birthCity || m.department || 'Dhaka'
-        );
-
-        const primaryTransit = payload.activeTransits[0];
-
-        return {
-          memberId: m.id || m.sl || m.name,
-          name: m.name,
-          birthday: m.birthday,
-          parsedBirthday: p,
-          zodiac: z,
-          upcomingGoodThings: {
-            headline: primaryTransit ? primaryTransit.headline : 'Executive Ascension & Operational Acclaim',
-            description: primaryTransit ? primaryTransit.prediction : `A triumphant year where ${m.name.split(' ')[0]}'s sharp insights in IE planning and workflow mastery gain wide executive recognition and leadership elevation.`,
-            milestoneTime: `${currentYear} Transit Culmination`,
-            luckyBlessing: `Janma Rashi: ${payload.natalChart.vedicMetrics.janmaRashi.rashi} (${payload.natalChart.vedicMetrics.janmaRashi.nakshatra} Pada ${payload.natalChart.vedicMetrics.janmaRashi.pada}) • Dasha: ${payload.natalChart.vedicMetrics.currentDasha.mahadasha.lord}-${payload.natalChart.vedicMetrics.currentDasha.antardasha.lord}.`
-          },
-          auraKeyword: aura.coreKeyword,
-          elementGlow: {
-            border: z.elementGlow.border,
-            badge: z.elementGlow.text,
-            shadow: z.elementGlow.shadow,
-            text: z.elementGlow.text
-          }
-        };
-      });
+      const generated = AstrologyDataService.generateTeamDestinies(
+        membersList,
+        getZodiacSign,
+        MONTH_AURAS,
+        currentYear
+      );
 
       setTeamDestinies(generated);
       setLastDestiniesSync(new Date().toLocaleTimeString());
