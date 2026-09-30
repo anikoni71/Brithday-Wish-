@@ -56,24 +56,35 @@ export interface MemberAstrologyDestiny {
   name: string;
   birthday: string;
   parsedBirthday: { month: number; day: number; formatted: string };
-  zodiac: {
-    name: string;
-    element: string;
-    glyph: string;
-    elementGlow: {
-      border: string;
-      badge: string;
-      shadow: string;
-      text: string;
-      color: string;
-    };
-  };
+  zodiac: any;
   upcomingGoodThings: {
     headline: string;
     description: string;
     milestoneTime: string;
     luckyBlessing: string;
   };
+  careerAndSuccess: {
+    title: string;
+    predictions: string[];
+    growthLeap: string;
+  };
+  personalJoyAndPeace: {
+    title: string;
+    milestones: string[];
+    friendshipBlessing: string;
+  };
+  dashaLifecycle: CurrentDashaStatus;
+  uniqueFortune: UniqueFortuneStrings;
+  careerOpportunities: string[];
+  happinessMilestones: string[];
+  financialAbundance: string[];
+  friendshipHarmony: string[];
+  yearByYearForecast: {
+    year: number;
+    theme: string;
+    prediction: string;
+    vitalityScore: number;
+  }[];
   auraKeyword: string;
   elementGlow: {
     border: string;
@@ -300,14 +311,65 @@ export class AstrologyDataService {
     member: TeamMember,
     getZodiacSign: (month: number, day: number) => any,
     monthAuras: Record<number, any>,
-    _currentYear: number
+    _currentYear: number = new Date().getFullYear()
   ): MemberAstrologyDestiny {
     const p = parseBirthdayDate(member.birthday) || { month: 8, monthNumber: 9, day: 13, formatted: member.birthday || '13th Sep' };
     const z = getZodiacSign(p.month, p.day);
     const aura = monthAuras[p.month] || monthAuras[8];
 
-    // Call deterministic generateUniqueFortune for the member
+    const birthYear = (member as any).birthYear || 1994;
+    const birthTimeStr = (member as any).birthTime || '12:00';
+    const [hours, minutes] = birthTimeStr.split(':').map(Number);
+    const birthDate = new Date(birthYear, p.month, p.day, hours || 12, minutes || 0, 0);
+
+    const moonNak = this.calculateMoonNakshatra(birthDate);
+    const dasha = this.calculateVimshottariDasha(moonNak.moonLongitude, birthDate, new Date(), member.name);
     const uniqueFortune = this.generateUniqueFortune(member);
+
+    const firstName = (member.name || 'Celebrant').split(' ')[0];
+    const nakshatra = moonNak.nakshatraName;
+    const pada = moonNak.pada;
+    const mahaLord = dasha.mahadasha.lord;
+    const antarLord = dasha.antardasha.lord;
+    const pratyantarLord = dasha.pratyantardasha.lord;
+    const startDate = dasha.antardasha.startDate;
+    const exactTriggerDate = dasha.antardasha.endDate;
+
+    const careerPredictions = [
+      `Because ${firstName}'s ruling Nakshatra is ${nakshatra} (Pada ${pada}) and active Dasha lord is ${mahaLord}, executive elevation culminates on ${exactTriggerDate}.`,
+      `Governed by ${antarLord} Bhukti steering through ${moonNak.rashi}, breakthrough leadership mandates and architectural influence reach peak momentum.`,
+      `Karma Bhava resonance unlocks strategic visibility, cross-team technical leadership, and commendations from Central IE stakeholders.`
+    ];
+
+    const joyMilestones = [
+      `Protected by Chandra in ${moonNak.rashi} (${nakshatra} Pada ${pada}), emotional sanctuary and radiant joy unfold from ${startDate}.`,
+      `Harmonious alignment in 4th and 11th Bhavas brings restorative celebrations, peaceful breakthroughs, and deep personal fulfillment.`,
+      `Vitality index surges under ${pratyantarLord} Pratyantar, anchoring creative peace and team camaraderie.`
+    ];
+
+    const careerOpportunities = [
+      `Executive Ascension in ${moonNak.rashi} under ${mahaLord}–${antarLord} Dasha culminating on ${exactTriggerDate}`,
+      `Lead architecture mandate triggered by ${nakshatra} Pada ${pada} planetary alignment`,
+      `High-visibility Central IE operational milestone recognized across leadership`
+    ];
+
+    const happinessMilestones = [
+      `Emotional rejuvenation & lunar harmony active from ${startDate}`,
+      `Soulful personal milestone in ${moonNak.rashi} celebrated with close peers and family`,
+      `Inner peace and radiant resilience blessed by Chandra in ${nakshatra}`
+    ];
+
+    const financialAbundance = [
+      `Appraisal bonus & material rewards trigger on ${exactTriggerDate} under ${mahaLord} stewardship`,
+      `Strategic portfolio growth empowered by 11th Bhava activation in ${moonNak.rashi}`,
+      `Long-term financial security accelerated during ${antarLord} Bhukti`
+    ];
+
+    const friendshipHarmony = [
+      `Cherished as the steadfast anchor and inspiring beacon of the Central IE team`,
+      `Heartfelt birthday tributes and lasting comradeship flowing throughout ${p.formatted}`,
+      `Mutual trust and cross-functional synergy magnified under ${antarLord} influence`
+    ];
 
     return {
       memberId: member.id || member.sl || member.name,
@@ -321,6 +383,42 @@ export class AstrologyDataService {
         milestoneTime: uniqueFortune.milestoneTime,
         luckyBlessing: uniqueFortune.luckyBlessing
       },
+      careerAndSuccess: {
+        title: `Dashamsha (D10) & Karma Bhava Destiny in ${moonNak.rashi}`,
+        predictions: careerPredictions,
+        growthLeap: `Executive Mandate in ${moonNak.rashi} • ${mahaLord}–${antarLord} Ascension (${startDate} – ${exactTriggerDate})`
+      },
+      personalJoyAndPeace: {
+        title: `Navamsha (D9) & Lunar Sanctuary in ${moonNak.rashi}`,
+        milestones: joyMilestones,
+        friendshipBlessing: `Protected by Chandra in Janma Rashi ${moonNak.rashi} (${nakshatra} Pada ${pada}), ${firstName} is cherished by teammates as the steadfast anchor, trusted confidant, and inspiring beacon of the entire department.`
+      },
+      dashaLifecycle: dasha,
+      uniqueFortune,
+      careerOpportunities,
+      happinessMilestones,
+      financialAbundance,
+      friendshipHarmony,
+      yearByYearForecast: [
+        {
+          year: _currentYear,
+          theme: `${mahaLord}–${antarLord} Karma Focus`,
+          prediction: `Rapid breakthroughs under ${antarLord} Bhukti in ${moonNak.rashi}. Operational triumphs and architectural mandates materialize in full alignment.`,
+          vitalityScore: 95
+        },
+        {
+          year: _currentYear + 1,
+          theme: `Jupiter Transit & Leadership Expansion`,
+          prediction: `Major team elevation and cross-functional authority recognized across the department with executive backing.`,
+          vitalityScore: 98
+        },
+        {
+          year: _currentYear + 2,
+          theme: `${nakshatra} Stellar Mastery`,
+          prediction: `Long-term vision anchors enduring milestone achievements, high organizational trust, and lasting professional legacy.`,
+          vitalityScore: 93
+        }
+      ],
       auraKeyword: aura?.coreKeyword || 'Radiant',
       elementGlow: {
         border: z.elementGlow.border,

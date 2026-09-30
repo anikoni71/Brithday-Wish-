@@ -49,6 +49,28 @@ export interface MemberAstrologyDestiny {
     milestoneTime: string;
     luckyBlessing: string;
   };
+  careerAndSuccess?: {
+    title: string;
+    predictions: string[];
+    growthLeap: string;
+  };
+  personalJoyAndPeace?: {
+    title: string;
+    milestones: string[];
+    friendshipBlessing: string;
+  };
+  dashaLifecycle?: any;
+  uniqueFortune?: any;
+  careerOpportunities?: string[];
+  happinessMilestones?: string[];
+  financialAbundance?: string[];
+  friendshipHarmony?: string[];
+  yearByYearForecast?: {
+    year: number;
+    theme: string;
+    prediction: string;
+    vitalityScore: number;
+  }[];
   auraKeyword: string;
   elementGlow: {
     border: string;
@@ -1861,7 +1883,12 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
   const [isServerSyncing, setIsServerSyncing] = useState<boolean>(true);
   const [serverStatus, setServerStatus] = useState<'CONNECTED' | 'SYNCHRONIZING' | 'VERIFIED'>('CONNECTED');
   const [latency, setLatency] = useState<number>(14);
-  const [liveFortune, setLiveFortune] = useState<LiveFortunePayload | null>(null);
+  const [liveFortune, setLiveFortune] = useState<LiveFortunePayload | null>(() => {
+    if (initialCelebrant) {
+      return AstrologyDataService.calculateDynamicPayload(initialCelebrant);
+    }
+    return null;
+  });
   const activeCelebrantKeyRef = useRef<string>('');
 
   // Real-Time Global Astrology Server Fetching Engine
@@ -1927,8 +1954,119 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
     return () => clearInterval(interval);
   }, [activeCelebrant?.id, activeCelebrant?.sl, activeCelebrant?.name, activeCelebrant?.birthday]);
 
+  // Constellation coordinate angle for the 3D Zodiac compass
+  const constellationAngle = useMemo(() => {
+    const signIdx = ZODIAC_SIGNS.findIndex((s) => s.name === zodiac.name);
+    return signIdx >= 0 ? signIdx * 30 + 15 : 45;
+  }, [zodiac.name]);
+
+  const teamMembers = members;
+
+  // Map over individual teamMembers to generate a unique, object-driven forecast for each member by invoking AstrologyDataService
+  const memberForecastsMap = useMemo(() => {
+    const map = new Map<string, MemberAstrologyDestiny>();
+    if (!teamMembers || teamMembers.length === 0) return map;
+    teamMembers.forEach((member) => {
+      const forecast = AstrologyDataService.generateMemberDestiny(
+        member,
+        getZodiacSign,
+        MONTH_AURAS,
+        currentYear
+      );
+      map.set(member.id || member.sl || member.name, forecast);
+    });
+    return map;
+  }, [teamMembers, currentYear]);
+
+  // Real-time team destinies state mapped over individual teamMembers invoking AstrologyDataService
+  const [teamDestinies, setTeamDestinies] = useState<MemberAstrologyDestiny[]>(() => {
+    if (teamMembers && teamMembers.length > 0) {
+      return teamMembers.map((member) =>
+        AstrologyDataService.generateMemberDestiny(
+          member,
+          getZodiacSign,
+          MONTH_AURAS,
+          new Date().getFullYear()
+        )
+      );
+    }
+    return [];
+  });
+  const [isSyncingDestinies, setIsSyncingDestinies] = useState<boolean>(false);
+  const [lastDestiniesSync, setLastDestiniesSync] = useState<string>('');
+  const [showNightSkyModal, setShowNightSkyModal] = useState<boolean>(false);
+
+  const syncTeamDestinies = (membersList: TeamMember[]) => {
+    setIsSyncingDestinies(true);
+    setTimeout(() => {
+      const generated = membersList.map((member) =>
+        AstrologyDataService.generateMemberDestiny(
+          member,
+          getZodiacSign,
+          MONTH_AURAS,
+          currentYear
+        )
+      );
+
+      setTeamDestinies(generated);
+      setLastDestiniesSync(new Date().toLocaleTimeString());
+      setIsSyncingDestinies(false);
+    }, 300);
+  };
+
+  // Dynamically generate and update unique team forecasts upon rendering
+  useEffect(() => {
+    if (teamMembers && teamMembers.length > 0) {
+      const generated = teamMembers.map((member) =>
+        AstrologyDataService.generateMemberDestiny(
+          member,
+          getZodiacSign,
+          MONTH_AURAS,
+          currentYear
+        )
+      );
+      setTeamDestinies(generated);
+      setLastDestiniesSync(new Date().toLocaleTimeString());
+    }
+  }, [teamMembers, currentYear]);
+
+  // Deterministic runtime destiny generated dynamically for the active celebrant by invoking AstrologyDataService
+  const activeCelebrantDestiny = useMemo(() => {
+    if (!activeCelebrant) return null;
+    const key = activeCelebrant.id || activeCelebrant.sl || activeCelebrant.name;
+    const found = memberForecastsMap.get(key) || teamDestinies.find((d) => d.memberId === key);
+    if (found) return found;
+    return AstrologyDataService.generateMemberDestiny(
+      activeCelebrant,
+      getZodiacSign,
+      MONTH_AURAS,
+      currentYear
+    );
+  }, [activeCelebrant, memberForecastsMap, teamDestinies, currentYear]);
+
+  // Dynamic values for Career & Success Fate bound to individual birth data
+  const careerFateData = useMemo(() => {
+    return {
+      title: activeCelebrantDestiny?.careerAndSuccess?.title || liveFortune?.fateAndDestiny?.careerAndSuccess?.title || 'Dashamsha (D10) & Karma Bhava Destiny',
+      predictions: activeCelebrantDestiny?.careerAndSuccess?.predictions || liveFortune?.fateAndDestiny?.careerAndSuccess?.predictions || [],
+      growthLeap: activeCelebrantDestiny?.careerAndSuccess?.growthLeap || liveFortune?.fateAndDestiny?.careerAndSuccess?.growthLeap || ''
+    };
+  }, [activeCelebrantDestiny, liveFortune]);
+
+  // Dynamic values for Personal Joy & Milestones bound to individual birth data
+  const personalJoyData = useMemo(() => {
+    return {
+      title: activeCelebrantDestiny?.personalJoyAndPeace?.title || liveFortune?.fateAndDestiny?.personalJoyAndPeace?.title || 'Navamsha (D9) & Lunar Sanctuary',
+      milestones: activeCelebrantDestiny?.personalJoyAndPeace?.milestones || liveFortune?.fateAndDestiny?.personalJoyAndPeace?.milestones || [],
+      friendshipBlessing: activeCelebrantDestiny?.personalJoyAndPeace?.friendshipBlessing || liveFortune?.fateAndDestiny?.personalJoyAndPeace?.friendshipBlessing || ''
+    };
+  }, [activeCelebrantDestiny, liveFortune]);
+
   // Memoized Dasha lifecycle details from ephemeris data
   const dashaInfo = useMemo(() => {
+    if (activeCelebrantDestiny?.dashaLifecycle) {
+      return activeCelebrantDestiny.dashaLifecycle;
+    }
     if (liveFortune?.natalChart?.vedicMetrics?.currentDasha) {
       return liveFortune.natalChart.vedicMetrics.currentDasha;
     }
@@ -1937,42 +2075,7 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
       return bPayload.natalChart.vedicMetrics.currentDasha;
     }
     return null;
-  }, [liveFortune, activeCelebrant]);
-
-  // Constellation coordinate angle for the 3D Zodiac compass
-  const constellationAngle = useMemo(() => {
-    const signIdx = ZODIAC_SIGNS.findIndex((s) => s.name === zodiac.name);
-    return signIdx >= 0 ? signIdx * 30 + 15 : 45;
-  }, [zodiac.name]);
-
-  // Real-time team destinies state & sync engine
-  const [teamDestinies, setTeamDestinies] = useState<MemberAstrologyDestiny[]>([]);
-  const [isSyncingDestinies, setIsSyncingDestinies] = useState<boolean>(false);
-  const [lastDestiniesSync, setLastDestiniesSync] = useState<string>('');
-  const [showNightSkyModal, setShowNightSkyModal] = useState<boolean>(false);
-
-  const syncTeamDestinies = (membersList: TeamMember[]) => {
-    setIsSyncingDestinies(true);
-    setTimeout(() => {
-      const generated = AstrologyDataService.generateTeamDestinies(
-        membersList,
-        getZodiacSign,
-        MONTH_AURAS,
-        currentYear
-      );
-
-      setTeamDestinies(generated);
-      setLastDestiniesSync(new Date().toLocaleTimeString());
-      setIsSyncingDestinies(false);
-    }, 450);
-  };
-
-  // Initial sync of team destinies on load
-  useEffect(() => {
-    if (members && members.length > 0) {
-      syncTeamDestinies(members);
-    }
-  }, [members, currentYear]);
+  }, [activeCelebrantDestiny, liveFortune, activeCelebrant]);
 
   const celebrantPhotoUrl = useMemo(() => {
     if (!activeCelebrant) return '';
@@ -2538,7 +2641,7 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
                       </span>
                     </div>
                     <ul className="space-y-1.5 text-xs text-slate-300">
-                      {liveFortune?.fateAndDestiny?.careerAndSuccess.predictions.map((p, idx) => (
+                      {careerFateData.predictions.map((p, idx) => (
                         <li key={idx} className="flex items-start gap-1.5">
                           <CheckCircle2 className="w-3.5 h-3.5 text-indigo-400 shrink-0 mt-0.5" />
                           <span>{p}</span>
@@ -2547,7 +2650,7 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
                     </ul>
                     <div className="pt-1 text-[10px] font-bold text-indigo-300 border-t border-slate-800 flex items-center gap-1">
                       <span>🚀 Growth Leap:</span>
-                      <span className="text-white truncate">{liveFortune?.fateAndDestiny?.careerAndSuccess.growthLeap}</span>
+                      <span className="text-white truncate">{careerFateData.growthLeap}</span>
                     </div>
                   </div>
 
@@ -2560,7 +2663,7 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
                       </span>
                     </div>
                     <ul className="space-y-1.5 text-xs text-slate-300">
-                      {liveFortune?.fateAndDestiny?.personalJoyAndPeace.milestones.map((m, idx) => (
+                      {personalJoyData.milestones.map((m, idx) => (
                         <li key={idx} className="flex items-start gap-1.5">
                           <CheckCircle2 className="w-3.5 h-3.5 text-rose-400 shrink-0 mt-0.5" />
                           <span>{m}</span>
@@ -2569,7 +2672,7 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
                     </ul>
                     <div className="pt-1 text-[10px] font-bold text-rose-300 border-t border-slate-800 flex items-center gap-1">
                       <span>💖 Friendship Harmony:</span>
-                      <span className="text-white truncate">{liveFortune?.fateAndDestiny?.personalJoyAndPeace.friendshipBlessing}</span>
+                      <span className="text-white truncate">{personalJoyData.friendshipBlessing}</span>
                     </div>
                   </div>
                 </div>
@@ -2697,7 +2800,7 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
             </div>
             <h3 className="text-base font-black text-white">Executive Breakthroughs</h3>
             <ul className="space-y-2 text-xs text-slate-300">
-              {liveFortune?.careerOpportunities.map((op, i) => (
+              {(activeCelebrantDestiny?.careerOpportunities || liveFortune?.careerOpportunities || []).map((op, i) => (
                 <li key={i} className="flex items-start gap-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5 text-indigo-400 shrink-0 mt-0.5" />
                   <span>{op}</span>
@@ -2716,7 +2819,7 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
             </div>
             <h3 className="text-base font-black text-white">Happiness & Vitality</h3>
             <ul className="space-y-2 text-xs text-slate-300">
-              {liveFortune?.happinessMilestones.map((hp, i) => (
+              {(activeCelebrantDestiny?.happinessMilestones || liveFortune?.happinessMilestones || []).map((hp, i) => (
                 <li key={i} className="flex items-start gap-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5 text-rose-400 shrink-0 mt-0.5" />
                   <span>{hp}</span>
@@ -2735,7 +2838,7 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
             </div>
             <h3 className="text-base font-black text-white">Prosperity & Assets</h3>
             <ul className="space-y-2 text-xs text-slate-300">
-              {liveFortune?.financialAbundance.map((fa, i) => (
+              {(activeCelebrantDestiny?.financialAbundance || liveFortune?.financialAbundance || []).map((fa, i) => (
                 <li key={i} className="flex items-start gap-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
                   <span>{fa}</span>
@@ -2754,7 +2857,7 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
             </div>
             <h3 className="text-base font-black text-white">Team Unity & Warmth</h3>
             <ul className="space-y-2 text-xs text-slate-300">
-              {liveFortune?.friendshipHarmony.map((fh, i) => (
+              {(activeCelebrantDestiny?.friendshipHarmony || liveFortune?.friendshipHarmony || []).map((fh, i) => (
                 <li key={i} className="flex items-start gap-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
                   <span>{fh}</span>
@@ -2775,7 +2878,7 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {liveFortune?.yearByYearForecast.map((item, idx) => {
+            {(activeCelebrantDestiny?.yearByYearForecast || liveFortune?.yearByYearForecast || []).map((item, idx) => {
               const yearPlanets = ['♃', '♄', '☉'];
               const yearPlanet = yearPlanets[idx % yearPlanets.length];
               return (
