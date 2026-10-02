@@ -29,13 +29,22 @@ import {
   MoonStar,
   BookOpen,
   Atom,
-  X
+  X,
+  Info,
+  Users,
+  Gauge
 } from 'lucide-react';
 import { TeamMember } from '../types';
 import { parseBirthdayDate, getDaysUntilBirthday, MONTH_NAMES } from '../utils/dateUtils';
 import { formatProfileImageUrl, getMemberPhotoUrl } from '../utils/imageUtils';
 import { generateDynamicAstrologyPayload } from '../services/ephemerisService';
-import { AstrologyDataService } from '../services/AstrologyDataService';
+import { 
+  AstrologyDataService, 
+  CompatibilityMatch, 
+  LuckyTalisman,
+  TeamEnergyVibeCheck,
+  MemberDashaEnergy 
+} from '../services/AstrologyDataService';
 
 export interface MemberAstrologyDestiny {
   memberId: string;
@@ -48,17 +57,26 @@ export interface MemberAstrologyDestiny {
     description: string;
     milestoneTime: string;
     luckyBlessing: string;
+    traitLabel?: string;
   };
   careerAndSuccess?: {
     title: string;
     predictions: string[];
     growthLeap: string;
+    traitLabel?: string;
   };
   personalJoyAndPeace?: {
     title: string;
     milestones: string[];
     friendshipBlessing: string;
+    traitLabel?: string;
   };
+  careerTraitLabel?: string;
+  joyTraitLabel?: string;
+  forecastTraitLabel?: string;
+  destinyTraitLabel?: string;
+  luckyTalisman?: LuckyTalisman;
+  luckyNumbers?: number[];
   dashaLifecycle?: any;
   uniqueFortune?: any;
   careerOpportunities?: string[];
@@ -1440,8 +1458,9 @@ export const StarFieldMap: React.FC<StarFieldMapProps> = ({
     const now = new Date();
     const currentMonth = now.getMonth();
     const currentRulingSign = getZodiacSign(currentMonth, now.getDate());
-    return parsedBirthday.month === currentMonth || zodiac.name === currentRulingSign.name;
-  }, [parsedBirthday.month, zodiac.name]);
+    const m = parsedBirthday ? parsedBirthday.month : currentMonth;
+    return m === currentMonth || (zodiac && zodiac.name === currentRulingSign?.name);
+  }, [parsedBirthday?.month, zodiac?.name]);
 
   // Subtle parallax coordinates for cosmic depth
   const [parallaxOffset, setParallaxOffset] = useState({ x: 0, y: 0 });
@@ -1891,6 +1910,34 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
   });
   const activeCelebrantKeyRef = useRef<string>('');
 
+  // Active Workstation Tab: Cosmic Fortune Almanac vs Astrological Karmic Insights
+  const [activeFortuneTab, setActiveFortuneTab] = useState<'almanac' | 'karmic-insights'>('almanac');
+
+  // Interactive prediction detail modal overlay state
+  const [selectedDetailPrediction, setSelectedDetailPrediction] = useState<{
+    title: string;
+    category: string;
+    badge?: string;
+    timeframe: string;
+    karmicImpact: string;
+    realLifeOutcomes: string[];
+    plainEnglishExplanation: string;
+    iconType: 'career' | 'joy' | 'financial' | 'friendship' | 'forecast';
+  } | null>(null);
+
+  // Keyboard accessibility: close detail prediction modal on Escape
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setSelectedDetailPrediction(null);
+      }
+    };
+    if (selectedDetailPrediction) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedDetailPrediction]);
+
   // Real-Time Global Astrology Server Fetching Engine
   const fetchLiveFortune = async (celebrant: TeamMember, quietSync = false, expectedKey?: string) => {
     const currentKey = expectedKey || celebrant.id || celebrant.sl || celebrant.name;
@@ -2049,7 +2096,8 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
     return {
       title: activeCelebrantDestiny?.careerAndSuccess?.title || liveFortune?.fateAndDestiny?.careerAndSuccess?.title || 'Dashamsha (D10) & Karma Bhava Destiny',
       predictions: activeCelebrantDestiny?.careerAndSuccess?.predictions || liveFortune?.fateAndDestiny?.careerAndSuccess?.predictions || [],
-      growthLeap: activeCelebrantDestiny?.careerAndSuccess?.growthLeap || liveFortune?.fateAndDestiny?.careerAndSuccess?.growthLeap || ''
+      growthLeap: activeCelebrantDestiny?.careerAndSuccess?.growthLeap || liveFortune?.fateAndDestiny?.careerAndSuccess?.growthLeap || '',
+      traitLabel: activeCelebrantDestiny?.careerAndSuccess?.traitLabel || activeCelebrantDestiny?.careerTraitLabel || 'Visionary'
     };
   }, [activeCelebrantDestiny, liveFortune]);
 
@@ -2058,9 +2106,45 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
     return {
       title: activeCelebrantDestiny?.personalJoyAndPeace?.title || liveFortune?.fateAndDestiny?.personalJoyAndPeace?.title || 'Navamsha (D9) & Lunar Sanctuary',
       milestones: activeCelebrantDestiny?.personalJoyAndPeace?.milestones || liveFortune?.fateAndDestiny?.personalJoyAndPeace?.milestones || [],
-      friendshipBlessing: activeCelebrantDestiny?.personalJoyAndPeace?.friendshipBlessing || liveFortune?.fateAndDestiny?.personalJoyAndPeace?.friendshipBlessing || ''
+      friendshipBlessing: activeCelebrantDestiny?.personalJoyAndPeace?.friendshipBlessing || liveFortune?.fateAndDestiny?.personalJoyAndPeace?.friendshipBlessing || '',
+      traitLabel: activeCelebrantDestiny?.personalJoyAndPeace?.traitLabel || activeCelebrantDestiny?.joyTraitLabel || 'Peacemaker'
     };
   }, [activeCelebrantDestiny, liveFortune]);
+
+  // Dynamic trait label for Upcoming Good Things & Multi-Year Forecast
+  const forecastTraitLabel = useMemo(() => {
+    return activeCelebrantDestiny?.forecastTraitLabel || activeCelebrantDestiny?.upcomingGoodThings?.traitLabel || 'Innovator';
+  }, [activeCelebrantDestiny]);
+
+  // Dynamic trait label for Destiny & Fate Outline
+  const destinyTraitLabel = useMemo(() => {
+    return activeCelebrantDestiny?.destinyTraitLabel || 'Trailblazer';
+  }, [activeCelebrantDestiny]);
+
+  // Unique Lucky Numbers based on birth date and name numerology
+  const activeLuckyNumbers = useMemo(() => {
+    if (!activeCelebrant) return [3, 7, 9, 14, 21, 33];
+    return AstrologyDataService.generateLuckyNumbers(activeCelebrant);
+  }, [activeCelebrant]);
+
+  // Unique Lucky Talisman / Personal Symbol based on birth date
+  const activeTalisman = useMemo<LuckyTalisman>(() => {
+    if (activeCelebrantDestiny?.luckyTalisman) {
+      return activeCelebrantDestiny.luckyTalisman;
+    }
+    return AstrologyDataService.generateLuckyTalisman(activeCelebrant?.birthday);
+  }, [activeCelebrantDestiny, activeCelebrant?.birthday]);
+
+  // Zodiac compatibility matches between active celebrant and team members based on Sun signs
+  const teamCompatibilityMatches = useMemo(() => {
+    if (!activeCelebrant || !members || members.length <= 1) return [];
+    return AstrologyDataService.calculateTeamCompatibility(
+      activeCelebrant,
+      members,
+      getZodiacSign,
+      parsedBirthday ? parsedBirthday.month : undefined
+    );
+  }, [activeCelebrant, members, parsedBirthday?.month]);
 
   // Memoized Dasha lifecycle details from ephemeris data
   const dashaInfo = useMemo(() => {
@@ -2091,6 +2175,11 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
       if (p) map[p.month].push(m);
     });
     return map;
+  }, [members]);
+
+  // Summarized Team Energy Score & Energetic Vibe Check based on collective current Dasha periods
+  const teamVibeCheck = useMemo<TeamEnergyVibeCheck>(() => {
+    return AstrologyDataService.calculateTeamEnergyVibeCheck(members);
   }, [members]);
 
   return (
@@ -2239,6 +2328,31 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
           animation: celestial-scan-sweep 3.5s linear infinite;
           transform-origin: center;
         }
+
+        /* Subtle Shimmer Entrance Animation for Destiny & Fate Outline Cards */
+        @keyframes destiny-shimmer-entrance {
+          0% {
+            opacity: 0.35;
+            transform: translateY(10px) scale(0.985);
+            box-shadow: 0 0 0 rgba(168, 85, 247, 0);
+            filter: brightness(0.95);
+          }
+          50% {
+            opacity: 1;
+            transform: translateY(-2px) scale(1.008);
+            box-shadow: 0 0 25px rgba(168, 85, 247, 0.45), inset 0 0 15px rgba(168, 85, 247, 0.25);
+            filter: brightness(1.1);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            box-shadow: 0 0 0 rgba(168, 85, 247, 0);
+            filter: brightness(1);
+          }
+        }
+        .animate-destiny-shimmer {
+          animation: destiny-shimmer-entrance 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
       `}</style>
 
       {/* =========================================================================
@@ -2303,6 +2417,45 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
         </div>
       </div>
 
+      {/* =========================================================================
+          Workstation Navigation Tabs: Cosmic Fortune Almanac vs Astrological Karmic Insights
+          ========================================================================= */}
+      <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-slate-900/90 border border-indigo-500/30 backdrop-blur-xl shadow-xl flex-wrap">
+        <button
+          id="tab-cosmic-almanac"
+          onClick={() => setActiveFortuneTab('almanac')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black transition cursor-pointer ${
+            activeFortuneTab === 'almanac'
+              ? 'bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-600 text-white shadow-lg shadow-purple-900/40 border border-purple-400/40'
+              : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+          }`}
+        >
+          <Sparkles className="w-4 h-4 text-amber-300" />
+          <span>Cosmic Fortune Almanac</span>
+          <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-white/10 text-slate-200">
+            Personal & Fate
+          </span>
+        </button>
+
+        <button
+          id="tab-karmic-insights"
+          onClick={() => setActiveFortuneTab('karmic-insights')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black transition cursor-pointer ${
+            activeFortuneTab === 'karmic-insights'
+              ? 'bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-600 text-white shadow-lg shadow-purple-900/40 border border-purple-400/40'
+              : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+          }`}
+        >
+          <Layers className="w-4 h-4 text-purple-300 animate-pulse" />
+          <span>Astrological Karmic Insights</span>
+          <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-amber-400/20 text-amber-300 border border-amber-400/30">
+            ⚡ {teamVibeCheck.teamEnergyScore}% Vibe Check
+          </span>
+        </button>
+      </div>
+
+      {activeFortuneTab === 'almanac' && (
+        <>
       {/* =========================================================================
           Hero Section: The Celebrant's Aura (Prominent Glassmorphic Profile Card)
           ========================================================================= */}
@@ -2391,8 +2544,14 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
                   <span className={zodiac.elementGlow.text}>{zodiac.element} Pillar</span>
                 </div>
 
-                <h2 className="text-2xl sm:text-3xl font-black text-white mt-2 leading-tight">
-                  {activeCelebrant.name}
+                <h2 className="text-2xl sm:text-3xl font-black text-white mt-2 leading-tight flex items-center justify-center gap-2">
+                  <span>{activeCelebrant.name}</span>
+                  <span 
+                    className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white/20 border border-white/30 text-white text-xs shrink-0 icon-breathing shadow-xs" 
+                    title={`Sun Sign: ${zodiac.name} (${zodiac.glyph})`}
+                  >
+                    {zodiac.glyph}
+                  </span>
                 </h2>
                 <p className="text-xs sm:text-sm text-slate-300 font-medium mt-0.5">
                   {activeCelebrant.designation} {activeCelebrant.department ? `• ${activeCelebrant.department}` : ''}
@@ -2524,9 +2683,16 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
                         <MoonStar className="w-3.5 h-3.5 text-purple-400 animate-pulse" />
                         <span>Book of Fate • Sacred Life Path</span>
                       </div>
-                      <h3 className="text-base font-black text-white leading-tight">
-                        Destiny & Fate Outline for {activeCelebrant.name}
-                      </h3>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="text-base font-black text-white leading-tight">
+                          Destiny & Fate Outline for {activeCelebrant.name}
+                        </h3>
+                        {destinyTraitLabel && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-purple-500/20 text-purple-300 border border-purple-400/30 shadow-xs">
+                            {destinyTraitLabel}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
 
@@ -2554,7 +2720,24 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
                 </div>
 
                 {/* The Year Ahead (Astrological Alignment & Forecast) */}
-                <div className="p-4 rounded-xl bg-slate-950/70 border border-purple-500/30 space-y-2">
+                <div 
+                  onClick={() => setSelectedDetailPrediction({
+                    category: 'Destiny & Fate Outline • The Year Ahead',
+                    title: `The Year Ahead: ${liveFortune?.fateAndDestiny?.theYearAhead.alignment || 'Cosmic Alignment'}`,
+                    badge: destinyTraitLabel,
+                    timeframe: 'Annual Astrological Cycle (Upcoming 12 Months)',
+                    karmicImpact: `Karmic alignment governed by ${liveFortune?.fateAndDestiny?.theYearAhead.alignment || 'Cosmic House'} with ${liveFortune?.fateAndDestiny?.theYearAhead.luckFactor || '95% Auspicious'} blessing.`,
+                    plainEnglishExplanation: `This upcoming year brings an overwhelmingly positive shift in your life journey. Old roadblocks and delays dissolve as favorable planetary alignments illuminate your highest aspirations. Expect consistent personal recognition, fruitful endeavors, and deeply reassuring peace of mind that guides your daily journey with grace and confidence.`,
+                    realLifeOutcomes: [
+                      liveFortune?.fateAndDestiny?.theYearAhead.forecast || 'Major breakthrough milestone materializing in complete alignment with your goals.',
+                      `Auspicious luck rating of ${liveFortune?.fateAndDestiny?.theYearAhead.luckFactor || '95% Auspicious'} shielding your projects from delays.`,
+                      'High-trust collaboration and executive appreciation across all personal and team pursuits.',
+                      liveFortune?.fateAndDestiny?.cosmicDecree || 'Cosmic decree empowering you to lead with visionary insight and heartfelt warmth.'
+                    ],
+                    iconType: 'forecast'
+                  })}
+                  className="p-4 rounded-xl bg-slate-950/70 border border-purple-500/30 space-y-2 cursor-pointer hover:border-purple-400/60 transition group tarot-card-3d animate-destiny-shimmer"
+                >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
                     <span className="text-xs sm:text-sm font-black bg-gradient-to-r from-amber-200 via-purple-100 to-cyan-200 bg-clip-text text-transparent flex items-center gap-2">
                       {/* CSS-Animated Planetary Icon with gentle breathing pulse indicating active planetary transit */}
@@ -2566,9 +2749,16 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
                       </span>
                       <span>The Year Ahead • {liveFortune?.fateAndDestiny?.theYearAhead.alignment}</span>
                     </span>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 self-start sm:self-auto">
-                      {liveFortune?.fateAndDestiny?.theYearAhead.luckFactor}
-                    </span>
+                    <div className="flex items-center gap-1.5 self-start sm:self-auto">
+                      {destinyTraitLabel && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-purple-500/20 text-purple-300 border border-purple-400/30 shadow-xs">
+                          {destinyTraitLabel}
+                        </span>
+                      )}
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+                        {liveFortune?.fateAndDestiny?.theYearAhead.luckFactor}
+                      </span>
+                    </div>
                   </div>
                   <div className="flex items-start gap-2.5">
                     <span 
@@ -2580,6 +2770,13 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
                     <p className="text-xs sm:text-sm text-slate-100 font-serif italic leading-relaxed">
                       "{liveFortune?.fateAndDestiny?.theYearAhead.forecast}"
                     </p>
+                  </div>
+                  <div className="pt-1 flex items-center justify-end border-t border-purple-900/40">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-extrabold bg-purple-500/20 text-purple-200 border border-purple-400/40 group-hover:bg-purple-500/30 group-hover:text-white transition shadow-xs">
+                      <Info className="w-3 h-3 text-purple-300" />
+                      <span>Click To Details</span>
+                      <ArrowUpRight className="w-2.5 h-2.5 text-purple-300" />
+                    </span>
                   </div>
                 </div>
 
@@ -2607,8 +2804,27 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
                           Moon: { glyph: '☽', color: 'text-cyan-300', border: 'border-cyan-400/40', bg: 'bg-cyan-950/60' },
                         };
                         const pConf = planetMap[transit.transitPlanet] || { glyph: '🪐', color: 'text-amber-300', border: 'border-purple-400/40', bg: 'bg-purple-950/60' };
+                        const transitTrait = AstrologyDataService.getTransitTraitLabel(transit.transitPlanet);
                         return (
-                          <div key={idx} className="p-2.5 rounded-lg bg-slate-900/90 border border-slate-800/80 flex items-start gap-2.5 hover:border-purple-500/40 transition">
+                          <div 
+                            key={idx} 
+                            onClick={() => setSelectedDetailPrediction({
+                              category: `Destiny & Fate Outline • ${transit.transitPlanet} Transit`,
+                              title: `${transit.transitPlanet} Transit: ${transit.headline}`,
+                              badge: transitTrait,
+                              timeframe: 'Active Planetary Transit Window (Current Season)',
+                              karmicImpact: `Gochara planetary transit of ${transit.transitPlanet} exerting a ${transit.impactScore}% impact rating across your natal houses.`,
+                              plainEnglishExplanation: `During this powerful ${transit.transitPlanet} transit phase, your natural ability to act as an inspirational ${transitTrait.toLowerCase()} is significantly heightened. ${transit.prediction} The cosmos supports decisive action, so trust your instincts and take the lead on initiatives you care deeply about.`,
+                              realLifeOutcomes: [
+                                transit.prediction,
+                                `Active ${transit.transitPlanet} alignment delivering a peak ${transit.impactScore}% karmic momentum boost.`,
+                                `Elevated ${transitTrait} clarity and emotional composure in daily conversations and workflows.`
+                              ],
+                              iconType: 'forecast'
+                            })}
+                            className="p-2.5 rounded-lg bg-slate-900/90 border border-slate-800/80 flex items-start gap-2.5 hover:border-purple-500/60 transition cursor-pointer group animate-destiny-shimmer"
+                            style={{ animationDelay: `${0.1 + idx * 0.08}s` }}
+                          >
                             {/* CSS-Animated Planetary Icon with gentle breathing pulse animation */}
                             <span 
                               className={`w-7 h-7 rounded-lg ${pConf.bg} border ${pConf.border} flex items-center justify-center shrink-0 icon-breathing shadow-xs`}
@@ -2616,12 +2832,24 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
                             >
                               <span className={`text-sm font-bold ${pConf.color}`}>{pConf.glyph}</span>
                             </span>
-                            <div className="space-y-0.5 min-w-0">
+                            <div className="space-y-0.5 min-w-0 flex-1">
                               <div className="flex items-center justify-between gap-1">
                                 <span className="text-[11px] font-bold text-white truncate">{transit.headline}</span>
-                                <span className="text-[9px] font-mono text-emerald-400 shrink-0">Impact: {transit.impactScore}%</span>
+                                <div className="flex items-center gap-1 shrink-0">
+                                  <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-purple-500/20 text-purple-300 border border-purple-400/30">
+                                    {transitTrait}
+                                  </span>
+                                  <span className="text-[9px] font-mono text-emerald-400">Impact: {transit.impactScore}%</span>
+                                </div>
                               </div>
                               <p className="text-[11px] text-slate-300 leading-snug">{transit.prediction}</p>
+                              <div className="pt-1 flex items-center justify-end">
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-extrabold bg-purple-500/20 text-purple-200 border border-purple-400/40 group-hover:bg-purple-500/30 group-hover:text-white transition shadow-xs">
+                                  <Info className="w-2.5 h-2.5 text-purple-300" />
+                                  <span>Click To Details</span>
+                                  <ArrowUpRight className="w-2.5 h-2.5" />
+                                </span>
+                              </div>
                             </div>
                           </div>
                         );
@@ -2633,12 +2861,35 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
                 {/* Specific Fate Breakdown: Career & Success vs Personal Joy & Milestones */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {/* Career & Success Fate */}
-                  <div className="p-3.5 rounded-xl bg-slate-900/80 border border-indigo-500/30 space-y-2 tarot-card-3d">
+                  <div 
+                    onClick={() => setSelectedDetailPrediction({
+                      category: 'Career & Success Fate',
+                      title: 'Executive Elevation & Architectural Influence',
+                      badge: careerFateData.traitLabel,
+                      timeframe: careerFateData.growthLeap || 'Active Vimshottari Dasha Window',
+                      karmicImpact: 'Dashamsha (D10) Karma Bhava resonance elevating leadership authority, high-stakes project ownership, and organizational trust.',
+                      plainEnglishExplanation: `Your professional journey is entering an expansive breakthrough phase. Instead of routine execution, central decision-makers and teammates will actively look to you for visionary direction, architectural mastery, and strategic guidance. Anticipate significant recognition, prominent leadership mandates, and accolades that elevate your standing across the entire organization.`,
+                      realLifeOutcomes: [
+                        ...careerFateData.predictions,
+                        `Breakthrough milestone: ${careerFateData.growthLeap}`,
+                        'Formal commendation and executive visibility from leadership stakeholders.',
+                        'Strategic mandate to guide core technical architecture and team initiatives.'
+                      ],
+                      iconType: 'career'
+                    })}
+                    className="p-3.5 rounded-xl bg-slate-900/80 border border-indigo-500/30 space-y-2 tarot-card-3d cursor-pointer hover:border-indigo-400 transition group animate-destiny-shimmer"
+                    style={{ animationDelay: '0.18s' }}
+                  >
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] font-black uppercase tracking-wider bg-gradient-to-r from-amber-300 to-indigo-200 bg-clip-text text-transparent flex items-center gap-1.5">
                         <Award className="w-3.5 h-3.5 text-amber-400" />
                         <span>Career & Success Fate</span>
                       </span>
+                      {careerFateData.traitLabel && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-500/20 text-indigo-300 border border-indigo-400/30 shadow-xs">
+                          {careerFateData.traitLabel}
+                        </span>
+                      )}
                     </div>
                     <ul className="space-y-1.5 text-xs text-slate-300">
                       {careerFateData.predictions.map((p, idx) => (
@@ -2648,19 +2899,49 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
                         </li>
                       ))}
                     </ul>
-                    <div className="pt-1 text-[10px] font-bold text-indigo-300 border-t border-slate-800 flex items-center gap-1">
-                      <span>🚀 Growth Leap:</span>
-                      <span className="text-white truncate">{careerFateData.growthLeap}</span>
+                    <div className="pt-1 text-[10px] font-bold text-indigo-300 border-t border-slate-800 flex items-center justify-between">
+                      <div className="flex items-center gap-1 truncate">
+                        <span>🚀 Growth Leap:</span>
+                        <span className="text-white truncate">{careerFateData.growthLeap}</span>
+                      </div>
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-indigo-500/25 text-indigo-200 border border-indigo-400/40 group-hover:bg-indigo-500/40 group-hover:text-white transition shrink-0 ml-1 shadow-xs">
+                        <Info className="w-3 h-3 text-indigo-300" />
+                        <span>Click To Details</span>
+                        <ArrowUpRight className="w-2.5 h-2.5" />
+                      </span>
                     </div>
                   </div>
 
                   {/* Personal Joy & Milestones */}
-                  <div className="p-3.5 rounded-xl bg-slate-900/80 border border-rose-500/30 space-y-2 tarot-card-3d">
+                  <div 
+                    onClick={() => setSelectedDetailPrediction({
+                      category: 'Personal Joy & Milestones',
+                      title: 'Emotional Sanctuary, Friendship & Radiant Joy',
+                      badge: personalJoyData.traitLabel,
+                      timeframe: 'Janma Chandra Alignment & Harmonic Bhavas',
+                      karmicImpact: 'Navamsha (D9) and 4th/11th House synergy dissolving fatigue, restoring inner peace, and bringing lifelong camaraderie.',
+                      plainEnglishExplanation: `A wonderful season of personal contentment and heartwarming companionship is unfolding for you. Prior stresses and lingering doubts lift away to reveal genuine peace of mind, restorative personal milestones, and rich celebrations with loved ones. Teammates and friends deeply value your warmth, and your environment will feel safer, happier, and profoundly supportive.`,
+                      realLifeOutcomes: [
+                        ...personalJoyData.milestones,
+                        personalJoyData.friendshipBlessing,
+                        'Harmonious balance between fulfilling accomplishments and restorative rest.',
+                        'Deepened bonds of mutual trust, heartfelt birthday tributes, and shared team victories.'
+                      ],
+                      iconType: 'joy'
+                    })}
+                    className="p-3.5 rounded-xl bg-slate-900/80 border border-rose-500/30 space-y-2 tarot-card-3d cursor-pointer hover:border-rose-400 transition group animate-destiny-shimmer"
+                    style={{ animationDelay: '0.24s' }}
+                  >
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] font-black uppercase tracking-wider bg-gradient-to-r from-rose-300 to-purple-200 bg-clip-text text-transparent flex items-center gap-1.5">
                         <Heart className="w-3.5 h-3.5 text-rose-400" />
                         <span>Personal Joy & Milestones</span>
                       </span>
+                      {personalJoyData.traitLabel && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-500/20 text-rose-300 border border-rose-400/30 shadow-xs">
+                          {personalJoyData.traitLabel}
+                        </span>
+                      )}
                     </div>
                     <ul className="space-y-1.5 text-xs text-slate-300">
                       {personalJoyData.milestones.map((m, idx) => (
@@ -2670,25 +2951,62 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
                         </li>
                       ))}
                     </ul>
-                    <div className="pt-1 text-[10px] font-bold text-rose-300 border-t border-slate-800 flex items-center gap-1">
-                      <span>💖 Friendship Harmony:</span>
-                      <span className="text-white truncate">{personalJoyData.friendshipBlessing}</span>
+                    <div className="pt-1 text-[10px] font-bold text-rose-300 border-t border-slate-800 flex items-center justify-between">
+                      <div className="flex items-center gap-1 truncate">
+                        <span>💖 Friendship Harmony:</span>
+                        <span className="text-white truncate">{personalJoyData.friendshipBlessing}</span>
+                      </div>
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-rose-500/25 text-rose-200 border border-rose-400/40 group-hover:bg-rose-500/40 group-hover:text-white transition shrink-0 ml-1 shadow-xs">
+                        <Info className="w-3 h-3 text-rose-300" />
+                        <span>Click To Details</span>
+                        <ArrowUpRight className="w-2.5 h-2.5" />
+                      </span>
                     </div>
                   </div>
                 </div>
 
                 {/* Fate Milestones Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
-                  {liveFortune?.fateAndDestiny?.destinyMilestones.map((dm, idx) => (
-                    <div 
-                      key={idx}
-                      className="p-3 rounded-xl bg-slate-900/80 border border-slate-700/70 hover:border-purple-400/50 transition tarot-card-3d space-y-1"
-                    >
-                      <div className="text-[10px] font-mono text-purple-300 font-bold uppercase">{dm.quarter}</div>
-                      <div className="text-xs font-black text-white">{dm.milestone}</div>
-                      <p className="text-[11px] text-slate-300 leading-tight">{dm.blessing}</p>
-                    </div>
-                  ))}
+                  {liveFortune?.fateAndDestiny?.destinyMilestones.map((dm, idx) => {
+                    const mTrait = AstrologyDataService.getMilestoneTraitLabel(dm.quarter, idx);
+                    return (
+                      <div 
+                        key={idx}
+                        onClick={() => setSelectedDetailPrediction({
+                          category: `Destiny & Fate Outline • ${dm.quarter} Milestone`,
+                          title: `${dm.quarter}: ${dm.milestone}`,
+                          badge: mTrait,
+                          timeframe: `Quarterly Milestone Window • ${dm.quarter}`,
+                          karmicImpact: `Karmic alignment channeling auspicious energy toward your ${dm.milestone.toLowerCase()} milestone.`,
+                          plainEnglishExplanation: `During ${dm.quarter}, your ongoing efforts culminate in a rewarding milestone. ${dm.blessing} Obstacles fade into the background, allowing you to establish greater stability, receive well-deserved appreciation, and celebrate meaningful achievements with your team and loved ones.`,
+                          realLifeOutcomes: [
+                            dm.milestone,
+                            dm.blessing,
+                            `Auspicious ${mTrait} breakthrough expanding your career prospects and personal contentment.`
+                          ],
+                          iconType: 'forecast'
+                        })}
+                        className="p-3 rounded-xl bg-slate-900/80 border border-slate-700/70 hover:border-purple-400/60 transition tarot-card-3d space-y-1.5 cursor-pointer group animate-destiny-shimmer"
+                        style={{ animationDelay: `${0.28 + idx * 0.08}s` }}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-mono text-purple-300 font-bold uppercase">{dm.quarter}</span>
+                          <span className="px-1.5 py-0.5 rounded-md text-[9px] font-extrabold bg-purple-500/20 text-purple-300 border border-purple-400/30">
+                            {mTrait}
+                          </span>
+                        </div>
+                        <div className="text-xs font-black text-white">{dm.milestone}</div>
+                        <p className="text-[11px] text-slate-300 leading-tight">{dm.blessing}</p>
+                        <div className="pt-1 flex items-center justify-end border-t border-slate-800">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-extrabold bg-purple-500/20 text-purple-200 border border-purple-400/40 group-hover:bg-purple-500/30 group-hover:text-white transition shadow-xs">
+                            <Info className="w-2.5 h-2.5 text-purple-300" />
+                            <span>Click To Details</span>
+                            <ArrowUpRight className="w-2.5 h-2.5" />
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
 
                 {/* Interactive Birth Constellation Star Field */}
@@ -2778,10 +3096,17 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-indigo-600" />
-              <span>Upcoming Good Things & Multi-Year Forecast</span>
-            </h2>
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-indigo-600" />
+                <span>Upcoming Good Things & Multi-Year Forecast</span>
+              </h2>
+              {forecastTraitLabel && (
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-700 shadow-xs">
+                  {forecastTraitLabel}
+                </span>
+              )}
+            </div>
             <p className="text-xs text-slate-500 dark:text-slate-400">
               Personalized, overwhelmingly positive milestones verified for {activeCelebrant?.name || 'Celebrant'}.
             </p>
@@ -2791,12 +3116,29 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
         {/* 4 Pillars of Good Fortune Cards with 3D Tilt */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Pillar 1: Career */}
-          <div className="rounded-2xl p-5 bg-gradient-to-b from-indigo-950/40 via-slate-900 to-slate-950 border border-indigo-500/40 text-white shadow-xl tarot-card-3d shimmer-glare space-y-3">
+          <div 
+            onClick={() => setSelectedDetailPrediction({
+              category: 'Upcoming Good Things • Career & Mastery',
+              title: 'Executive Breakthroughs & Strategic Authority',
+              badge: 'Trailblazer',
+              timeframe: 'Upcoming 6–12 Months',
+              karmicImpact: '10th House Karma Bhava activation triggering leadership elevation and architectural authority.',
+              plainEnglishExplanation: `Your professional journey is gaining significant upward momentum. Central leaders and peers will recognize your core competence, leading to designated leadership ownership and respected strategic influence across central initiatives.`,
+              realLifeOutcomes: (activeCelebrantDestiny?.careerOpportunities || liveFortune?.careerOpportunities || []),
+              iconType: 'career'
+            })}
+            className="rounded-2xl p-5 bg-gradient-to-b from-indigo-950/40 via-slate-900 to-slate-950 border border-indigo-500/40 text-white shadow-xl tarot-card-3d shimmer-glare space-y-3 cursor-pointer hover:border-indigo-400 transition group"
+          >
             <div className="flex items-center justify-between">
               <span className="p-2 rounded-xl bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">
                 <Award className="w-5 h-5 text-indigo-400" />
               </span>
-              <span className="text-[10px] font-black uppercase tracking-wider text-indigo-300">Career & Mastery</span>
+              <div className="flex items-center gap-1.5">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">
+                  Trailblazer
+                </span>
+                <span className="text-[10px] font-black uppercase tracking-wider text-indigo-300">Career & Mastery</span>
+              </div>
             </div>
             <h3 className="text-base font-black text-white">Executive Breakthroughs</h3>
             <ul className="space-y-2 text-xs text-slate-300">
@@ -2807,15 +3149,39 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
                 </li>
               ))}
             </ul>
+            <div className="pt-1 flex items-center justify-end border-t border-indigo-900/40">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-extrabold bg-indigo-500/25 text-indigo-200 border border-indigo-400/40 group-hover:bg-indigo-500/40 group-hover:text-white transition shadow-xs">
+                <Info className="w-3 h-3 text-indigo-300" />
+                <span>Click To Details</span>
+                <ArrowUpRight className="w-2.5 h-2.5" />
+              </span>
+            </div>
           </div>
 
           {/* Pillar 2: Happiness & Emotional Harmony */}
-          <div className="rounded-2xl p-5 bg-gradient-to-b from-rose-950/40 via-slate-900 to-slate-950 border border-rose-500/40 text-white shadow-xl tarot-card-3d shimmer-glare space-y-3">
+          <div 
+            onClick={() => setSelectedDetailPrediction({
+              category: 'Upcoming Good Things • Emotional Harmony',
+              title: 'Happiness, Vitality & Emotional Bliss',
+              badge: 'Harmonizer',
+              timeframe: 'Upcoming Seasons & Milestones',
+              karmicImpact: 'Chandra lunar grace cultivating tranquil peace of mind and vibrant well-being.',
+              plainEnglishExplanation: `You are entering a period of renewed vitality and emotional lightness. Personal worries fade, and you will find profound fulfillment in your personal time, hobbies, and relationships with the people who matter most. Expect joyful celebrations and a radiant boost to your health and everyday energy.`,
+              realLifeOutcomes: (activeCelebrantDestiny?.happinessMilestones || liveFortune?.happinessMilestones || []),
+              iconType: 'joy'
+            })}
+            className="rounded-2xl p-5 bg-gradient-to-b from-rose-950/40 via-slate-900 to-slate-950 border border-rose-500/40 text-white shadow-xl tarot-card-3d shimmer-glare space-y-3 cursor-pointer hover:border-rose-400 transition group"
+          >
             <div className="flex items-center justify-between">
               <span className="p-2 rounded-xl bg-rose-500/20 text-rose-300 border border-rose-400/30">
                 <Heart className="w-5 h-5 text-rose-400" />
               </span>
-              <span className="text-[10px] font-black uppercase tracking-wider text-rose-300">Emotional Bliss</span>
+              <div className="flex items-center gap-1.5">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-500/20 text-rose-300 border border-rose-400/30">
+                  Harmonizer
+                </span>
+                <span className="text-[10px] font-black uppercase tracking-wider text-rose-300">Emotional Bliss</span>
+              </div>
             </div>
             <h3 className="text-base font-black text-white">Happiness & Vitality</h3>
             <ul className="space-y-2 text-xs text-slate-300">
@@ -2826,15 +3192,39 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
                 </li>
               ))}
             </ul>
+            <div className="pt-1 flex items-center justify-end border-t border-rose-900/40">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-extrabold bg-rose-500/25 text-rose-200 border border-rose-400/40 group-hover:bg-rose-500/40 group-hover:text-white transition shadow-xs">
+                <Info className="w-3 h-3 text-rose-300" />
+                <span>Click To Details</span>
+                <ArrowUpRight className="w-2.5 h-2.5" />
+              </span>
+            </div>
           </div>
 
           {/* Pillar 3: Financial Abundance */}
-          <div className="rounded-2xl p-5 bg-gradient-to-b from-amber-950/40 via-slate-900 to-slate-950 border border-amber-500/40 text-white shadow-xl tarot-card-3d shimmer-glare space-y-3">
+          <div 
+            onClick={() => setSelectedDetailPrediction({
+              category: 'Upcoming Good Things • Financial Abundance',
+              title: 'Prosperity, Assets & Material Rewards',
+              badge: 'Abundance',
+              timeframe: '11th House Expansion Window',
+              karmicImpact: 'Jupiterian wealth and Dhana Bhava alignment securing substantial material rewards and portfolio growth.',
+              plainEnglishExplanation: `Financial stability and growth take center stage. Through bonuses, appraisal recognition, wise investments, or smart resource management, you will experience an influx of material comfort. This phase relieves financial pressures and lets you build lasting security for yourself and your loved ones.`,
+              realLifeOutcomes: (activeCelebrantDestiny?.financialAbundance || liveFortune?.financialAbundance || []),
+              iconType: 'financial'
+            })}
+            className="rounded-2xl p-5 bg-gradient-to-b from-amber-950/40 via-slate-900 to-slate-950 border border-amber-500/40 text-white shadow-xl tarot-card-3d shimmer-glare space-y-3 cursor-pointer hover:border-amber-400 transition group"
+          >
             <div className="flex items-center justify-between">
               <span className="p-2 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-400/30">
                 <Star className="w-5 h-5 text-amber-400" />
               </span>
-              <span className="text-[10px] font-black uppercase tracking-wider text-amber-300">Abundance</span>
+              <div className="flex items-center gap-1.5">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500/20 text-amber-300 border border-amber-400/30">
+                  Abundance
+                </span>
+                <span className="text-[10px] font-black uppercase tracking-wider text-amber-300">Prosperity</span>
+              </div>
             </div>
             <h3 className="text-base font-black text-white">Prosperity & Assets</h3>
             <ul className="space-y-2 text-xs text-slate-300">
@@ -2845,15 +3235,39 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
                 </li>
               ))}
             </ul>
+            <div className="pt-1 flex items-center justify-end border-t border-amber-900/40">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-extrabold bg-amber-500/25 text-amber-200 border border-amber-400/40 group-hover:bg-amber-500/40 group-hover:text-white transition shadow-xs">
+                <Info className="w-3 h-3 text-amber-300" />
+                <span>Click To Details</span>
+                <ArrowUpRight className="w-2.5 h-2.5" />
+              </span>
+            </div>
           </div>
 
           {/* Pillar 4: Friendship & Comradeship */}
-          <div className="rounded-2xl p-5 bg-gradient-to-b from-emerald-950/40 via-slate-900 to-slate-950 border border-emerald-500/40 text-white shadow-xl tarot-card-3d shimmer-glare space-y-3">
+          <div 
+            onClick={() => setSelectedDetailPrediction({
+              category: 'Upcoming Good Things • Team Unity & Warmth',
+              title: 'Beloved Comrades, Trust & Enduring Bonds',
+              badge: 'Camaraderie',
+              timeframe: 'Ongoing Departmental Synergy',
+              karmicImpact: 'Heart chakra and Venusian connection elevating mutual respect and team loyalty.',
+              plainEnglishExplanation: `Your role within the team shines brighter than ever. Colleagues respect not just your technical contribution, but your human warmth, patience, and encouraging nature. You will forge lifelong memories, celebrate team milestones, and always have a dependable support system standing firmly behind you.`,
+              realLifeOutcomes: (activeCelebrantDestiny?.friendshipHarmony || liveFortune?.friendshipHarmony || []),
+              iconType: 'friendship'
+            })}
+            className="rounded-2xl p-5 bg-gradient-to-b from-emerald-950/40 via-slate-900 to-slate-950 border border-emerald-500/40 text-white shadow-xl tarot-card-3d shimmer-glare space-y-3 cursor-pointer hover:border-emerald-400 transition group"
+          >
             <div className="flex items-center justify-between">
               <span className="p-2 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
                 <Smile className="w-5 h-5 text-emerald-400" />
               </span>
-              <span className="text-[10px] font-black uppercase tracking-wider text-emerald-300">Beloved Comrades</span>
+              <div className="flex items-center gap-1.5">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+                  Camaraderie
+                </span>
+                <span className="text-[10px] font-black uppercase tracking-wider text-emerald-300">Beloved Comrades</span>
+              </div>
             </div>
             <h3 className="text-base font-black text-white">Team Unity & Warmth</h3>
             <ul className="space-y-2 text-xs text-slate-300">
@@ -2864,6 +3278,13 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
                 </li>
               ))}
             </ul>
+            <div className="pt-1 flex items-center justify-end border-t border-emerald-900/40">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-extrabold bg-emerald-500/25 text-emerald-200 border border-emerald-400/40 group-hover:bg-emerald-500/40 group-hover:text-white transition shadow-xs">
+                <Info className="w-3 h-3 text-emerald-300" />
+                <span>Click To Details</span>
+                <ArrowUpRight className="w-2.5 h-2.5" />
+              </span>
+            </div>
           </div>
         </div>
 
@@ -2881,10 +3302,26 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
             {(activeCelebrantDestiny?.yearByYearForecast || liveFortune?.yearByYearForecast || []).map((item, idx) => {
               const yearPlanets = ['♃', '♄', '☉'];
               const yearPlanet = yearPlanets[idx % yearPlanets.length];
+              const yearArchetypes = ['Catalyst', 'Expansion', 'Mastermind'];
+              const yearTrait = yearArchetypes[idx % yearArchetypes.length];
               return (
                 <div
                   key={item.year}
-                  className="p-4 rounded-2xl bg-slate-950/90 border border-slate-700/80 hover:border-indigo-400/60 transition shadow-inner space-y-2"
+                  onClick={() => setSelectedDetailPrediction({
+                    category: `Multi-Year Roadmap • Year ${item.year}`,
+                    title: `${item.year}: ${item.theme}`,
+                    badge: `${yearTrait} • Vitality ${item.vitalityScore}%`,
+                    timeframe: `Full Year Cycle ${item.year}`,
+                    karmicImpact: `Planetary transits governing ${item.theme} operating at peak ${item.vitalityScore}% vitality resonance.`,
+                    plainEnglishExplanation: `In ${item.year}, the universe aligns your internal aspirations with external achievements. ${item.prediction} This year represents a major developmental bridge where steady diligence turns into visible milestones and lasting respect across your organization and personal circles.`,
+                    realLifeOutcomes: [
+                      item.prediction,
+                      `Peak vitality rating of ${item.vitalityScore}% ensuring endurance, clarity, and energy.`,
+                      `Enduring ${yearTrait.toLowerCase()} milestone and personal peace established under the ${item.theme} transit.`
+                    ],
+                    iconType: 'forecast'
+                  })}
+                  className="p-4 rounded-2xl bg-slate-950/90 border border-slate-700/80 hover:border-indigo-400/60 transition shadow-inner space-y-2 cursor-pointer group"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -2897,9 +3334,14 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
                       </span>
                       <span className="text-lg font-black text-amber-300">{item.year}</span>
                     </div>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">
-                      Vitality {item.vitalityScore}%
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">
+                        {yearTrait}
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-500/20 text-purple-300 border border-purple-400/30">
+                        Vitality {item.vitalityScore}%
+                      </span>
+                    </div>
                   </div>
                   <div className="text-xs font-extrabold text-white flex items-center gap-1.5">
                     <span className="text-purple-300 text-xs icon-breathing">🪐</span>
@@ -2908,6 +3350,13 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
                   <div className="flex items-start gap-2">
                     <span className="text-amber-300 text-xs icon-breathing shrink-0 mt-0.5">✦</span>
                     <p className="text-xs text-slate-300 leading-relaxed">{item.prediction}</p>
+                  </div>
+                  <div className="pt-1 flex items-center justify-end border-t border-slate-800">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-extrabold bg-indigo-500/25 text-indigo-200 border border-indigo-400/40 group-hover:bg-indigo-500/40 group-hover:text-white transition shadow-xs">
+                      <Info className="w-3 h-3 text-indigo-300" />
+                      <span>Click To Details</span>
+                      <ArrowUpRight className="w-2.5 h-2.5" />
+                    </span>
                   </div>
                 </div>
               );
@@ -3247,8 +3696,14 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
                     </div>
 
                     <div className="min-w-0 flex-1">
-                      <h3 className="text-sm font-black truncate leading-tight">
-                        {destiny.name}
+                      <h3 className="text-sm font-black truncate leading-tight flex items-center gap-1.5">
+                        <span className="truncate">{destiny.name}</span>
+                        <span 
+                          className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-purple-100 dark:bg-purple-900/60 border border-purple-300 dark:border-purple-700 text-purple-700 dark:text-purple-300 text-[10px] font-bold icon-breathing shrink-0 shadow-xs" 
+                          title={`Sun Sign: ${destiny.zodiac.name} (${destiny.zodiac.glyph})`}
+                        >
+                          {destiny.zodiac.glyph}
+                        </span>
                       </h3>
                       <p className="text-[11px] text-slate-400 truncate mt-0.5">
                         🎂 {destiny.birthday || 'Date TBD'}
@@ -3274,6 +3729,11 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
                         </span>
                         <span>{destiny.upcomingGoodThings.headline}</span>
                       </span>
+                      {(destiny.forecastTraitLabel || destiny.upcomingGoodThings.traitLabel) && (
+                        <span className="px-1.5 py-0.5 rounded-md text-[9px] font-extrabold bg-purple-100 dark:bg-purple-950/70 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 shrink-0">
+                          {destiny.forecastTraitLabel || destiny.upcomingGoodThings.traitLabel}
+                        </span>
+                      )}
                     </div>
                     <div className="flex items-start gap-1.5">
                       <span className="text-[10px] text-amber-500 dark:text-amber-400 icon-breathing shrink-0 mt-0.5">✨</span>
@@ -3300,6 +3760,312 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
           })}
         </div>
       </div>
+        </>
+      )}
+
+      {/* =========================================================================
+          Astrological Karmic Insights Tab: Energetic Vibe Check & Team Dasha Periods
+          ========================================================================= */}
+      {activeFortuneTab === 'karmic-insights' && (
+        <div className="space-y-6 animate-in fade-in duration-300">
+          {/* Collective Energetic Vibe Check Hero Banner */}
+          <div className="rounded-3xl p-6 sm:p-9 bg-gradient-to-br from-slate-950 via-purple-950/70 to-indigo-950 border border-purple-500/40 shadow-2xl relative overflow-hidden text-white shimmer-glare">
+            {/* Background Cosmic Starfield */}
+            <div className="absolute inset-0 bg-[radial-gradient(#a855f7_1px,transparent_1px)] [background-size:24px_24px] opacity-20 pointer-events-none" />
+
+            {/* Continuously Rotating 3D Astrological Wheel */}
+            <div className="absolute -top-36 -right-36 w-[480px] h-[480px] rounded-full border border-purple-500/15 animate-[spin_60s_linear_infinite] pointer-events-none flex items-center justify-center opacity-40">
+              <div className="w-[400px] h-[400px] rounded-full border border-dashed border-indigo-400/20" />
+              <div className="w-[300px] h-[300px] rounded-full border border-purple-400/10" />
+            </div>
+
+            <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+              {/* Left: Collective Team Energy Score Display */}
+              <div className="lg:col-span-4 flex flex-col items-center text-center space-y-4">
+                <div className="relative">
+                  {/* Glowing Aura Ring */}
+                  <div 
+                    className="w-36 h-36 sm:w-44 sm:h-44 rounded-full p-2.5 relative flex flex-col items-center justify-center shadow-2xl transition-transform duration-500 hover:scale-105"
+                    style={{
+                      boxShadow: '0 0 40px rgba(168, 85, 247, 0.5), inset 0 0 20px rgba(99, 102, 241, 0.4)',
+                      background: 'radial-gradient(circle, rgba(76, 29, 149, 0.8) 0%, rgba(15, 23, 42, 0.95) 70%)'
+                    }}
+                  >
+                    <div className="absolute inset-0 rounded-full border-2 border-purple-400/50 animate-spin-celestial pointer-events-none" />
+                    
+                    <span className="text-[10px] font-mono uppercase tracking-widest text-purple-300 font-black">
+                      Collective
+                    </span>
+                    <div className="text-4xl sm:text-5xl font-black bg-gradient-to-r from-amber-200 via-amber-300 to-yellow-100 bg-clip-text text-transparent mt-0.5 flex items-baseline">
+                      <span>{teamVibeCheck.teamEnergyScore}</span>
+                      <span className="text-2xl sm:text-3xl text-amber-300">%</span>
+                    </div>
+                    <span className="text-[11px] font-extrabold text-indigo-200 uppercase tracking-wider mt-0.5">
+                      Team Energy Score
+                    </span>
+
+                    {/* Dominant Planetary Node */}
+                    <div 
+                      className="absolute -bottom-2 -right-1 w-11 h-11 rounded-2xl bg-slate-900/95 border-2 border-purple-400/80 flex items-center justify-center shadow-xl animate-float-3d" 
+                      title={`Dominant Dasha Lord: ${teamVibeCheck.dominantDashaLord}`}
+                    >
+                      <span className="text-lg font-black text-amber-300">{teamVibeCheck.dominantDashaGlyph}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-black bg-purple-500/20 text-purple-200 border border-purple-400/30 shadow-xs">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
+                    <span>{teamVibeCheck.vibeLevel}</span>
+                    <span>•</span>
+                    <span className="text-emerald-300">{teamVibeCheck.collectiveAuspiciousRating}</span>
+                  </div>
+                  <h2 className="text-xl sm:text-2xl font-black text-white mt-2">
+                    Energetic Vibe Check
+                  </h2>
+                  <p className="text-xs text-slate-300 font-medium mt-1">
+                    Whole Team Vimshottari Dasha Ephemeris Sync
+                  </p>
+
+                  <button
+                    onClick={() => setActiveFortuneTab('almanac')}
+                    className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 text-slate-200 border border-white/20 transition cursor-pointer"
+                  >
+                    <span>← Return to Almanac View</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Right: Energetic Vibe Details & Ephemeris Breakdown */}
+              <div className="lg:col-span-8 space-y-4">
+                {/* Vibe Check Narrative Banner */}
+                <div className="p-5 sm:p-6 rounded-2xl bg-slate-900/80 backdrop-blur-xl border border-purple-400/30 shadow-xl space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-purple-300">
+                      <Orbit className="w-4 h-4 text-amber-300 animate-spin-slow" />
+                      <span>Collective Energetic Vibe Check for the Whole Team</span>
+                    </div>
+                    <span className="text-[10px] font-mono text-cyan-300 px-2 py-0.5 rounded bg-cyan-950/60 border border-cyan-800/40">
+                      Active Ephemeris ({currentYear})
+                    </span>
+                  </div>
+
+                  <p className="text-sm sm:text-base text-slate-100 font-serif italic leading-relaxed">
+                    "{teamVibeCheck.vibeDescription}"
+                  </p>
+
+                  <div className="p-3 rounded-xl bg-purple-950/50 border border-purple-500/25 flex items-center gap-2.5 text-xs text-purple-200">
+                    <Zap className="w-4 h-4 text-amber-300 shrink-0" />
+                    <span><strong>Collective Focus:</strong> {teamVibeCheck.collectiveFocus}</span>
+                  </div>
+                </div>
+
+                {/* Planetary Dasha Distribution across the Squad */}
+                <div className="p-4 sm:p-5 rounded-2xl bg-slate-900/70 border border-indigo-500/30 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black uppercase tracking-wider text-indigo-300 flex items-center gap-1.5">
+                      <Layers className="w-3.5 h-3.5 text-indigo-400" />
+                      <span>Active Dasha Lord Distribution Across Team</span>
+                    </span>
+                    <span className="text-[10px] font-mono text-slate-400">
+                      {teamVibeCheck.memberEnergies.length} Members Synchronized
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                    {teamVibeCheck.activeDashaDistribution.map((dist) => (
+                      <div 
+                        key={dist.lord}
+                        className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 hover:border-purple-500/50 transition shadow-inner space-y-1"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-black text-white flex items-center gap-1">
+                            <span style={{ color: dist.color }}>{dist.glyph}</span>
+                            <span>{dist.lord}</span>
+                          </span>
+                          <span className="text-xs font-bold text-amber-300">
+                            {dist.count} {dist.count === 1 ? 'member' : 'members'}
+                          </span>
+                        </div>
+                        <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full rounded-full transition-all duration-500"
+                            style={{ 
+                              width: `${dist.percentage}%`,
+                              backgroundColor: dist.color
+                            }}
+                          />
+                        </div>
+                        <div className="text-[10px] text-slate-400 font-mono text-right">
+                          {dist.percentage}% of squad
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Team Members Individual Dasha Energetic Alignment Grid */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                  <Users className="w-5 h-5 text-indigo-500" />
+                  <span>Team Members' Current Dasha Energetic Vibe</span>
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Real-time Vimshottari Mahadasha & Antardasha calculation for every team member.
+                </p>
+              </div>
+              <span className="text-xs font-mono text-purple-400 hidden sm:inline">
+                Team Energy Score: {teamVibeCheck.teamEnergyScore}%
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {teamVibeCheck.memberEnergies.map((mEnergy) => {
+                const m = mEnergy.member;
+                const photo = formatProfileImageUrl(m.imageUrl) || getMemberPhotoUrl(m);
+                const isCurrentActive = (m.id || m.sl) === (activeCelebrant?.id || activeCelebrant?.sl);
+
+                return (
+                  <div
+                    key={m.id || m.sl || m.name}
+                    onClick={() => {
+                      setSelectedMemberId(m.id || m.sl);
+                      setSelectedDetailPrediction({
+                        category: `Astrological Karmic Insights • ${m.name}`,
+                        title: `${m.name}'s Current Dasha: ${mEnergy.currentDasha} Era`,
+                        badge: `${mEnergy.glyph} ${mEnergy.statusBadge} (${mEnergy.energyScore}% Energy)`,
+                        timeframe: `Active Period: ${mEnergy.startDate} – ${mEnergy.endDate}`,
+                        karmicImpact: `Governed by ${mEnergy.mahadashaLord} Mahadasha and ${mEnergy.antardashaLord} Antardasha in accordance with Lahiri Sidereal ephemeris calculations.`,
+                        plainEnglishExplanation: `${m.name} is navigating a vital ${mEnergy.theme.toLowerCase()} life era. ${mEnergy.karmicVibe}. Their personal vitality index stands at an auspicious ${mEnergy.energyScore}%, meaning initiatives started in this window carry steady momentum, heightened clarity, and harmonious reception from teammates and leaders.`,
+                        realLifeOutcomes: [
+                          `Active ${mEnergy.mahadashaLord} planetary cycle amplifying leadership resonance and strategic intuition.`,
+                          `Sub-phase under ${mEnergy.antardashaLord} Antardasha unlocking breakthrough results through ${mEnergy.endDate}.`,
+                          `Harmonious team energy contribution boosting collective squad velocity by ${mEnergy.energyScore}%.`,
+                          `Celebrated milestone era aligning with personal aspirations and organizational milestones.`
+                        ],
+                        iconType: 'forecast'
+                      });
+                    }}
+                    className={`rounded-2xl p-5 border transition-all duration-300 tarot-card-3d shimmer-glare flex flex-col justify-between cursor-pointer group ${
+                      isCurrentActive
+                        ? 'bg-gradient-to-b from-slate-900 via-indigo-950 to-slate-950 border-purple-400 shadow-xl shadow-purple-500/20 text-white ring-2 ring-purple-400/80'
+                        : 'bg-white dark:bg-slate-900/90 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-800 hover:border-purple-400/80 shadow-xs'
+                    }`}
+                  >
+                    <div className="space-y-3">
+                      {/* Header: Member Avatar, Name & Dasha Lord Glyph */}
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white dark:border-slate-800 shadow-md bg-slate-800 flex items-center justify-center text-sm font-black text-white shrink-0">
+                            {photo ? (
+                              <img src={photo} alt={m.name} className="w-full h-full object-cover" />
+                            ) : (
+                              m.name.charAt(0)
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <h4 className="text-sm font-black truncate leading-tight flex items-center gap-1 group-hover:text-purple-300 transition">
+                              <span className="truncate">{m.name}</span>
+                              {isCurrentActive && (
+                                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block shrink-0" />
+                              )}
+                            </h4>
+                            <p className="text-[11px] text-slate-400 truncate mt-0.5">
+                              🎂 {m.birthday || 'Date TBD'}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Planetary Glyph */}
+                        <div 
+                          className="w-9 h-9 rounded-xl flex items-center justify-center text-base font-bold shadow-xs shrink-0"
+                          style={{ 
+                            backgroundColor: `${mEnergy.planetColor}25`,
+                            color: mEnergy.planetColor,
+                            border: `1px solid ${mEnergy.planetColor}60`
+                          }}
+                          title={`Governed by ${mEnergy.mahadashaLord}`}
+                        >
+                          <span>{mEnergy.glyph}</span>
+                        </div>
+                      </div>
+
+                      {/* Dasha Period Pill */}
+                      <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-mono text-purple-600 dark:text-purple-400 font-extrabold uppercase">
+                            Current Dasha Era
+                          </span>
+                          <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                            {mEnergy.energyScore}% Energy
+                          </span>
+                        </div>
+
+                        <div className="text-xs font-black text-slate-900 dark:text-white flex items-center gap-1.5">
+                          <span className="text-amber-500 dark:text-amber-400">{mEnergy.glyph}</span>
+                          <span>{mEnergy.currentDasha} Era</span>
+                          <span className="text-[10px] text-slate-400 font-normal">({mEnergy.theme})</span>
+                        </div>
+
+                        <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-snug">
+                          {mEnergy.karmicVibe}
+                        </p>
+
+                        <div className="text-[10px] font-mono text-slate-400 pt-1 border-t border-slate-200 dark:border-slate-700/60 flex items-center justify-between">
+                          <span>Window:</span>
+                          <span className="text-slate-700 dark:text-slate-300">{mEnergy.startDate} – {mEnergy.endDate}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Card Footer: Visual Trigger */}
+                    <div className="pt-3 mt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                      <span className="text-[10px] font-extrabold text-purple-600 dark:text-purple-400">
+                        {mEnergy.statusBadge}
+                      </span>
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-indigo-500/15 text-indigo-600 dark:text-indigo-300 border border-indigo-400/30 group-hover:bg-indigo-500/30 transition shadow-xs">
+                        <Info className="w-2.5 h-2.5 text-indigo-400" />
+                        <span>Click To Details</span>
+                        <ArrowUpRight className="w-2.5 h-2.5" />
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Collective Karmic Recommendations */}
+          <div className="p-6 rounded-3xl bg-slate-900/80 border border-purple-500/30 shadow-xl text-white space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <Sparkles className="w-5 h-5 text-amber-300 animate-pulse" />
+                <h3 className="text-base font-black text-white">Collective Karmic Synergy Recommendations</h3>
+              </div>
+              <span className="text-xs font-mono text-purple-300">Vedic Team Ephemeris</span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {teamVibeCheck.karmicRecommendations.map((rec, idx) => (
+                <div key={idx} className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-1.5 flex items-start gap-3">
+                  <span className="w-6 h-6 rounded-lg bg-purple-900/60 border border-purple-400/40 text-amber-300 flex items-center justify-center text-xs font-black shrink-0 mt-0.5">
+                    {idx + 1}
+                  </span>
+                  <p className="text-xs text-slate-200 leading-relaxed font-normal">
+                    {rec}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Interactive Night Sky Map Modal */}
       {showNightSkyModal && activeCelebrant && (
@@ -3310,6 +4076,270 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
           zodiac={zodiac}
           parsedBirthday={parsedBirthday}
         />
+      )}
+
+      {/* Interactive Prediction Detail Modal Overlay */}
+      {selectedDetailPrediction && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/85 backdrop-blur-md animate-in fade-in duration-300"
+          onClick={() => setSelectedDetailPrediction(null)}
+        >
+          <div 
+            className="relative w-full max-w-2xl bg-slate-950 border border-indigo-500/40 rounded-3xl shadow-[0_0_50px_rgba(99,102,241,0.25)] overflow-hidden flex flex-col max-h-[90vh] text-white animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="px-6 py-4 bg-slate-900/95 border-b border-indigo-500/30 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-indigo-950/80 border border-indigo-400/50 flex items-center justify-center text-amber-300 shadow-[0_0_15px_rgba(99,102,241,0.4)] shrink-0">
+                  {selectedDetailPrediction.iconType === 'career' && <Award className="w-5 h-5 text-amber-400" />}
+                  {selectedDetailPrediction.iconType === 'joy' && <Heart className="w-5 h-5 text-rose-400" />}
+                  {selectedDetailPrediction.iconType === 'financial' && <Star className="w-5 h-5 text-amber-400" />}
+                  {selectedDetailPrediction.iconType === 'friendship' && <Smile className="w-5 h-5 text-emerald-400" />}
+                  {selectedDetailPrediction.iconType === 'forecast' && <TrendingUp className="w-5 h-5 text-indigo-400" />}
+                </div>
+                <div>
+                  <div className="text-[10px] font-black uppercase tracking-wider text-indigo-300 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                    <span>{selectedDetailPrediction.category}</span>
+                  </div>
+                  <h3 className="text-base sm:text-lg font-black text-white flex items-center gap-2 flex-wrap">
+                    <span>{selectedDetailPrediction.title}</span>
+                    {selectedDetailPrediction.badge && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">
+                        {selectedDetailPrediction.badge}
+                      </span>
+                    )}
+                  </h3>
+                </div>
+              </div>
+              <div className="flex items-center gap-2.5 shrink-0 ml-2">
+                {/* Visual Symbol Icon / Celestial Lucky Talisman */}
+                {activeTalisman && (
+                  <div 
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-purple-950/70 border border-purple-400/40 shadow-xs"
+                    title={`Celestial Symbol: ${activeTalisman.name} • ${activeTalisman.meaning}`}
+                  >
+                    <span className="text-base leading-none animate-float-3d" role="img" aria-label={activeTalisman.name}>
+                      {activeTalisman.symbol}
+                    </span>
+                    <span className="text-[11px] font-black text-amber-300 hidden sm:inline">
+                      {activeTalisman.name}
+                    </span>
+                  </div>
+                )}
+                <button
+                  onClick={() => setSelectedDetailPrediction(null)}
+                  className="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center border border-slate-700 transition cursor-pointer"
+                  title="Close prediction details"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Content - Scrollable */}
+            <div className="p-6 overflow-y-auto space-y-5 text-sm">
+              {/* Plain-English Overview Callout */}
+              <div className="p-4 rounded-2xl bg-gradient-to-r from-indigo-950/60 to-purple-950/60 border border-indigo-500/40 space-y-2">
+                <div className="text-xs font-black uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
+                  <Sparkles className="w-4 h-4 text-amber-300" />
+                  <span>What This Means For You (In Plain Words)</span>
+                </div>
+                <p className="text-slate-200 leading-relaxed text-sm font-normal">
+                  {selectedDetailPrediction.plainEnglishExplanation}
+                </p>
+              </div>
+
+              {/* Celestial Symbol & Personal Lucky Talisman */}
+              {activeTalisman && (
+                <div className="p-3.5 rounded-2xl bg-gradient-to-r from-purple-950/60 via-slate-900 to-indigo-950/60 border border-purple-500/30 flex items-center justify-between gap-3 shadow-xs">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-2xl bg-purple-900/60 border border-purple-400/50 flex items-center justify-center text-xl shadow-[0_0_12px_rgba(168,85,247,0.4)] shrink-0 animate-float-3d">
+                      <span role="img" aria-label={activeTalisman.name}>{activeTalisman.symbol}</span>
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-[10px] font-black uppercase tracking-wider text-purple-300 flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                        <span>Celestial Symbol & Personal Lucky Talisman</span>
+                      </div>
+                      <h4 className="text-sm font-black text-white flex items-center gap-2 truncate">
+                        <span>{activeTalisman.name}</span>
+                        <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-purple-500/20 text-purple-300 border border-purple-400/30">
+                          {activeTalisman.element} Element
+                        </span>
+                      </h4>
+                      <p className="text-[11px] text-slate-300 truncate mt-0.5">
+                        {activeTalisman.meaning} • <span className="text-amber-300 italic">{activeTalisman.blessing}</span>
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0 hidden sm:block">
+                    <span className="text-[10px] font-mono text-purple-400 block">Personal Symbol</span>
+                    <span className="text-xs font-bold text-white">Birth Date Aligned</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Timeframe & Karmic Influence Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-1">
+                  <div className="text-[11px] font-extrabold text-indigo-400 flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5" />
+                    <span>Exact Timeframe & Window</span>
+                  </div>
+                  <p className="text-xs font-semibold text-white">
+                    {selectedDetailPrediction.timeframe}
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-1">
+                  <div className="text-[11px] font-extrabold text-purple-400 flex items-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    <span>Astrological & Karmic Alignment</span>
+                  </div>
+                  <p className="text-xs font-semibold text-white">
+                    {selectedDetailPrediction.karmicImpact}
+                  </p>
+                </div>
+              </div>
+
+              {/* Real-Life Outcomes List */}
+              <div className="space-y-2">
+                <div className="text-xs font-black uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  <span>Specific Real-Life Outcomes & Milestones</span>
+                </div>
+                <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800/80 space-y-2.5">
+                  {selectedDetailPrediction.realLifeOutcomes.map((outcome, idx) => (
+                    <div key={idx} className="flex items-start gap-2.5 text-xs text-slate-200">
+                      <span className="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-300 flex items-center justify-center text-[10px] font-black shrink-0 mt-0.5 border border-emerald-500/40">
+                        {idx + 1}
+                      </span>
+                      <span className="leading-relaxed">{outcome}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Cosmic Lucky Numbers (Birth & Name Numerology) */}
+              <div className="space-y-2 pt-1 border-t border-slate-800">
+                <div className="text-xs font-black uppercase tracking-wider text-amber-300 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                    <span>Cosmic Lucky Numbers</span>
+                  </span>
+                  <span className="text-[10px] font-mono text-slate-400">Birth & Name Numerology</span>
+                </div>
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                  {activeLuckyNumbers.map((num, idx) => {
+                    const numberLabels = ['Life Path', 'Destiny', 'Catalyst', 'Soul Key', 'Power', 'Wealth'];
+                    return (
+                      <div 
+                        key={idx}
+                        className="p-2.5 rounded-xl bg-slate-900/90 border border-amber-500/30 text-center shadow-xs flex flex-col items-center justify-center space-y-0.5 hover:border-amber-400/60 transition group"
+                      >
+                        <span className="text-lg font-black text-amber-300 group-hover:scale-110 transition-transform">
+                          {num}
+                        </span>
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
+                          {numberLabels[idx % numberLabels.length]}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Zodiac Compatibility & Energetic Alignment */}
+              <div className="space-y-2.5 pt-1 border-t border-slate-800">
+                <div className="text-xs font-black uppercase tracking-wider text-indigo-300 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Heart className="w-3.5 h-3.5 text-rose-400" />
+                    <span>Zodiac Compatibility</span>
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-mono">
+                    {zodiac.name} ({zodiac.glyph}) • {zodiac.element} Element
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="text-[11px] font-bold text-slate-300 flex items-center justify-between">
+                    <span>Energetically Aligned Teammates This Month:</span>
+                    <span className="text-[10px] text-indigo-400 font-semibold">View Matches ({teamCompatibilityMatches.slice(0, 4).length})</span>
+                  </div>
+
+                  {teamCompatibilityMatches.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      {teamCompatibilityMatches.slice(0, 4).map((match, idx) => {
+                        const matchPhoto = match.member ? (formatProfileImageUrl(match.member.imageUrl) || getMemberPhotoUrl(match.member)) : '';
+                        return (
+                          <div 
+                            key={idx}
+                            onClick={() => {
+                              setSelectedMemberId(match.member.id || match.member.sl);
+                              setSelectedDetailPrediction(null);
+                            }}
+                            className="p-3 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-indigo-400/60 transition flex items-center justify-between gap-3 shadow-xs cursor-pointer group"
+                            title={`Switch to ${match.member.name}'s cosmic profile`}
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className="w-9 h-9 rounded-full overflow-hidden bg-slate-800 border border-indigo-400/40 flex items-center justify-center text-xs font-black text-white shrink-0 group-hover:border-indigo-300 transition">
+                                {matchPhoto ? (
+                                  <img src={matchPhoto} alt={match.member.name} className="w-full h-full object-cover" />
+                                ) : (
+                                  match.member.name.charAt(0)
+                                )}
+                              </div>
+                              <div className="min-w-0">
+                                <div className="text-xs font-black text-white truncate flex items-center gap-1 group-hover:text-indigo-200 transition">
+                                  <span>{match.member.name}</span>
+                                  <span className="text-[10px] text-amber-300" title={match.sign}>{match.glyph}</span>
+                                </div>
+                                <div className="text-[10px] text-slate-400 truncate">
+                                  {match.sign} • {match.alignmentReason}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="text-right shrink-0">
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                                {match.score}% Match
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-400 italic">No other team members available to compare.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-3.5 bg-slate-900/90 border-t border-slate-800 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs text-slate-400">
+                <span>
+                  Personalized forecast for <strong className="text-slate-200">{activeCelebrant?.name}</strong>
+                </span>
+                {activeTalisman && (
+                  <span className="hidden sm:inline-flex items-center gap-1 text-[11px] text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
+                    <span role="img" aria-label={activeTalisman.name}>{activeTalisman.symbol}</span>
+                    <span>{activeTalisman.name}</span>
+                  </span>
+                )}
+              </div>
+              <button
+                onClick={() => setSelectedDetailPrediction(null)}
+                className="px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white transition cursor-pointer shadow-md"
+              >
+                Close & Return
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
