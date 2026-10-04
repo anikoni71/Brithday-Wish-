@@ -32,8 +32,18 @@ import {
   X,
   Info,
   Users,
-  Gauge
+  Gauge,
+  Gem
 } from 'lucide-react';
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid
+} from 'recharts';
 import { TeamMember } from '../types';
 import { parseBirthdayDate, getDaysUntilBirthday, MONTH_NAMES } from '../utils/dateUtils';
 import { formatProfileImageUrl, getMemberPhotoUrl } from '../utils/imageUtils';
@@ -43,7 +53,10 @@ import {
   CompatibilityMatch, 
   LuckyTalisman,
   TeamEnergyVibeCheck,
-  MemberDashaEnergy 
+  MemberDashaEnergy,
+  PersonalLuckyCharm,
+  PersonalLuckyGemstone,
+  MonthlyEnergyFlowPoint
 } from '../services/AstrologyDataService';
 
 export interface MemberAstrologyDestiny {
@@ -2182,6 +2195,31 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
     return AstrologyDataService.calculateTeamEnergyVibeCheck(members);
   }, [members]);
 
+  // Personal Lucky Charm based on birth month
+  const personalLuckyCharm = useMemo<PersonalLuckyCharm>(() => {
+    return AstrologyDataService.getPersonalLuckyCharm(activeCelebrant?.birthday || parsedBirthday.month);
+  }, [activeCelebrant?.birthday, parsedBirthday.month]);
+
+  // Personal Lucky Gemstone based on birth date
+  const personalLuckyGemstone = useMemo<PersonalLuckyGemstone>(() => {
+    return AstrologyDataService.getPersonalLuckyGemstone(activeCelebrant?.birthday);
+  }, [activeCelebrant?.birthday]);
+
+  // Zodiac Sign and Element for detail modal
+  const modalZodiac = useMemo(() => {
+    return AstrologyDataService.getZodiacSignAndElement(activeCelebrant?.birthday);
+  }, [activeCelebrant?.birthday]);
+
+  // Next month trend and peak month for Monthly Karmic Trend summary card
+  const nextMonthTrend = useMemo(() => {
+    return teamVibeCheck.monthlyEnergyFlow?.[1] || teamVibeCheck.monthlyEnergyFlow?.[0];
+  }, [teamVibeCheck.monthlyEnergyFlow]);
+
+  const peakEnergyMonth = useMemo(() => {
+    if (!teamVibeCheck.monthlyEnergyFlow || teamVibeCheck.monthlyEnergyFlow.length === 0) return null;
+    return [...teamVibeCheck.monthlyEnergyFlow].sort((a, b) => b.energyScore - a.energyScore)[0];
+  }, [teamVibeCheck.monthlyEnergyFlow]);
+
   return (
     <div id="month-of-fortune-container" className="space-y-8 pb-16 animate-in fade-in duration-500">
       {/* =========================================================================
@@ -3908,6 +3946,168 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
             </div>
           </div>
 
+          {/* =========================================================================
+              Monthly Energy Flow Graph (12-Month Collective Dasha Trends via Recharts)
+              ========================================================================= */}
+          <div className="p-5 sm:p-6 rounded-3xl bg-slate-900/80 border border-indigo-500/30 shadow-xl text-white space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <div className="flex items-center gap-2">
+                  <Activity className="w-5 h-5 text-indigo-400" />
+                  <h3 className="text-base sm:text-lg font-black text-white">Monthly Energy Flow</h3>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">
+                    12-Month Horizon
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Mapping collective Vimshottari Dasha periods across all team members to track high & low energy cycles.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 text-xs font-mono">
+                <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>Peak: {peakEnergyMonth ? `${peakEnergyMonth.month} (${peakEnergyMonth.energyScore}%)` : '96%'}</span>
+                </span>
+              </div>
+            </div>
+
+            <div className="h-64 sm:h-72 w-full pt-2">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart
+                  data={teamVibeCheck.monthlyEnergyFlow}
+                  margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                >
+                  <defs>
+                    <linearGradient id="energyGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#818cf8" stopOpacity={0.5} />
+                      <stop offset="95%" stopColor="#c084fc" stopOpacity={0.02} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.4} vertical={false} />
+                  <XAxis
+                    dataKey="month"
+                    stroke="#94a3b8"
+                    fontSize={11}
+                    tickLine={false}
+                    axisLine={{ stroke: '#334155' }}
+                  />
+                  <YAxis
+                    domain={[70, 100]}
+                    stroke="#94a3b8"
+                    fontSize={11}
+                    tickLine={false}
+                    axisLine={{ stroke: '#334155' }}
+                    tickFormatter={(v) => `${v}%`}
+                  />
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        const data: MonthlyEnergyFlowPoint = payload[0].payload;
+                        return (
+                          <div className="p-3 rounded-xl bg-slate-950/95 border border-indigo-400/50 shadow-2xl backdrop-blur-md text-white text-xs space-y-1.5 z-50">
+                            <div className="flex items-center justify-between gap-3">
+                              <span className="font-black text-white text-sm">{data.fullMonth || data.month}</span>
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-500/20 text-purple-300 border border-purple-400/30">
+                                {data.trend}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2 text-indigo-300">
+                              <span className="text-base font-bold text-amber-300">{data.energyScore}%</span>
+                              <span>Team Energy Score</span>
+                            </div>
+                            <div className="text-[11px] text-slate-300 flex items-center justify-between gap-2 pt-1 border-t border-slate-800">
+                              <span>Dominant Dasha Lord:</span>
+                              <span className="text-amber-300 font-bold">{data.dominantGlyph} {data.dominantLord}</span>
+                            </div>
+                            <p className="text-[10px] text-slate-400 italic">
+                              {data.summary}
+                            </p>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="energyScore"
+                    stroke="#818cf8"
+                    strokeWidth={3}
+                    fill="url(#energyGradient)"
+                    dot={{ stroke: '#c084fc', strokeWidth: 2, r: 4, fill: '#0f172a' }}
+                    activeDot={{ stroke: '#fbbf24', strokeWidth: 2, r: 6, fill: '#818cf8' }}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* =========================================================================
+              Monthly Karmic Trend Summary Card (Peak High-Energy Periods for Coming Month)
+              ========================================================================= */}
+          <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-slate-900/90 via-indigo-950/70 to-slate-900/90 border border-purple-500/30 shadow-xl text-white space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <Sparkles className="w-5 h-5 text-amber-300 animate-pulse" />
+                <h3 className="text-base font-black text-white">Monthly Karmic Trend</h3>
+              </div>
+              <span className="text-xs font-mono text-purple-300">
+                Peak Energy Forecast
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-1">
+                <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">
+                  Coming Month Trajectory
+                </span>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-lg sm:text-xl font-black text-amber-300">
+                    {nextMonthTrend?.month || 'Upcoming Month'}
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/20 text-purple-300 border border-purple-400/30">
+                    {nextMonthTrend?.energyScore || 90}% Energy
+                  </span>
+                </div>
+                <p className="text-xs text-slate-300 mt-1 leading-snug">
+                  Governed by {nextMonthTrend?.dominantLord} ({nextMonthTrend?.dominantGlyph}) • {nextMonthTrend?.trend}.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-1">
+                <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">
+                  Peak Team High-Energy Window
+                </span>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-lg sm:text-xl font-black text-emerald-400">
+                    {peakEnergyMonth?.fullMonth || 'Peak Horizon'}
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+                    {peakEnergyMonth?.energyScore || 95}% Peak
+                  </span>
+                </div>
+                <p className="text-xs text-slate-300 mt-1 leading-snug">
+                  Prime window for major releases, architectural launches, and high-trust collaborations.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-1">
+                <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">
+                  Collective Dasha Alignment
+                </span>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-base font-black text-white">
+                    {teamVibeCheck.dominantDashaLord} Mahadasha Era
+                  </span>
+                  <span className="text-lg text-amber-300">{teamVibeCheck.dominantDashaGlyph}</span>
+                </div>
+                <p className="text-xs text-slate-300 mt-1 leading-snug">
+                  Optimal synchronicity with {teamVibeCheck.activeDashaDistribution[0]?.percentage || 40}% of team members anchored in expansive ruling houses.
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* Team Members Individual Dasha Energetic Alignment Grid */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -4110,10 +4310,49 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
                         {selectedDetailPrediction.badge}
                       </span>
                     )}
+                    {modalZodiac && (
+                      <>
+                        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-900/60 text-purple-200 border border-purple-400/30">
+                          {modalZodiac.glyph} {modalZodiac.sign}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-cyan-950/60 text-cyan-200 border border-cyan-400/30">
+                          {modalZodiac.element} Element
+                        </span>
+                      </>
+                    )}
                   </h3>
                 </div>
               </div>
-              <div className="flex items-center gap-2.5 shrink-0 ml-2">
+              <div className="flex items-center gap-2 flex-wrap shrink-0 ml-2">
+                {/* Personal Lucky Charm Emoji-based Badge */}
+                {personalLuckyCharm && (
+                  <div 
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-amber-500/15 border border-amber-400/40 text-amber-200 shadow-xs cursor-default"
+                    title={`Personal Lucky Charm (${personalLuckyCharm.monthName}): ${personalLuckyCharm.charmName} • ${personalLuckyCharm.meaning}`}
+                  >
+                    <span className="text-base leading-none" role="img" aria-label={personalLuckyCharm.charmName}>
+                      {personalLuckyCharm.emoji}
+                    </span>
+                    <span className="text-[11px] font-black text-amber-300 hidden sm:inline">
+                      {personalLuckyCharm.charmName}
+                    </span>
+                  </div>
+                )}
+
+                {/* Personal Lucky Gemstone Badge / Icon */}
+                {personalLuckyGemstone && (
+                  <div 
+                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl ${personalLuckyGemstone.bgColor} border ${personalLuckyGemstone.borderColor} ${personalLuckyGemstone.textColor} shadow-xs cursor-default`}
+                    title={`Personal Lucky Gemstone: ${personalLuckyGemstone.name} (${personalLuckyGemstone.sanskritName}) • ${personalLuckyGemstone.benefits}`}
+                  >
+                    <Gem className="w-3.5 h-3.5" style={{ color: personalLuckyGemstone.color }} />
+                    <span className="text-xs leading-none">{personalLuckyGemstone.glyph}</span>
+                    <span className="text-[11px] font-black hidden sm:inline">
+                      {personalLuckyGemstone.name}
+                    </span>
+                  </div>
+                )}
+
                 {/* Visual Symbol Icon / Celestial Lucky Talisman */}
                 {activeTalisman && (
                   <div 
@@ -4178,6 +4417,54 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
                     <span className="text-[10px] font-mono text-purple-400 block">Personal Symbol</span>
                     <span className="text-xs font-bold text-white">Birth Date Aligned</span>
                   </div>
+                </div>
+              )}
+
+              {/* Personal Lucky Gemstone & Lucky Charm Feature Card */}
+              {(personalLuckyGemstone || personalLuckyCharm) && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {personalLuckyGemstone && (
+                    <div className={`p-3.5 rounded-2xl ${personalLuckyGemstone.bgColor} border ${personalLuckyGemstone.borderColor} space-y-1.5 shadow-xs`}>
+                      <div className="flex items-center justify-between">
+                        <div className="text-[10px] font-black uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
+                          <Gem className="w-3.5 h-3.5" style={{ color: personalLuckyGemstone.color }} />
+                          <span>Lucky Gemstone</span>
+                        </div>
+                        <span className="text-[10px] font-mono text-slate-300">
+                          {personalLuckyGemstone.wearFinger}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg leading-none">{personalLuckyGemstone.glyph}</span>
+                        <span className="text-sm font-black text-white">{personalLuckyGemstone.name}</span>
+                        <span className="text-xs text-slate-400 font-serif italic">({personalLuckyGemstone.sanskritName})</span>
+                      </div>
+                      <p className="text-[11px] text-slate-200 leading-snug">
+                        {personalLuckyGemstone.benefits}
+                      </p>
+                    </div>
+                  )}
+
+                  {personalLuckyCharm && (
+                    <div className="p-3.5 rounded-2xl bg-amber-950/40 border border-amber-500/30 space-y-1.5 shadow-xs">
+                      <div className="flex items-center justify-between">
+                        <div className="text-[10px] font-black uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                          <span>Birth Month Charm</span>
+                        </div>
+                        <span className="text-[10px] font-mono text-amber-300">
+                          {personalLuckyCharm.monthName}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg leading-none" role="img" aria-label={personalLuckyCharm.charmName}>{personalLuckyCharm.emoji}</span>
+                        <span className="text-sm font-black text-white">{personalLuckyCharm.charmName}</span>
+                      </div>
+                      <p className="text-[11px] text-slate-200 leading-snug">
+                        {personalLuckyCharm.meaning}
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
 
