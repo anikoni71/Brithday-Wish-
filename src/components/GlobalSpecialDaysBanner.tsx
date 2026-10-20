@@ -56,8 +56,8 @@ export const GlobalSpecialDaysBanner: React.FC<GlobalSpecialDaysBannerProps> = (
       {/* Top Banner Bar */}
       <div className="p-4 sm:p-5 bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 text-white flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-400 to-orange-500 text-slate-950 flex items-center justify-center font-bold shadow-md shrink-0">
-            <Sparkles className="w-5 h-5 text-slate-950" />
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-400 to-orange-500 text-slate-950 flex items-center justify-center font-bold shadow-md shrink-0 festive-icon-cinematic festive-icon-floating festive-icon-shimmer festive-icon-glow-amber">
+            <Sparkles className="w-5 h-5 text-slate-950 animate-pulse [animation-duration:3s]" />
           </div>
           <div>
             <div className="flex items-center gap-2 flex-wrap">

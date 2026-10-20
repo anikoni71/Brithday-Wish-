@@ -11,6 +11,10 @@ export interface SpecialDay {
   description: string;
   greetingTheme: string;
   isFloating?: boolean; // Whether the date moves annually (e.g. Eid, Mother's Day, Poya, Diwali)
+  significance?: string; // Exact reason & spiritual significance
+  history?: string; // Historical background & origins
+  culturalTradition?: string; // Cultural & religious celebration practices
+  regionalNote?: string; // Bangladesh / regional cultural context
 }
 
 /**
@@ -700,6 +704,24 @@ export const GLOBAL_SPECIAL_DAYS: SpecialDay[] = [
     isFloating: true,
   },
   {
+    id: 'maghi-purnima',
+    name: "Maghi Purnima (মাঘী পূর্ণিমা - Mahamuni Pilgrimage Festival)",
+    shortName: "Maghi Purnima",
+    dateFormatted: "3 Mar",
+    month: 2,
+    day: 3,
+    icon: "☸️",
+    category: "festive",
+    badgeColor: "bg-amber-100 text-amber-950 border-amber-400 font-bold",
+    description: "Sacred full moon of Magha commemorating Lord Buddha's announcement of his impending Parinirvana, assembly of 1,250 Arahants, and the historic Mahamuni Mela in Chittagong, Bangladesh.",
+    greetingTheme: "Reflection on impermanence, Dhamma dedication, ancestral pilgrimage, and peaceful harmony.",
+    isFloating: true,
+    significance: "Marks Lord Buddha relinquishing His life momentum (Ayu-Sankhara Vissajjana) at Chapala Cetiya in Vaishali, announcing He would attain final Parinirvana in three months, urging disciples to be diligent and be islands unto themselves.",
+    history: "Also commemorates the spontaneous gathering of 1,250 enlightened Arahants at Veluvana Monastery where Lord Buddha delivered the fundamental code of monastic discipline (Ovada Patimokkha).",
+    culturalTradition: "Devotees observe the Eight Precepts (Ashta Sila), chant sacred suttas, and visit holy sites. Traditional fairs feature folk handicrafts, wooden toys, sweet delicacies (Batasa, Kadma), and spiritual discourses.",
+    regionalNote: "Celebrated with the historic Maghi Purnima Mela at Mahamuni Pahartali in Raozan, Chittagong, one of the oldest living Buddhist pilgrimage fairs in the Indian subcontinent."
+  },
+  {
     id: 'milarepa-day',
     name: "Milarepa Commemorative Day",
     shortName: "Milarepa Day",
@@ -906,6 +928,23 @@ export const GLOBAL_SPECIAL_DAYS: SpecialDay[] = [
     greetingTheme: "Cleansing renewal, filial respect, blessings of water, and vibrant joy."
   },
   {
+    id: 'bizhu-boisabi',
+    name: "Bizhu & Boisabi Festival (বৈসাবি ও বিজু উৎসব - Indigenous Buddhist New Year)",
+    shortName: "Bizhu Festival",
+    dateFormatted: "13 Apr",
+    month: 3,
+    day: 13,
+    icon: "🌺",
+    category: "festive",
+    badgeColor: "bg-rose-100 text-rose-950 border-rose-400 font-bold",
+    description: "The colorful three-day traditional New Year festival celebrated by Chakma (Bizhu), Marma (Sangrai), and Tripura (Baisu) Buddhist and indigenous communities in Bangladesh.",
+    greetingTheme: "Cultural renewal, cleansing of past hardships, floral devotion, and festive joy.",
+    significance: "Marks the close of the solar calendar year (Chaitra Sankranti) and the joyful arrival of the New Year, cleansing sorrow and inviting blessings of health, abundance, and peace.",
+    history: "An ancient traditional harvest and solar transition festival deeply integrated with Theravada Buddhist ethics of purification and respect for elders.",
+    culturalTradition: "Celebrated across three days: 'Phool Bizhu' (offering wild flowers to rivers and Buddha shrines at dawn), 'Mool Bizhu' (feasting on 'Pachon'—a sacred delicacy made from over 30 wild vegetables), and 'Gojjepojje' (social visits and seeking blessings from elders).",
+    regionalNote: "The grandest indigenous cultural festival in the Chittagong Hill Tracts (Rangamati, Bandarban, Khagrachhari) and Cox's Bazar, attracting cultural tourists from across Bangladesh."
+  },
+  {
     id: 'vaisakhi',
     name: "Vaisakhi (Baisakhi Harvest & Khalsa Day)",
     shortName: "Vaisakhi",
@@ -976,17 +1015,21 @@ export const GLOBAL_SPECIAL_DAYS: SpecialDay[] = [
   },
   {
     id: 'vesak-poya',
-    name: "Vesak Full Moon Poya (Buddha Purnima)",
-    shortName: "Vesak Poya",
+    name: "Buddha Purnima (বুদ্ধ পূর্ণিমা / Vesak - Bangladesh National Public Holiday)",
+    shortName: "Buddha Purnima",
     dateFormatted: "1 May",
     month: 4,
     day: 1,
     icon: "🪷",
     category: "festive",
     badgeColor: "bg-amber-100 text-amber-950 border-amber-400 font-bold",
-    description: "The most sacred Buddhist festival worldwide commemorating the Birth, Enlightenment, and Parinirvana of Gautama Buddha.",
-    greetingTheme: "Peace, wisdom, loving-kindness (Metta), compassion, and inner serenity.",
+    description: "The most sacred 'Thrice-Blessed Day' commemorating the Birth, Supreme Enlightenment (Buddhahood), and Mahaparinirvana of Gautama Buddha, observed as a National Public Holiday in Bangladesh.",
+    greetingTheme: "Peace, wisdom, loving-kindness (Metta), compassion, and universal harmony.",
     isFloating: true,
+    significance: "Celebrates the three most momentous milestones in the life of Gautama Buddha, inspiring humanity toward non-violence (Ahimsa), ethical purity, and supreme awakening.",
+    history: "Occurs on the full moon of Vaisakha (Boishakh). Over 2,600 years of living spiritual tradition honoring the historical teacher who illuminated the path out of suffering for all sentient beings.",
+    culturalTradition: "Devotees observe Pancha Sila & Ashta Sila, hoist colorful Buddhist flags, lead colorful Shovajatra (peace processions), light thousands of oil lamps, release captive birds/fish in symbolic compassion, and distribute Payesh (rice pudding).",
+    regionalNote: "An official National Public Holiday in Bangladesh with nationwide state greetings, television broadcasts, and vibrant interfaith harmony celebrations from Dhaka to the Chittagong Hill Tracts."
   },
   {
     id: 'national-nurses-day',
@@ -1267,6 +1310,24 @@ export const GLOBAL_SPECIAL_DAYS: SpecialDay[] = [
     isFloating: true,
   },
   {
+    id: 'ashadhi-purnima',
+    name: "Ashadhi Purnima (আষাঢ়ী পূর্ণিমা - বর্ষাবাস আরম্ভ / Dhammacakka Day)",
+    shortName: "Ashadhi Purnima",
+    dateFormatted: "28 Jul",
+    month: 6,
+    day: 28,
+    icon: "🪷",
+    category: "festive",
+    badgeColor: "bg-emerald-100 text-emerald-950 border-emerald-400 font-bold",
+    description: "Marks Prince Siddhartha's Great Renunciation, His First Sermon at Sarnath (Turning of the Dhamma Wheel), and the commencement of the three-month Vassavasa retreat in Bangladesh monasteries.",
+    greetingTheme: "The Middle Path, Four Noble Truths, moral commitment, and spiritual dedication.",
+    isFloating: true,
+    significance: "Marks four foundational milestones in Buddhism: Conception of the Bodhisattva, Great Renunciation, preaching of the Dhammacakkappavattana Sutta, and the onset of the three-month Vassa retreat.",
+    history: "Lord Buddha delivered His First Discourse to the group of five ascetics at Deer Park in Sarnath, setting in motion the Wheel of Truth (Dhammacakka) and establishing the Sangha.",
+    culturalTradition: "Devotees offer Vassika Satika (rain-retreat robes) to monks, resolve to abstain from negative actions, and commit to special meditation throughout the three months of Vassa.",
+    regionalNote: "Monasteries across Chittagong, Dhaka, and Hill Tracts hold solemn initiation ceremonies as monks take formal vows of three-month continuous monastic residence."
+  },
+  {
     id: 'friendship-day',
     name: "International Friendship Day",
     shortName: "Friendship Day",
@@ -1438,17 +1499,21 @@ export const GLOBAL_SPECIAL_DAYS: SpecialDay[] = [
   },
   {
     id: 'madhu-purnima',
-    name: "Madhu Purnima (Honey Full Moon Festival)",
+    name: "Madhu Purnima (Honey Full Moon / মধু পূর্ণিমা - Bangladesh Buddhist Festival)",
     shortName: "Madhu Purnima",
     dateFormatted: "25 Sep",
     month: 8,
     day: 25,
     icon: "🍯",
     category: "festive",
-    badgeColor: "bg-yellow-100 text-yellow-950 border-yellow-400 font-bold",
-    description: "Commemorating the retreat of the Buddha in the Parileyyaka forest where a monkey offered honeycomb and an elephant served water.",
-    greetingTheme: "Harmony, animal friendship, selfless service, sweet devotion, and reconciliation.",
+    badgeColor: "bg-amber-100 text-amber-950 border-amber-400 font-bold",
+    description: "Celebrated on the full moon of Bhadro across Bangladesh, commemorating Lord Buddha's retreat in the Parileyyaka forest where a monkey offered honeycomb and an elephant offered fresh water.",
+    greetingTheme: "Harmony, animal compassion, selfless service, sweet devotion, and reconciliation.",
     isFloating: true,
+    significance: "Celebrates reconciliation, spiritual unity, and unconditional loving-kindness. It reminds humanity to transcend sectarian discord and nurture selfless service to all living beings.",
+    history: "According to the Pali Tipitaka (Vinaya Pitaka & Dhammapada Atthakatha), when the monks in Kosambi became divided by disputes, Lord Buddha retired to the Parileyyaka forest for His 10th Vassavasa. An elephant named Parileyyaka faithfully served the Buddha with water and fruit, while a forest monkey joyfully offered a fresh honeycomb on a plantain leaf. The Buddha accepted both gifts, demonstrating that even wild creatures recognize purity and virtue.",
+    culturalTradition: "Devotees in Bangladesh dress in white, assemble at ancient and modern Viharas, chant sacred Paritta suttas, and offer jars of pure natural honey, fresh fruits, payesh (kheer), and medicines to the venerable Sangha.",
+    regionalNote: "One of the most joyous festivals celebrated throughout Chittagong, Cox's Bazar, Comilla, and Dhaka, uniting both Barua Buddhists and Hill Tracts communities in festive family gatherings."
   },
   {
     id: 'confucius-day',
@@ -1612,6 +1677,46 @@ export const GLOBAL_SPECIAL_DAYS: SpecialDay[] = [
     description: "Sacred Buddhist festival marking the conclusion of the three-month Vassana retreat and the offering of Kathina Cheewara robes to the Sangha.",
     greetingTheme: "Generosity (Dana), merit-making, monastic support, and joyful spiritual harmony.",
     isFloating: true,
+    significance: "Concludes the three-month Rains Retreat and initiates the sacred Kathina season of robe offerings, expressing gratitude to the monastic Sangha.",
+    history: "Rooted in the Vinaya Pitaka guidelines decreed by Gautama Buddha in the 5th century BCE at Jetavana monastery in Savatthi.",
+    culturalTradition: "Offering of robes, almsgiving, lighting oil lamps around stupas, and joyful chanting.",
+    regionalNote: "Celebrated across Theravada Buddhist communities in Bangladesh, Sri Lanka, Myanmar, and Thailand."
+  },
+  {
+    id: 'kathina-civara-dana',
+    name: "Kathina Civara Dana (কঠিন চীবর দান - Mahadana Robe Offering)",
+    shortName: "Kathina Civara Dana",
+    dateFormatted: "25 Oct",
+    month: 9,
+    day: 25,
+    icon: "👘",
+    category: "festive",
+    badgeColor: "bg-amber-100 text-amber-950 border-amber-400 font-bold",
+    description: "The grandest robe-offering festival in Bangladesh Buddhism (Mahadana), celebrated during the month following Pavarana, where lay devotees weave and offer the sacred Kathina robe.",
+    greetingTheme: "Supreme generosity (Dana), monastic support, boundless merit-making, and spiritual unity.",
+    isFloating: true,
+    significance: "Regarded as the greatest of all material offerings (Dana) in Theravada Buddhism. Monks who have successfully observed the three-month Vassavasa retreat receive the Kathina robe, which relieves them of certain Vinaya austerities and grants supreme karmic merit to donors.",
+    history: "Instituted by Lord Buddha after thirty virtuous monks from Pava, while journeying to Savatthi, were halted by monsoon floods at Saketa. Upon completing their retreat, they reached the Buddha doused in rain and their robes soaked with mud. Out of boundless compassion, Lord Buddha established the 'Kathina Atthavara' granting them the right to receive new robes.",
+    culturalTradition: "A single day and night tradition of spinning raw cotton, weaving on traditional looms ('Bain Kapor' in Chittagong Hill Tracts), sewing, and dyeing the saffron robe with natural jackfruit dye within 24 hours, followed by grand monastic chanting and communal feasts.",
+    regionalNote: "Celebrated across Bangladesh at famous monasteries such as Rajbana Vihara (Rangamati), Shakyamuni Buddhist Vihara (Dhaka), and hundreds of village viharas in Chittagong, drawing tens of thousands of devotees."
+  },
+  {
+    id: 'probarona-purnima',
+    name: "Probarona Purnima & Fanush Utsav (প্রবারণা পূর্ণিমা ও ফানুস উৎসব)",
+    shortName: "Probarona Purnima",
+    dateFormatted: "25 Oct",
+    month: 9,
+    day: 25,
+    icon: "🏮",
+    category: "festive",
+    badgeColor: "bg-orange-100 text-orange-950 border-orange-400 font-bold",
+    description: "The sacred conclusion of the three-month Buddhist Rains Retreat (Vassa) celebrated across Bangladesh with illumination, Buddha Puja, and the release of glowing sky lanterns (Fanush).",
+    greetingTheme: "Forgiveness, spiritual purity, mutual harmony, illumination, and peace.",
+    isFloating: true,
+    significance: "'Pavarana' signifies inviting constructive feedback and mutual forgiveness among monastics and lay devotees, eliminating grievances and renewing pure spiritual fellowship.",
+    history: "Commemorates Lord Buddha's descent from Tavatimsa Heaven to the city of Sankassa after expounding the Higher Dhamma (Abhidhamma) to his mother Maya Devi during the rains retreat.",
+    culturalTradition: "At dusk, thousands of vibrant handmade hot-air lanterns (Fanush) are lit and set soaring into the autumn night sky to worship the Chulamani Cetiya (where Lord Buddha's hair relic was enshrined). Temples are illuminated with thousands of oil lamps and floating paper boats with candles.",
+    regionalNote: "A national highlight in Bangladesh, especially at Kamalapur Dharmarajika Buddhist Vihara in Dhaka and throughout Chittagong, Cox's Bazar, and Rangamati, welcoming people of all faiths to share in the radiant sky celebration."
   },
   {
     id: 'halloween',
@@ -1846,14 +1951,32 @@ export function getSpecialDaysForYear(targetYear: number): SpecialDay[] {
 
   const list = GLOBAL_SPECIAL_DAYS.map((sd) => {
     if (sd.isFloating) {
-      if (scheduleForYear && scheduleForYear[sd.id]) {
-        const override = scheduleForYear[sd.id];
-        return {
-          ...sd,
-          month: override.month,
-          day: override.day,
-          dateFormatted: override.dateFormatted,
-        };
+      if (scheduleForYear) {
+        if (scheduleForYear[sd.id]) {
+          const override = scheduleForYear[sd.id];
+          return {
+            ...sd,
+            month: override.month,
+            day: override.day,
+            dateFormatted: override.dateFormatted,
+          };
+        }
+        if (sd.id === 'kathina-civara-dana' && scheduleForYear['kathina-pavarana']) {
+          const k = scheduleForYear['kathina-pavarana'];
+          return { ...sd, month: k.month, day: k.day, dateFormatted: k.dateFormatted };
+        }
+        if (sd.id === 'probarona-purnima' && scheduleForYear['kathina-pavarana']) {
+          const k = scheduleForYear['kathina-pavarana'];
+          return { ...sd, month: k.month, day: k.day, dateFormatted: k.dateFormatted };
+        }
+        if (sd.id === 'maghi-purnima' && scheduleForYear['magha-puja']) {
+          const m = scheduleForYear['magha-puja'];
+          return { ...sd, month: m.month, day: m.day, dateFormatted: m.dateFormatted };
+        }
+        if (sd.id === 'ashadhi-purnima' && scheduleForYear['asalha-puja']) {
+          const a = scheduleForYear['asalha-puja'];
+          return { ...sd, month: a.month, day: a.day, dateFormatted: a.dateFormatted };
+        }
       }
 
       // Dynamic fallback calculations for years beyond schedule table

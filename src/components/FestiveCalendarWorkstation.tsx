@@ -36,7 +36,11 @@ import {
   Wifi,
   Plus,
   Loader2,
-  ArrowRight
+  ArrowRight,
+  Compass,
+  BookOpen,
+  Heart,
+  Info
 } from 'lucide-react';
 import { TeamMember } from '../types';
 import {
@@ -93,6 +97,19 @@ export const FestiveCalendarWorkstation: React.FC<FestiveCalendarWorkstationProp
   const [viewMode, setViewMode] = useState<ViewMode>('cards');
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [copiedProposal, setCopiedProposal] = useState<boolean>(false);
+
+  // Interactive Festival Details Modal State
+  const [selectedFestivalDetail, setSelectedFestivalDetail] = useState<SpecialDay | null>(null);
+
+  // Helper to extract rich detailed festival history, reason & cultural significance
+  const getDetailedFestivalInfo = (sd: SpecialDay) => {
+    return {
+      significance: sd.significance || `The celebration of ${sd.name} centers on fostering ${sd.greetingTheme.toLowerCase()}, reminding us of our shared human values, mutual respect, and spiritual elevation.`,
+      history: sd.history || `Rooted in longstanding historical and cultural traditions, ${sd.name} has been commemorated for generations across communities, celebrating milestones of faith, cultural unity, and social harmony.`,
+      culturalTradition: sd.culturalTradition || `Celebrated with traditional prayer gatherings, special festive meals, acts of generosity (Dana), community goodwill, and warm exchanges of greetings among colleagues and families.`,
+      regionalNote: sd.regionalNote || `In Bangladesh and South Asia, this festive observance brings communities together across diverse cultural backgrounds in an atmosphere of warmth, respect, and celebratory joy.`
+    };
+  };
 
   // Festive Email state
   const [previewEmail, setPreviewEmail] = useState<PreviewEmailState | null>(null);
@@ -465,8 +482,8 @@ export const FestiveCalendarWorkstation: React.FC<FestiveCalendarWorkstationProp
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
           <div className="space-y-2 max-w-2xl">
             <div className="flex items-center gap-2.5 flex-wrap">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-400 to-orange-500 text-slate-950 flex items-center justify-center font-bold shadow-md shadow-amber-500/20">
-                <Globe className="w-5 h-5 text-slate-950" />
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-400 to-orange-500 text-slate-950 flex items-center justify-center font-bold shadow-md shadow-amber-500/20 festive-icon-cinematic festive-icon-floating festive-icon-shimmer festive-icon-glow-amber">
+                <Globe className="w-5 h-5 text-slate-950 animate-pulse [animation-duration:3s]" />
               </div>
               <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
                 Global Special Days & Festive Calendar
@@ -641,8 +658,8 @@ export const FestiveCalendarWorkstation: React.FC<FestiveCalendarWorkstationProp
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 mt-6 pt-6 border-t border-white/10">
           
           <div className="bg-white/5 border border-white/10 rounded-2xl p-3.5 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-400/20 text-amber-300 flex items-center justify-center font-bold">
-              <Calendar className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-xl bg-amber-400/20 text-amber-300 flex items-center justify-center font-bold festive-icon-cinematic festive-icon-floating festive-icon-shimmer festive-icon-glow-amber">
+              <Calendar className="w-5 h-5 transition-transform duration-300 hover:rotate-6" />
             </div>
             <div>
               <p className="text-[10px] font-bold text-slate-300 uppercase tracking-wider">Total Special Days</p>
@@ -651,8 +668,8 @@ export const FestiveCalendarWorkstation: React.FC<FestiveCalendarWorkstationProp
           </div>
 
           <div className="bg-white/5 border border-white/10 rounded-2xl p-3.5 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-400/20 text-emerald-300 flex items-center justify-center font-bold">
-              <Cake className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-xl bg-emerald-400/20 text-emerald-300 flex items-center justify-center font-bold festive-icon-cinematic festive-icon-floating festive-icon-shimmer festive-icon-glow-emerald [animation-delay:0.8s]">
+              <Cake className="w-5 h-5 transition-transform duration-300 hover:scale-110" />
             </div>
             <div>
               <p className="text-[10px] font-bold text-slate-300 uppercase tracking-wider">With Birthday Boys</p>
@@ -663,8 +680,8 @@ export const FestiveCalendarWorkstation: React.FC<FestiveCalendarWorkstationProp
           </div>
 
           <div className="bg-white/5 border border-white/10 rounded-2xl p-3.5 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-rose-400/20 text-rose-300 flex items-center justify-center font-bold">
-              <Sparkles className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-xl bg-rose-400/20 text-rose-300 flex items-center justify-center font-bold festive-icon-cinematic festive-icon-floating festive-icon-shimmer festive-icon-glow-rose [animation-delay:1.6s]">
+              <Sparkles className="w-5 h-5 transition-transform duration-300 hover:rotate-12" />
             </div>
             <div>
               <p className="text-[10px] font-bold text-slate-300 uppercase tracking-wider">Exact Day Matches</p>
@@ -673,8 +690,8 @@ export const FestiveCalendarWorkstation: React.FC<FestiveCalendarWorkstationProp
           </div>
 
           <div className="bg-white/5 border border-white/10 rounded-2xl p-3.5 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-indigo-400/20 text-indigo-300 flex items-center justify-center font-bold">
-              <Flame className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-xl bg-indigo-400/20 text-indigo-300 flex items-center justify-center font-bold festive-icon-cinematic festive-icon-floating festive-icon-shimmer festive-icon-glow-indigo [animation-delay:2.4s]">
+              <Flame className="w-5 h-5 transition-transform duration-300 hover:scale-110" />
             </div>
             <div>
               <p className="text-[10px] font-bold text-slate-300 uppercase tracking-wider">Celebration Score</p>
@@ -712,15 +729,17 @@ export const FestiveCalendarWorkstation: React.FC<FestiveCalendarWorkstationProp
               return (
                 <div
                   key={`festive-upcoming-${item.id}-${idx}`}
-                  className={`p-3.5 rounded-2xl border transition relative ${
+                  onClick={() => setSelectedFestivalDetail(item)}
+                  className={`p-3.5 rounded-2xl border transition relative cursor-pointer group hover:shadow-xs ${
                     isImminent
                       ? 'bg-amber-50/50 border-amber-300 shadow-xs'
                       : 'bg-white border-slate-200 hover:border-slate-300'
                   }`}
+                  title="Click to view festival reason, history & cultural significance"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2.5">
-                      <span className="text-2xl select-none">{item.icon}</span>
+                      <span className="text-2xl select-none inline-block festive-icon-cinematic festive-icon-floating">{item.icon}</span>
                       <div>
                         <h4 className="text-xs font-bold text-slate-900 leading-snug">
                           {item.name}
@@ -748,7 +767,7 @@ export const FestiveCalendarWorkstation: React.FC<FestiveCalendarWorkstationProp
                   <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs">
                     {hasCelebrants ? (
                       <div className="flex items-center gap-1 text-[11px] font-bold text-emerald-700 truncate">
-                        <Cake className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                        <Cake className="w-3.5 h-3.5 text-emerald-600 shrink-0 animate-pulse festive-icon-floating" />
                         <span className="truncate">
                           {matches.map((m) => m.member.name).join(', ')}
                         </span>
@@ -951,19 +970,21 @@ export const FestiveCalendarWorkstation: React.FC<FestiveCalendarWorkstationProp
               return (
                 <div
                   key={`festive-grid-${sd.id}-${sdIdx}`}
-                  className={`bg-white rounded-3xl p-6 border transition shadow-xs hover:shadow-md flex flex-col justify-between space-y-5 ${
+                  onClick={() => setSelectedFestivalDetail(sd)}
+                  className={`bg-white rounded-3xl p-6 border transition shadow-xs hover:shadow-md flex flex-col justify-between space-y-5 cursor-pointer group hover:border-amber-400 ${
                     hasExactMatch
                       ? 'border-amber-300 ring-2 ring-amber-400/20'
                       : hasCelebrants
                       ? 'border-emerald-300'
                       : 'border-slate-200'
                   }`}
+                  title="Click anywhere on card to view festival reason, historical background & significance"
                 >
                   {/* Top: Icon, Date, Title, Category Badge */}
                   <div className="space-y-3">
-                    <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start justify-between gap-3 flex-wrap sm:flex-nowrap">
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-3xl shadow-xs shrink-0 select-none">
+                        <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-3xl shadow-xs shrink-0 select-none festive-icon-cinematic festive-icon-floating festive-icon-shimmer hover:festive-icon-glow-amber">
                           {sd.icon}
                         </div>
                         <div>
@@ -980,11 +1001,25 @@ export const FestiveCalendarWorkstation: React.FC<FestiveCalendarWorkstationProp
                               </span>
                             )}
                           </div>
-                          <h3 className="text-base font-black text-slate-900 tracking-tight mt-1">
+                          <h3 className="text-base font-black text-slate-900 tracking-tight mt-1 group-hover:text-indigo-600 transition-colors">
                             {sd.name}
                           </h3>
                         </div>
                       </div>
+
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedFestivalDetail(sd);
+                        }}
+                        className="px-2.5 py-1.5 rounded-xl text-[11px] font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/80 flex items-center gap-1.5 transition cursor-pointer shrink-0 shadow-2xs hover:shadow-xs self-start"
+                        title="View complete reason, historical background, and religious significance"
+                      >
+                        <Info className="w-3.5 h-3.5 text-indigo-600 animate-pulse shrink-0" />
+                        <span className="hidden sm:inline">Festival Reason & History</span>
+                        <span className="sm:hidden">Reason & Details</span>
+                      </button>
                     </div>
 
                     <p className="text-xs text-slate-600 leading-relaxed">
@@ -1004,7 +1039,7 @@ export const FestiveCalendarWorkstation: React.FC<FestiveCalendarWorkstationProp
                   <div className="pt-4 border-t border-slate-100 space-y-3">
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-1.5">
-                        <Cake className="w-4 h-4 text-amber-500" />
+                        <Cake className="w-4 h-4 text-amber-500 animate-bounce [animation-duration:3s] festive-icon-floating" />
                         <span className="text-xs font-black text-slate-900 uppercase tracking-wider">
                           Birthday Boy(s) & Celebrants
                         </span>
@@ -1197,25 +1232,30 @@ export const FestiveCalendarWorkstation: React.FC<FestiveCalendarWorkstationProp
                 <div key={`festive-timeline-${sd.id}-${sdIdx}`} className="relative group">
                   {/* Timeline Dot Icon */}
                   <div
-                    className={`absolute -left-[35px] sm:-left-[43px] top-1 w-8 h-8 rounded-xl flex items-center justify-center text-base border-2 shadow-xs ${
+                    className={`absolute -left-[35px] sm:-left-[43px] top-1 w-8 h-8 rounded-xl flex items-center justify-center text-base border-2 shadow-xs festive-icon-cinematic festive-icon-floating festive-icon-shimmer ${
                       hasExactMatch
-                        ? 'bg-amber-400 border-white text-slate-950 ring-2 ring-amber-400'
+                        ? 'bg-amber-400 border-white text-slate-950 ring-2 ring-amber-400 festive-icon-glow-amber'
                         : hasCelebrants
-                        ? 'bg-emerald-500 border-white text-white'
+                        ? 'bg-emerald-500 border-white text-white festive-icon-glow-emerald'
                         : 'bg-slate-100 border-slate-300 text-slate-700'
                     }`}
                   >
                     {sd.icon}
                   </div>
 
-                  <div className="bg-slate-50/70 hover:bg-slate-50 rounded-2xl p-5 border border-slate-200 transition space-y-3">
+                  <div
+                    onClick={() => setSelectedFestivalDetail(sd)}
+                    className="bg-slate-50/70 hover:bg-slate-50 hover:border-amber-400 rounded-2xl p-5 border border-slate-200 transition space-y-3 cursor-pointer group"
+                    title="Click to view festival reason, history & cultural significance"
+                  >
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="px-2.5 py-0.5 rounded-md text-xs font-black bg-slate-900 text-white font-mono">
                           {sd.dateFormatted}
                         </span>
-                        <h4 className="text-sm font-bold text-slate-900">
-                          {sd.name}
+                        <h4 className="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors flex items-center gap-1.5">
+                          <span>{sd.name}</span>
+                          <Info className="w-3.5 h-3.5 text-indigo-500 opacity-70 group-hover:opacity-100 transition-opacity" />
                         </h4>
                         <span className={`px-2 py-0.2 rounded text-[10px] font-bold border ${sd.badgeColor}`}>
                           {sd.category}
@@ -1319,7 +1359,7 @@ export const FestiveCalendarWorkstation: React.FC<FestiveCalendarWorkstationProp
                 <div>
                   <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                     <div className="flex items-center gap-2">
-                      <span className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-700 font-black text-xs flex items-center justify-center">
+                      <span className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-700 font-black text-xs flex items-center justify-center festive-icon-cinematic festive-icon-floating shadow-xs">
                         {month.short}
                       </span>
                       <h4 className="text-sm font-bold text-slate-900">
@@ -1346,16 +1386,18 @@ export const FestiveCalendarWorkstation: React.FC<FestiveCalendarWorkstationProp
                         return (
                           <div
                             key={`month-${month.index}-sd-${sd.id}-${sdIdx}`}
-                            className={`p-2.5 rounded-xl border text-xs flex items-center justify-between gap-2 ${
+                            onClick={() => setSelectedFestivalDetail(sd)}
+                            className={`p-2.5 rounded-xl border text-xs flex items-center justify-between gap-2 cursor-pointer transition hover:shadow-2xs hover:border-amber-400 group ${
                               hasExact
                                 ? 'bg-amber-50 border-amber-300'
                                 : matches.length > 0
                                 ? 'bg-emerald-50/60 border-emerald-200'
-                                : 'bg-slate-50 border-slate-100'
+                                : 'bg-slate-50 border-slate-100 hover:bg-white'
                             }`}
+                            title="Click to view festival reason, history & cultural significance"
                           >
                             <div className="flex items-center gap-2 truncate">
-                              <span className="text-base select-none shrink-0">{sd.icon}</span>
+                              <span className="text-base select-none shrink-0 inline-block festive-icon-cinematic festive-icon-floating">{sd.icon}</span>
                               <div className="truncate">
                                 <span className="font-bold text-slate-900 block truncate">{sd.name}</span>
                                 <span className="text-[10px] text-slate-500 font-mono">{sd.dateFormatted}</span>

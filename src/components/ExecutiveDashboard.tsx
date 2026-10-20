@@ -772,21 +772,26 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
         />
       </motion.div>
 
-      {/* 3. TOP METRIC BENTO CARDS WITH INTEGRATED SPARKLINES */}
+      {/* 3. TOP METRIC BENTO CARDS WITH INTEGRATED SPARKLINES & CINEMATIC TELEMETRY */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
         {/* Card 1: Total Team Members */}
         <motion.div
           variants={itemVariants}
-          className="group relative rounded-xl bg-zinc-900/50 backdrop-blur-xl p-4 sm:p-5 border border-zinc-800/80 hover:border-zinc-700 transition-all duration-300 shadow-xl shadow-black/40 overflow-hidden"
+          className="group relative rounded-xl bg-zinc-900/50 backdrop-blur-xl p-4 sm:p-5 border border-zinc-800/80 hover:border-zinc-700 transition-all duration-300 shadow-xl shadow-black/40 overflow-hidden executive-card-cinematic executive-metric-1"
         >
-          <div className="flex items-center justify-between">
+          {/* Ambient Futuristic Telemetry Glow */}
+          <div className="absolute -top-10 -right-10 w-28 h-28 rounded-full bg-emerald-500/10 blur-2xl pointer-events-none" />
+          <div className="absolute bottom-1 right-2 w-1 h-1 rounded-full bg-emerald-400/40 animate-ping [animation-duration:3s] pointer-events-none" />
+          <div className="absolute top-2 left-1/3 w-1 h-1 rounded-full bg-cyan-400/30 animate-pulse pointer-events-none" />
+
+          <div className="relative z-10 flex items-center justify-between">
             <span className="text-[11px] font-mono font-medium tracking-wider text-zinc-400 uppercase">
               TOTAL TEAM
             </span>
             <Users className="w-4 h-4 text-zinc-400" />
           </div>
 
-          <div className="mt-3 flex items-end justify-between">
+          <div className="relative z-10 mt-3 flex items-end justify-between">
             <div>
               <div className="text-3xl font-extrabold tracking-tight text-white font-mono">
                 <CountUp value={totalMembers} />
@@ -807,20 +812,25 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
         {/* Card 2: Today's Celebrants */}
         <motion.div
           variants={itemVariants}
-          className={`group relative rounded-xl p-4 sm:p-5 backdrop-blur-xl border transition-all duration-300 shadow-xl shadow-black/40 overflow-hidden ${
+          className={`group relative rounded-xl p-4 sm:p-5 backdrop-blur-xl border transition-all duration-300 shadow-xl shadow-black/40 overflow-hidden executive-card-cinematic executive-metric-2 ${
             todayCelebrants.length > 0
-              ? 'bg-zinc-900/80 border-emerald-500/50 shadow-emerald-500/5'
+              ? 'bg-zinc-900/80 border-emerald-500/60 shadow-[0_0_25px_rgba(16,185,129,0.2)] ring-1 ring-emerald-500/30'
               : 'bg-zinc-900/50 border-zinc-800/80 hover:border-zinc-700'
           }`}
         >
-          <div className="flex items-center justify-between">
+          {/* Ambient Futuristic Telemetry Glow */}
+          <div className={`absolute -top-10 -right-10 w-28 h-28 rounded-full blur-2xl pointer-events-none ${todayCelebrants.length > 0 ? 'bg-emerald-500/20 animate-pulse' : 'bg-zinc-500/10'}`} />
+          <div className="absolute top-2 right-8 w-1.5 h-1.5 rounded-full bg-emerald-400/50 animate-pulse pointer-events-none" />
+          <div className="absolute bottom-2 left-2 w-1 h-1 rounded-full bg-emerald-400/30 animate-ping [animation-duration:2.5s] pointer-events-none" />
+
+          <div className="relative z-10 flex items-center justify-between">
             <span className="text-[11px] font-mono font-medium tracking-wider text-zinc-400 uppercase">
               TODAY'S CELEBRANTS
             </span>
-            <Cake className={`w-4 h-4 ${todayCelebrants.length > 0 ? 'text-emerald-400' : 'text-zinc-500'}`} />
+            <Cake className={`w-4 h-4 ${todayCelebrants.length > 0 ? 'text-emerald-400 animate-bounce' : 'text-zinc-500'}`} />
           </div>
 
-          <div className="mt-3 flex items-end justify-between">
+          <div className="relative z-10 mt-3 flex items-end justify-between">
             <div>
               <div className="text-3xl font-extrabold tracking-tight text-white font-mono flex items-center gap-2">
                 <CountUp value={todayCelebrants.length} />
@@ -850,16 +860,20 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
         {/* Card 3: 30-Day Lookahead */}
         <motion.div
           variants={itemVariants}
-          className="group relative rounded-xl bg-zinc-900/50 backdrop-blur-xl p-4 sm:p-5 border border-zinc-800/80 hover:border-zinc-700 transition-all duration-300 shadow-xl shadow-black/40 overflow-hidden"
+          className="group relative rounded-xl bg-zinc-900/50 backdrop-blur-xl p-4 sm:p-5 border border-zinc-800/80 hover:border-zinc-700 transition-all duration-300 shadow-xl shadow-black/40 overflow-hidden executive-card-cinematic executive-metric-3"
         >
-          <div className="flex items-center justify-between">
+          {/* Ambient Futuristic Telemetry Glow */}
+          <div className="absolute -top-10 -right-10 w-28 h-28 rounded-full bg-indigo-500/10 blur-2xl pointer-events-none" />
+          <div className="absolute bottom-2 left-4 w-1 h-1 rounded-full bg-indigo-400/40 animate-ping [animation-duration:4s] pointer-events-none" />
+
+          <div className="relative z-10 flex items-center justify-between">
             <span className="text-[11px] font-mono font-medium tracking-wider text-zinc-400 uppercase">
               30-DAY OUTLOOK
             </span>
             <Calendar className="w-4 h-4 text-zinc-400" />
           </div>
 
-          <div className="mt-3 flex items-end justify-between">
+          <div className="relative z-10 mt-3 flex items-end justify-between">
             <div>
               <div className="text-3xl font-extrabold tracking-tight text-white font-mono">
                 <CountUp value={upcoming30DaysCelebrants.length} />
@@ -880,16 +894,20 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
         {/* Card 4: Wish Dispatch Rate */}
         <motion.div
           variants={itemVariants}
-          className="group relative rounded-xl bg-zinc-900/50 backdrop-blur-xl p-4 sm:p-5 border border-zinc-800/80 hover:border-zinc-700 transition-all duration-300 shadow-xl shadow-black/40 overflow-hidden"
+          className="group relative rounded-xl bg-zinc-900/50 backdrop-blur-xl p-4 sm:p-5 border border-zinc-800/80 hover:border-zinc-700 transition-all duration-300 shadow-xl shadow-black/40 overflow-hidden executive-card-cinematic executive-metric-4"
         >
-          <div className="flex items-center justify-between">
+          {/* Ambient Futuristic Telemetry Glow */}
+          <div className="absolute -top-10 -right-10 w-28 h-28 rounded-full bg-emerald-500/10 blur-2xl pointer-events-none" />
+          <div className="absolute top-3 left-1/2 w-1 h-1 rounded-full bg-emerald-300/40 animate-pulse pointer-events-none" />
+
+          <div className="relative z-10 flex items-center justify-between">
             <span className="text-[11px] font-mono font-medium tracking-wider text-zinc-400 uppercase">
               DISPATCH RATE
             </span>
             <Send className="w-4 h-4 text-zinc-400" />
           </div>
 
-          <div className="mt-3 flex items-end justify-between">
+          <div className="relative z-10 mt-3 flex items-end justify-between">
             <div>
               <div className="text-3xl font-extrabold tracking-tight text-white font-mono">
                 <CountUp value={dispatchMetrics.completionRate} suffix="%" />
@@ -909,16 +927,20 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
         {/* Card 5: Engine Telemetry Status */}
         <motion.div
           variants={itemVariants}
-          className="group relative rounded-xl bg-zinc-900/50 backdrop-blur-xl p-4 sm:p-5 border border-zinc-800/80 hover:border-zinc-700 transition-all duration-300 shadow-xl shadow-black/40 overflow-hidden"
+          className="group relative rounded-xl bg-zinc-900/50 backdrop-blur-xl p-4 sm:p-5 border border-zinc-800/80 hover:border-zinc-700 transition-all duration-300 shadow-xl shadow-black/40 overflow-hidden executive-card-cinematic executive-metric-5"
         >
-          <div className="flex items-center justify-between">
+          {/* Ambient Futuristic Telemetry Glow */}
+          <div className="absolute -top-10 -right-10 w-28 h-28 rounded-full bg-emerald-500/15 blur-2xl pointer-events-none animate-pulse" />
+          <div className="absolute bottom-2 right-12 w-1.5 h-1.5 rounded-full bg-emerald-400/50 animate-ping [animation-duration:2.5s] pointer-events-none" />
+
+          <div className="relative z-10 flex items-center justify-between">
             <span className="text-[11px] font-mono font-medium tracking-wider text-zinc-400 uppercase">
               SYSTEM ENGINE
             </span>
             <Zap className="w-4 h-4 text-emerald-400" />
           </div>
 
-          <div className="mt-3 flex items-end justify-between">
+          <div className="relative z-10 mt-3 flex items-end justify-between">
             <div>
               <div className="flex items-center gap-1.5 text-sm font-bold text-emerald-400 font-mono">
                 <span className="relative flex h-2 w-2">
@@ -945,9 +967,14 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
         {/* Chart 1: Wish Delivery Lifecycle (Precision Donut) - 5 cols */}
         <motion.div
           variants={itemVariants}
-          className="lg:col-span-5 relative rounded-2xl bg-zinc-900/60 backdrop-blur-xl p-5 sm:p-6 border border-zinc-800/80 hover:border-zinc-700 shadow-xl shadow-black/60 flex flex-col justify-between"
+          className="lg:col-span-5 relative rounded-2xl bg-zinc-900/60 backdrop-blur-xl p-5 sm:p-6 border border-zinc-800/80 hover:border-zinc-700 shadow-xl shadow-black/60 flex flex-col justify-between executive-card-cinematic executive-chart-1 overflow-hidden"
         >
-          <div>
+          {/* Ambient Cybernetic Donut Glow & Telemetry Particles */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 rounded-full bg-emerald-500/8 blur-3xl pointer-events-none" />
+          <div className="absolute top-4 right-16 w-1.5 h-1.5 rounded-full bg-emerald-400/40 animate-ping [animation-duration:3.5s] pointer-events-none" />
+          <div className="absolute bottom-6 left-8 w-1 h-1 rounded-full bg-cyan-400/30 animate-pulse pointer-events-none" />
+
+          <div className="relative z-10">
             <div className="flex items-center justify-between mb-3">
               <div>
                 <h3 className="text-sm font-bold text-white uppercase tracking-wider font-mono">
@@ -956,7 +983,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
                 <p className="text-xs text-zinc-400">{currentYear} Annual Target Progress</p>
               </div>
 
-              <span className="px-2.5 py-1 rounded-full text-xs font-mono font-bold bg-zinc-950 text-emerald-400 border border-emerald-500/30">
+              <span className="px-2.5 py-1 rounded-full text-xs font-mono font-bold bg-zinc-950 text-emerald-400 border border-emerald-500/30 shadow-[0_0_12px_rgba(16,185,129,0.2)]">
                 {dispatchMetrics.completionRate}%
               </span>
             </div>
@@ -1026,10 +1053,10 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
           </div>
 
           {/* Breakdown Stats */}
-          <div className="grid grid-cols-2 gap-3 pt-3 border-t border-zinc-800/80 font-mono">
+          <div className="relative z-10 grid grid-cols-2 gap-3 pt-3 border-t border-zinc-800/80 font-mono">
             <div className="p-2.5 rounded-xl bg-zinc-950/60 border border-zinc-800/80">
               <div className="flex items-center gap-1.5 text-xs text-zinc-400">
-                <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span>
                 <span>Delivered</span>
               </div>
               <p className="text-lg font-bold text-white mt-1">{dispatchMetrics.sentCount}</p>
@@ -1050,9 +1077,14 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
         {/* Chart 2: Annual Birthday & Event Density (Area / Bar) - 7 cols */}
         <motion.div
           variants={itemVariants}
-          className="lg:col-span-7 relative rounded-2xl bg-zinc-900/60 backdrop-blur-xl p-5 sm:p-6 border border-zinc-800/80 hover:border-zinc-700 shadow-xl shadow-black/60 flex flex-col justify-between"
+          className="lg:col-span-7 relative rounded-2xl bg-zinc-900/60 backdrop-blur-xl p-5 sm:p-6 border border-zinc-800/80 hover:border-zinc-700 shadow-xl shadow-black/60 flex flex-col justify-between executive-card-cinematic executive-chart-2 overflow-hidden"
         >
-          <div>
+          {/* Ambient Density Glow & Telemetry Grid shimmer */}
+          <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-emerald-500/8 blur-3xl pointer-events-none" />
+          <div className="absolute top-3 left-1/3 w-1.5 h-1.5 rounded-full bg-emerald-400/35 animate-pulse pointer-events-none" />
+          <div className="absolute bottom-16 right-10 w-1 h-1 rounded-full bg-cyan-400/40 animate-ping [animation-duration:4s] pointer-events-none" />
+
+          <div className="relative z-10">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
               <div>
                 <h3 className="text-sm font-bold text-white uppercase tracking-wider font-mono">

@@ -475,25 +475,256 @@ html.dark table thead tr {
   will-change: box-shadow, border-color;
 }
 
-@keyframes shimmer-sweep-card {
+/* ==========================================================================
+   Magical Shimmer Hover Animation for MonthOfFortune Cards
+   ========================================================================== */
+@keyframes magical-shimmer-sweep {
   0% {
-    transform: translateX(-120%) skewX(-20deg);
+    transform: translateX(-150%) skewX(-20deg);
+    opacity: 0;
   }
-  30%, 100% {
+  30% {
+    opacity: 0.85;
+  }
+  100% {
     transform: translateX(200%) skewX(-20deg);
+    opacity: 0;
   }
 }
 
-.fortune-card-hover {
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease-out;
+.tarot-card-3d,
+.magical-card-shimmer {
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease, border-color 0.35s ease;
 }
 
-.fortune-card-hover:hover {
-  transform: translateY(-4px) scale(1.015);
+.tarot-card-3d::after,
+.magical-card-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.04) 20%,
+    rgba(168, 85, 247, 0.22) 50%,
+    rgba(251, 191, 36, 0.18) 70%,
+    transparent 100%
+  );
+  transform: translateX(-150%) skewX(-20deg);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 15;
 }
 
+.tarot-card-3d:hover::after,
+.magical-card-shimmer:hover::after {
+  animation: magical-shimmer-sweep 1.3s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
 
+.tarot-card-3d:hover,
+.magical-card-shimmer:hover {
+  transform: translateY(-3px) scale(1.01);
+  box-shadow: 0 12px 28px -6px rgba(168, 85, 247, 0.25), 0 0 16px rgba(129, 140, 248, 0.2);
+}
 
+/* ==========================================================================
+   Executive Command Center Futuristic Cinematic Animation Effects
+   ========================================================================== */
+@keyframes telemetry-radar-beam {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.95;
+  }
+  60% {
+    opacity: 0.95;
+  }
+  100% {
+    transform: translateX(200%);
+    opacity: 0;
+  }
+}
 
+@keyframes telemetry-pulse-ambient {
+  0%, 100% {
+    opacity: 0.12;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.28;
+    transform: scale(1.06);
+  }
+}
 
+.executive-card-cinematic {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.executive-card-cinematic:hover {
+  transform: translateY(-2.5px);
+  box-shadow: 0 16px 32px -8px rgba(0, 0, 0, 0.75), 0 0 22px rgba(16, 185, 129, 0.22);
+  border-color: rgba(16, 185, 129, 0.5) !important;
+}
+
+/* Futuristic top laser scanning telemetry beam */
+.executive-card-cinematic::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1.5px;
+  background: linear-gradient(90deg, transparent 0%, rgba(16, 185, 129, 0.1) 20%, #10b981 50%, #38bdf8 75%, transparent 100%);
+  transform: translateX(-100%);
+  animation: telemetry-radar-beam 4.5s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 20;
+}
+
+/* Stagger animations across Executive cards */
+.executive-metric-1::before { animation-delay: 0s; }
+.executive-metric-2::before { animation-delay: 0.8s; }
+.executive-metric-3::before { animation-delay: 1.6s; }
+.executive-metric-4::before { animation-delay: 2.4s; }
+.executive-metric-5::before { animation-delay: 3.2s; }
+.executive-chart-1::before { animation-delay: 0.6s; animation-duration: 5.5s; }
+.executive-chart-2::before { animation-delay: 2.2s; animation-duration: 5.5s; }
+
+/* ==========================================================================
+   Top Summary Metric Cards Cinematic Animation Effects
+   ========================================================================== */
+@keyframes metric-beam-sweep {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(200%);
+    opacity: 0;
+  }
+}
+
+.animate-metric-beam {
+  animation: metric-beam-sweep 4.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.metric-card-cinematic {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.metric-card-cinematic:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px -6px rgba(0, 0, 0, 0.08), 0 0 16px rgba(245, 158, 11, 0.12);
+}
+
+/* ==========================================================================
+   Global Special Days & Festive Calendar Cinematic Icon Effects
+   ========================================================================== */
+@keyframes festive-icon-float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-2.5px) rotate(1.2deg);
+  }
+}
+
+@keyframes festive-icon-pulse-glow {
+  0%, 100% {
+    opacity: 0.35;
+    transform: scale(0.96);
+  }
+  50% {
+    opacity: 0.75;
+    transform: scale(1.08);
+  }
+}
+
+@keyframes festive-icon-shimmer-sweep {
+  0% {
+    transform: translateX(-150%) rotate(25deg);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.85;
+  }
+  60% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translateX(200%) rotate(25deg);
+    opacity: 0;
+  }
+}
+
+.festive-icon-floating {
+  animation: festive-icon-float 3.8s ease-in-out infinite;
+}
+
+.festive-icon-cinematic {
+  position: relative;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.festive-icon-cinematic:hover {
+  transform: translateY(-3px) scale(1.08);
+}
+
+.festive-icon-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.festive-icon-shimmer::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    115deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.45) 50%,
+    transparent 65%
+  );
+  transform: translateX(-150%) rotate(25deg);
+  animation: festive-icon-shimmer-sweep 4.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.festive-icon-glow-amber {
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.35), 0 0 25px rgba(245, 158, 11, 0.15);
+}
+
+.festive-icon-glow-emerald {
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.35), 0 0 25px rgba(16, 185, 129, 0.15);
+}
+
+.festive-icon-glow-rose {
+  box-shadow: 0 0 14px rgba(244, 63, 94, 0.35), 0 0 25px rgba(244, 63, 94, 0.15);
+}
+
+.festive-icon-glow-indigo {
+  box-shadow: 0 0 14px rgba(99, 102, 241, 0.35), 0 0 25px rgba(99, 102, 241, 0.15);
+}
 

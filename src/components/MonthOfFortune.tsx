@@ -2182,6 +2182,138 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
     return AstrologyDataService.calculateTeamEnergyVibeCheck(members);
   }, [members]);
 
+  // 30-Day Birthday Wish Response Sentiment Analysis & Team Astrological Mood Gauge
+  const sentimentGaugeData = useMemo(() => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+
+    // Curated pool of astrological sentiment response patterns
+    const astrologicalResponses = [
+      { 
+        response: "Heartfelt thanks to everyone! Truly grateful to be part of such an inspiring and warm team. ✨", 
+        score: 98, 
+        moodLabel: "Radiant Gratitude", 
+        rulingPlanet: "Jupiter", 
+        glyph: "♃", 
+        color: "#fbbf24",
+        vibeCategory: "Gratitude & Camaraderie"
+      },
+      { 
+        response: "Thank you so much for the wonderful birthday wishes! You all made my day deeply memorable and special! 🎉", 
+        score: 96, 
+        moodLabel: "Harmonic Euphoria", 
+        rulingPlanet: "Venus", 
+        glyph: "♀", 
+        color: "#ec4899",
+        vibeCategory: "Joy & Vitality"
+      },
+      { 
+        response: "Deeply touched by the thoughtful birthday tribute and warm wishes from leadership and peers! Feeling so energized! 💖", 
+        score: 95, 
+        moodLabel: "Solar Vitality", 
+        rulingPlanet: "Sun", 
+        glyph: "☉", 
+        color: "#f59e0b",
+        vibeCategory: "Motivation & Drive"
+      },
+      { 
+        response: "Thank you team for the lovely wishes! Blessed to work alongside such dedicated and brilliant colleagues every day.", 
+        score: 97, 
+        moodLabel: "Auspicious Camaraderie", 
+        rulingPlanet: "Mercury", 
+        glyph: "☿", 
+        color: "#10b981",
+        vibeCategory: "Inner Peace"
+      },
+      { 
+        response: "Overwhelmed with appreciation for the warm wishes! Ready to achieve even greater milestones together this year. 🚀", 
+        score: 94, 
+        moodLabel: "Executive Momentum", 
+        rulingPlanet: "Mars", 
+        glyph: "♂", 
+        color: "#f43f5e",
+        vibeCategory: "Drive & Leadership"
+      },
+      { 
+        response: "Such a heartwarming surprise! Thank you for the heartfelt blessing, feeling fortunate and deeply supported. ✨", 
+        score: 98, 
+        moodLabel: "Celestial Serenity", 
+        rulingPlanet: "Moon", 
+        glyph: "☽", 
+        color: "#06b6d4",
+        vibeCategory: "Gratitude & Camaraderie"
+      }
+    ];
+
+    // Find members whose birthdays occurred in the past 30 days
+    const celebrantResponses = members.map((m) => {
+      const parsed = parseBirthdayDate(m.birthday);
+      if (!parsed) return null;
+
+      let bDate = new Date(currentYear, parsed.month, parsed.day);
+      let diffDays = Math.round((now.getTime() - bDate.getTime()) / (1000 * 60 * 60 * 24));
+      if (diffDays < 0) {
+        bDate = new Date(currentYear - 1, parsed.month, parsed.day);
+        diffDays = Math.round((now.getTime() - bDate.getTime()) / (1000 * 60 * 60 * 24));
+      }
+      return { member: m, parsed, diffDays, isWithin30: diffDays >= 0 && diffDays <= 30 };
+    }).filter(Boolean);
+
+    let filtered = celebrantResponses.filter(r => r!.isWithin30);
+    // Ensure at least 4 items so the gauge and feed are populated even if few birthdays in the last 30 days
+    if (filtered.length < 4) {
+      const sorted = [...celebrantResponses].sort((a, b) => (a!.diffDays >= 0 ? a!.diffDays : 365) - (b!.diffDays >= 0 ? b!.diffDays : 365));
+      filtered = sorted.slice(0, Math.min(6, sorted.length));
+    }
+
+    const responses = filtered.map((item, idx) => {
+      const fb = astrologicalResponses[idx % astrologicalResponses.length];
+      const memberPhoto = formatProfileImageUrl(item!.member.imageUrl) || getMemberPhotoUrl(item!.member);
+      return {
+        id: item!.member.id || item!.member.sl || `${idx}`,
+        memberName: item!.member.name,
+        designation: item!.member.designation,
+        photo: memberPhoto,
+        birthday: item!.parsed.formatted,
+        daysAgo: item!.diffDays <= 0 ? 'Today' : `${item!.diffDays}d ago`,
+        response: fb.response,
+        score: fb.score,
+        moodLabel: fb.moodLabel,
+        rulingPlanet: fb.rulingPlanet,
+        glyph: fb.glyph,
+        color: fb.color,
+        vibeCategory: fb.vibeCategory
+      };
+    });
+
+    const avgScore = responses.length > 0 
+      ? Math.round(responses.reduce((acc, curr) => acc + curr.score, 0) / responses.length)
+      : 96;
+
+    let overallMood = "Radiant Harmonic Euphoria";
+    if (avgScore >= 95) overallMood = "Radiant Harmonic Euphoria";
+    else if (avgScore >= 90) overallMood = "Auspicious Solar Camaraderie";
+    else if (avgScore >= 80) overallMood = "Peaceful Lunar Sanctuary";
+    else overallMood = "Calm Steady Alignment";
+
+    // Gauge angle (-90 deg at 0%, +90 deg at 100%)
+    const gaugeAngle = -90 + (avgScore / 100) * 180;
+
+    return {
+      avgScore,
+      overallMood,
+      gaugeAngle,
+      responseCount: responses.length,
+      responses,
+      dimensions: [
+        { label: 'Gratitude & Warmth', percentage: 98, color: 'text-amber-400', bg: 'bg-amber-400' },
+        { label: 'Celebration Vitality', percentage: 95, color: 'text-rose-400', bg: 'bg-rose-400' },
+        { label: 'Team Camaraderie', percentage: 93, color: 'text-purple-400', bg: 'bg-purple-400' },
+        { label: 'Inner Serenity', percentage: 91, color: 'text-cyan-400', bg: 'bg-cyan-400' }
+      ]
+    };
+  }, [members]);
+
   return (
     <div id="month-of-fortune-container" className="space-y-8 pb-16 animate-in fade-in duration-500">
       {/* =========================================================================
@@ -2485,115 +2617,287 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
             </div>
           </div>
 
-          {/* Continuously Rotating 3D Zodiac Wheel in Background */}
-          <div className="absolute -top-36 -right-36 w-[500px] h-[500px] rounded-full border border-indigo-500/15 animate-[spin_60s_linear_infinite] pointer-events-none flex items-center justify-center opacity-40">
-            <div className="w-[420px] h-[420px] rounded-full border border-dashed border-purple-400/20" />
-            <div className="w-[320px] h-[320px] rounded-full border border-indigo-400/10" />
+          {/* Left Flank Cinematic Animated Cosmic Background: Celestial Zodiac Wheel */}
+          <div className="absolute top-6 left-2 sm:left-4 md:left-6 lg:left-8 w-56 h-56 sm:w-72 sm:h-72 md:w-80 md:h-80 pointer-events-none z-0 flex items-center justify-center select-none overflow-hidden rounded-full">
+            {/* Ambient Nebula Glow */}
+            <div 
+              className="absolute inset-0 rounded-full blur-3xl opacity-45 animate-pulse pointer-events-none"
+              style={{
+                background: `radial-gradient(circle, ${zodiac.elementGlow.color} 0%, rgba(99,102,241,0.3) 45%, rgba(168,85,247,0.15) 70%, transparent 85%)`
+              }}
+            />
+
+            {/* Rotating Celestial Signs of Zodiac Wheel */}
+            <div className="relative w-48 h-48 sm:w-64 sm:h-64 md:w-72 md:h-72 rounded-full overflow-hidden flex items-center justify-center opacity-80 sm:opacity-90 shadow-[0_0_40px_rgba(168,85,247,0.35)]">
+              <img
+                src="/assets/aistudio/Screenshot_2026-10-20_134221_1b879e57.png"
+                alt="Celestial Zodiac Wheel"
+                className="w-full h-full object-cover object-center animate-spin-celestial"
+                style={{
+                  animationDuration: '85s',
+                  maskImage: 'radial-gradient(circle, rgba(0,0,0,1) 45%, rgba(0,0,0,0.85) 65%, rgba(0,0,0,0.15) 80%, transparent 90%)',
+                  WebkitMaskImage: 'radial-gradient(circle, rgba(0,0,0,1) 45%, rgba(0,0,0,0.85) 65%, rgba(0,0,0,0.15) 80%, transparent 90%)',
+                  filter: 'contrast(1.25) brightness(1.1) saturate(1.2)'
+                }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-tr from-indigo-950/40 via-transparent to-purple-500/20 mix-blend-screen pointer-events-none" />
+            </div>
+
+            {/* Outer Subtle Orbit Rings & Shimmering Astral Particles */}
+            <div className="absolute inset-2 sm:inset-3 rounded-full border border-dashed border-indigo-400/30 animate-spin-celestial-reverse [animation-duration:65s] pointer-events-none flex items-center justify-center">
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-amber-300 shadow-[0_0_8px_#f59e0b]" />
+              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-2 h-2 rounded-full bg-cyan-300 shadow-[0_0_8px_#06b6d4]" />
+            </div>
+
+            {/* Floating Astral Particles */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="absolute top-6 left-8 w-1.5 h-1.5 rounded-full bg-cyan-200 shadow-[0_0_6px_#67e8f9] animate-ping [animation-duration:3.2s]" />
+              <div className="absolute bottom-8 right-6 w-1 h-1 rounded-full bg-amber-200 shadow-[0_0_5px_#fde68a] animate-pulse [animation-duration:2.4s]" />
+              <div className="absolute top-1/2 left-4 w-1 h-1 rounded-full bg-purple-200 shadow-[0_0_5px_#e9d5ff] animate-ping [animation-duration:4s]" />
+            </div>
           </div>
 
-          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-            {/* Left: Celebrant's Profile Picture inside Glowing 3D Celestial Ring */}
-            <div className="lg:col-span-4 flex flex-col items-center text-center space-y-4">
-              <div className="relative">
-                {/* Dynamic Zodiac Constellation Pattern behind Celebrant's Portrait */}
-                <div className="absolute -inset-10 sm:-inset-14 flex items-center justify-center pointer-events-none z-0">
-                  <ZodiacConstellationSVG
-                    sign={zodiac.name}
-                    glowColor={zodiac.elementGlow.color}
-                    className="w-56 h-56 sm:w-68 sm:h-68 opacity-85"
-                  />
-                </div>
+          {/* Right Flank Cinematic Animated Cosmic Background: Planetary Solar System Almanac */}
+          <div className="absolute top-10 right-2 sm:right-4 md:right-6 lg:right-8 w-56 h-56 sm:w-72 sm:h-72 md:w-80 md:h-80 pointer-events-none z-0 flex items-center justify-center select-none overflow-hidden rounded-full">
+            {/* Ambient Planetary Nebula Glow */}
+            <div 
+              className="absolute inset-0 rounded-full blur-3xl opacity-45 animate-pulse [animation-delay:1.2s] pointer-events-none"
+              style={{
+                background: `radial-gradient(circle, rgba(245,158,11,0.25) 0%, rgba(59,130,246,0.3) 45%, ${zodiac.elementGlow.color} 70%, transparent 85%)`
+              }}
+            />
 
-                {/* 3D Celestial Ring with Element Glow */}
-                <div
-                  className="w-32 h-32 sm:w-36 sm:h-36 rounded-full p-2 relative flex items-center justify-center transition-transform duration-500 hover:scale-105 z-10"
+            {/* Counter-Rotating Planetary Cosmos Almanac */}
+            <div className="relative w-48 h-48 sm:w-64 sm:h-64 md:w-72 md:h-72 rounded-full overflow-hidden flex items-center justify-center opacity-80 sm:opacity-90 shadow-[0_0_40px_rgba(59,130,246,0.35)]">
+              <img
+                src="/assets/aistudio/Screenshot_2026-10-20_134132_57d04fe4.png"
+                alt="Celestial Solar System Almanac"
+                className="w-full h-full object-cover object-center animate-spin-celestial-reverse"
+                style={{
+                  animationDuration: '95s',
+                  maskImage: 'radial-gradient(circle, rgba(0,0,0,1) 45%, rgba(0,0,0,0.85) 65%, rgba(0,0,0,0.15) 80%, transparent 90%)',
+                  WebkitMaskImage: 'radial-gradient(circle, rgba(0,0,0,1) 45%, rgba(0,0,0,0.85) 65%, rgba(0,0,0,0.15) 80%, transparent 90%)',
+                  filter: 'contrast(1.25) brightness(1.1) saturate(1.2)'
+                }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-bl from-amber-500/15 via-transparent to-indigo-950/45 mix-blend-screen pointer-events-none" />
+            </div>
+
+            {/* Outer Subtle Orbit Rings & Shimmering Planetary Nodes */}
+            <div className="absolute inset-2 sm:inset-3 rounded-full border border-dashed border-amber-300/30 animate-spin-celestial [animation-duration:75s] pointer-events-none flex items-center justify-center">
+              <div className="absolute top-1/2 left-0 -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-rose-400 shadow-[0_0_8px_#f43f5e]" />
+              <div className="absolute top-1/2 right-0 translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-amber-400 shadow-[0_0_10px_#fbbf24]" />
+            </div>
+
+            {/* Floating Astral Particles */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="absolute top-8 right-8 w-1.5 h-1.5 rounded-full bg-amber-200 shadow-[0_0_6px_#fef08a] animate-ping [animation-duration:2.8s]" />
+              <div className="absolute bottom-6 left-10 w-1 h-1 rounded-full bg-cyan-200 shadow-[0_0_5px_#a5f3fc] animate-pulse [animation-duration:3s]" />
+              <div className="absolute bottom-1/2 right-4 w-1 h-1 rounded-full bg-rose-200 shadow-[0_0_5px_#fecdd3] animate-ping [animation-duration:3.6s]" />
+            </div>
+          </div>
+
+          {/* Top Profile Header Section */}
+          <div className="relative z-10 flex flex-col items-center text-center space-y-4 mb-8">
+            <div className="relative flex items-center justify-center">
+              {/* Cinematic Animated Cosmic Background from Reference Image */}
+              <div className="absolute -inset-16 sm:-inset-20 flex items-center justify-center pointer-events-none z-0 select-none">
+                {/* 1. Nebula Cosmic Glow & Depth Halo */}
+                <div 
+                  className="absolute w-72 h-72 sm:w-88 sm:h-88 rounded-full blur-2xl opacity-60 animate-pulse pointer-events-none"
                   style={{
-                    boxShadow: `0 0 35px ${zodiac.elementGlow.color}, inset 0 0 15px ${zodiac.elementGlow.color}`
+                    background: `radial-gradient(circle, ${zodiac.elementGlow.color} 0%, rgba(59,130,246,0.3) 40%, rgba(147,51,234,0.2) 65%, transparent 75%)`
                   }}
-                >
-                  <div className="absolute inset-0 rounded-full border-2 border-white/60 animate-spin-celestial pointer-events-none" />
-                  
-                  {/* Photo Container */}
-                  <div className="w-full h-full rounded-full overflow-hidden bg-slate-900 border-2 border-white relative shadow-2xl">
-                    {celebrantPhotoUrl ? (
-                      <img
-                        src={celebrantPhotoUrl}
-                        alt={activeCelebrant.name}
-                        className="w-full h-full object-cover object-center birthday-avatar-cinematic"
-                        referrerPolicy="no-referrer"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-3xl font-black text-purple-200 bg-gradient-to-br from-indigo-900 to-purple-950">
-                        {activeCelebrant.name.charAt(0)}
-                      </div>
-                    )}
-                  </div>
+                />
 
-                  {/* 3D Floating Life Symbol Icon */}
-                  <div className="absolute -bottom-2 -right-1 w-11 h-11 rounded-2xl bg-slate-900/95 border-2 border-white/90 flex items-center justify-center shadow-xl animate-float-3d">
-                    <LifeSymbol3D symbol={monthAura.lifeSymbolName} className="w-7 h-7" />
-                  </div>
+                {/* 2. Mystical Cosmic Artwork from Reference Image with Soft Radial Vignette & Cosmic Breathing Pulse */}
+                <div className="absolute w-64 h-64 sm:w-76 sm:h-76 rounded-full overflow-hidden flex items-center justify-center opacity-85 shadow-[0_0_50px_rgba(59,130,246,0.5)]">
+                  <img
+                    src="/assets/aistudio/image_faceb040.png"
+                    alt="Cosmic Fortune Astral Background"
+                    className="w-full h-full object-cover object-center animate-spin-celestial"
+                    style={{
+                      animationDuration: '90s',
+                      maskImage: 'radial-gradient(circle, rgba(0,0,0,1) 40%, rgba(0,0,0,0.85) 60%, rgba(0,0,0,0.2) 75%, transparent 85%)',
+                      WebkitMaskImage: 'radial-gradient(circle, rgba(0,0,0,1) 40%, rgba(0,0,0,0.85) 60%, rgba(0,0,0,0.2) 75%, transparent 85%)',
+                      filter: 'contrast(1.2) brightness(1.1) saturate(1.25)'
+                    }}
+                  />
+                  {/* Shimmering Cosmic Nebula Light Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-indigo-950/40 via-transparent to-amber-500/20 mix-blend-screen pointer-events-none" />
                 </div>
+
+                {/* 3. Outer Rotating Concentric Celestial Orbits & Astrological Ring */}
+                <div className="absolute w-68 h-68 sm:w-80 sm:h-80 rounded-full border border-dashed border-amber-300/40 animate-spin-celestial pointer-events-none flex items-center justify-center">
+                  {/* Glowing Planetary Orbs on the Outer Orbit (inspired by reference image planets) */}
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full bg-gradient-to-br from-amber-200 to-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.9)] border border-white/60" />
+                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-3 h-3 rounded-full bg-gradient-to-br from-cyan-200 to-cyan-500 shadow-[0_0_10px_rgba(6,182,212,0.9)] border border-white/60" />
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-gradient-to-br from-purple-300 to-purple-600 shadow-[0_0_10px_rgba(168,85,247,0.9)] border border-white/60" />
+                  <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-3.5 h-3.5 rounded-full bg-gradient-to-br from-rose-300 to-orange-500 shadow-[0_0_12px_rgba(244,63,94,0.9)] border border-white/60" />
+                </div>
+
+                {/* 4. Counter-Rotating Middle Astral Orbit Ring */}
+                <div className="absolute w-56 h-56 sm:w-64 sm:h-64 rounded-full border border-cyan-400/35 animate-spin-celestial-reverse pointer-events-none">
+                  {/* Secondary Orbit Nodes */}
+                  <div className="absolute top-4 right-6 w-2.5 h-2.5 rounded-full bg-cyan-300 shadow-[0_0_8px_rgba(6,182,212,0.85)] animate-pulse" />
+                  <div className="absolute bottom-4 left-6 w-2.5 h-2.5 rounded-full bg-amber-300 shadow-[0_0_8px_rgba(245,158,11,0.85)] animate-pulse" />
+                </div>
+
+                {/* 5. Shimmering Astral Star Dust & Particles */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="absolute -top-10 left-12 w-1.5 h-1.5 rounded-full bg-amber-200 shadow-[0_0_6px_#fde68a] animate-ping [animation-duration:3s]" />
+                  <div className="absolute -bottom-8 right-10 w-1.5 h-1.5 rounded-full bg-cyan-200 shadow-[0_0_6px_#a5f3fc] animate-ping [animation-duration:2.5s] [animation-delay:1s]" />
+                  <div className="absolute top-1/3 -left-8 w-1 h-1 rounded-full bg-purple-200 shadow-[0_0_5px_#e9d5ff] animate-pulse [animation-duration:2s]" />
+                  <div className="absolute bottom-1/3 -right-8 w-1 h-1 rounded-full bg-amber-100 shadow-[0_0_5px_#fef3c7] animate-pulse [animation-duration:2.2s]" />
+                </div>
+
+                {/* 6. Dynamic Zodiac Constellation Pattern */}
+                <ZodiacConstellationSVG
+                  sign={zodiac.name}
+                  glowColor={zodiac.elementGlow.color}
+                  className="w-56 h-56 sm:w-68 sm:h-68 opacity-75 relative z-10"
+                />
               </div>
 
-              <div>
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-black bg-white/10 backdrop-blur-md border border-white/20 text-white shadow-xs">
-                  <span className="text-base">{zodiac.glyph}</span>
-                  <span>{zodiac.name}</span>
-                  <span>•</span>
-                  <span className={zodiac.elementGlow.text}>{zodiac.element} Pillar</span>
+              {/* 3D Celestial Ring with Element Glow */}
+              <div
+                className="w-32 h-32 sm:w-36 sm:h-36 rounded-full p-2 relative flex items-center justify-center transition-transform duration-500 hover:scale-105 z-10"
+                style={{
+                  boxShadow: `0 0 35px ${zodiac.elementGlow.color}, inset 0 0 15px ${zodiac.elementGlow.color}`
+                }}
+              >
+                {/* Subtle Slowly Rotating Circular Orbit Ring Animation */}
+                <div className="absolute -inset-3.5 sm:-inset-4.5 pointer-events-none flex items-center justify-center animate-spin-celestial [animation-duration:40s]">
+                  <svg
+                    viewBox="0 0 200 200"
+                    className="w-full h-full overflow-visible animate-pulse [animation-duration:3.5s]"
+                  >
+                    <defs>
+                      <linearGradient id="orbit-ring-glow" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor={zodiac.elementGlow.color} stopOpacity="0.85" />
+                        <stop offset="50%" stopColor="#38bdf8" stopOpacity="0.45" />
+                        <stop offset="100%" stopColor={zodiac.elementGlow.color} stopOpacity="0.15" />
+                      </linearGradient>
+                      <filter id="subtle-orbit-blur" x="-30%" y="-30%" width="160%" height="160%">
+                        <feGaussianBlur stdDeviation="2" result="blur" />
+                        <feMerge>
+                          <feMergeNode in="blur" />
+                          <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                      </filter>
+                    </defs>
+                    <circle
+                      cx="100"
+                      cy="100"
+                      r="95"
+                      fill="none"
+                      stroke="url(#orbit-ring-glow)"
+                      strokeWidth="1.5"
+                      strokeDasharray="6 10 18 10"
+                      filter="url(#subtle-orbit-blur)"
+                      className="opacity-70"
+                    />
+                    <circle
+                      cx="100"
+                      cy="5"
+                      r="2.5"
+                      fill="#ffffff"
+                      filter="url(#subtle-orbit-blur)"
+                      className="opacity-90"
+                    />
+                    <circle
+                      cx="195"
+                      cy="100"
+                      r="1.8"
+                      fill={zodiac.elementGlow.color}
+                      className="opacity-75"
+                    />
+                  </svg>
                 </div>
 
-                <h2 className="text-2xl sm:text-3xl font-black text-white mt-2 leading-tight flex items-center justify-center gap-2">
-                  <span>{activeCelebrant.name}</span>
-                  <span 
-                    className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white/20 border border-white/30 text-white text-xs shrink-0 icon-breathing shadow-xs" 
-                    title={`Sun Sign: ${zodiac.name} (${zodiac.glyph})`}
-                  >
-                    {zodiac.glyph}
-                  </span>
-                </h2>
-                <p className="text-xs sm:text-sm text-slate-300 font-medium mt-0.5">
-                  {activeCelebrant.designation} {activeCelebrant.department ? `• ${activeCelebrant.department}` : ''}
-                </p>
-
-                <div className="flex items-center justify-center gap-2 mt-2.5">
-                  <span className="text-xs font-bold text-slate-200 bg-white/10 px-3 py-1 rounded-lg border border-white/15">
-                    🎂 {parsedBirthday.formatted || activeCelebrant.birthday}
-                  </span>
-                  {activeCelebrant.isBirthdayToday && (
-                    <span className="text-xs font-black text-white bg-gradient-to-r from-amber-500 to-rose-500 px-3 py-1 rounded-lg shadow-md animate-pulse">
-                      Birthday Hero Today! 🎉
-                    </span>
+                <div className="absolute inset-0 rounded-full border-2 border-white/60 animate-spin-celestial pointer-events-none" />
+                
+                {/* Photo Container */}
+                <div className="w-full h-full rounded-full overflow-hidden bg-slate-900 border-2 border-white relative shadow-2xl">
+                  {celebrantPhotoUrl ? (
+                    <img
+                      src={celebrantPhotoUrl}
+                      alt={activeCelebrant.name}
+                      className="w-full h-full object-cover object-center birthday-avatar-cinematic"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-3xl font-black text-purple-200 bg-gradient-to-br from-indigo-900 to-purple-950">
+                      {activeCelebrant.name.charAt(0)}
+                    </div>
                   )}
                 </div>
+
+                {/* 3D Floating Life Symbol Icon */}
+                <div className="absolute -bottom-2 -right-1 w-11 h-11 rounded-2xl bg-slate-900/95 border-2 border-white/90 flex items-center justify-center shadow-xl animate-float-3d">
+                  <LifeSymbol3D symbol={monthAura.lifeSymbolName} className="w-7 h-7" />
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-black bg-white/10 backdrop-blur-md border border-white/20 text-white shadow-xs">
+                <span className="text-base">{zodiac.glyph}</span>
+                <span>{zodiac.name}</span>
+                <span>•</span>
+                <span className={zodiac.elementGlow.text}>{zodiac.element} Pillar</span>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex items-center gap-2.5 pt-1">
-                {onOpenGenerator && (
-                  <button
-                    onClick={() => onOpenGenerator(activeCelebrant)}
-                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-black bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-lg shadow-purple-900/40 active:translate-y-[1px] transition cursor-pointer"
-                  >
-                    <Gift className="w-3.5 h-3.5" />
-                    Personal Wish
-                  </button>
-                )}
-                {onSendWhatsApp && (
-                  <button
-                    onClick={() => onSendWhatsApp(activeCelebrant)}
-                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-black bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-lg shadow-emerald-900/40 active:translate-y-[1px] transition cursor-pointer"
-                  >
-                    <Zap className="w-3.5 h-3.5" />
-                    Instant Dispatch
-                  </button>
+              <h2 className="text-2xl sm:text-3xl font-black text-white mt-2 leading-tight flex items-center justify-center gap-2">
+                <span>{activeCelebrant.name}</span>
+                <span 
+                  className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white/20 border border-white/30 text-white text-xs shrink-0 icon-breathing shadow-xs" 
+                  title={`Sun Sign: ${zodiac.name} (${zodiac.glyph})`}
+                >
+                  {zodiac.glyph}
+                </span>
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-300 font-medium mt-0.5">
+                {activeCelebrant.designation} {activeCelebrant.department ? `• ${activeCelebrant.department}` : ''}
+              </p>
+
+              <div className="flex items-center justify-center gap-2 mt-2.5">
+                <span className="text-xs font-bold text-slate-200 bg-white/10 px-3 py-1 rounded-lg border border-white/15">
+                  🎂 {parsedBirthday.formatted || activeCelebrant.birthday}
+                </span>
+                {activeCelebrant.isBirthdayToday && (
+                  <span className="text-xs font-black text-white bg-gradient-to-r from-amber-500 to-rose-500 px-3 py-1 rounded-lg shadow-md animate-pulse">
+                    Birthday Hero Today! 🎉
+                  </span>
                 )}
               </div>
             </div>
 
-            {/* Right: The Universe's Note & Dynamic Cosmic Traits Grid */}
-            <div className="lg:col-span-8 space-y-5">
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2.5 pt-1">
+              {onOpenGenerator && (
+                <button
+                  onClick={() => onOpenGenerator(activeCelebrant)}
+                  className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-black bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-lg shadow-purple-900/40 active:translate-y-[1px] transition cursor-pointer"
+                >
+                  <Gift className="w-3.5 h-3.5" />
+                  Personal Wish
+                </button>
+              )}
+              {onSendWhatsApp && (
+                <button
+                  onClick={() => onSendWhatsApp(activeCelebrant)}
+                  className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-black bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-lg shadow-emerald-900/40 active:translate-y-[1px] transition cursor-pointer"
+                >
+                  <Zap className="w-3.5 h-3.5" />
+                  Instant Dispatch
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Universe's Note & Dynamic Cosmic Traits Section */}
+          <div className="relative z-10 space-y-5">
               {/* The Universe's Note (Personalized Feel-Good Typography Section) */}
               <div className="p-5 sm:p-6 rounded-2xl bg-slate-900/80 backdrop-blur-xl border border-indigo-400/30 shadow-xl space-y-3 relative">
                 <div className="flex items-center justify-between">
@@ -3087,8 +3391,7 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
       {/* =========================================================================
           Future Forecasting: Year-by-Year & Upcoming Good Things Grid
@@ -3903,6 +4206,237 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
                       </div>
                     ))}
                   </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* =========================================================================
+              30-Day Birthday Wish Response Sentiment Analysis & Astrological Mood Gauge
+              ========================================================================= */}
+          <div className="rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 border border-purple-500/40 shadow-2xl relative overflow-hidden text-white tarot-card-3d magical-card-shimmer">
+            {/* Background Cosmic Starfield */}
+            <div className="absolute inset-0 bg-[radial-gradient(#818cf8_1px,transparent_1px)] [background-size:24px_24px] opacity-15 pointer-events-none" />
+
+            <div className="relative z-10 space-y-6">
+              {/* Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-indigo-500/20 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-purple-900/60 border border-purple-400/50 flex items-center justify-center shadow-lg shadow-purple-900/30">
+                    <Gauge className="w-5 h-5 text-amber-300 animate-pulse" />
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-black uppercase tracking-wider text-purple-300 flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                      <span>Karmic Resonance • 30-Day Response Analytics</span>
+                    </div>
+                    <h3 className="text-lg sm:text-xl font-black text-white">
+                      Team Astrological Mood & Wish Sentiment Gauge
+                    </h3>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="px-3 py-1 rounded-full text-xs font-black bg-gradient-to-r from-amber-500/20 to-purple-500/20 text-amber-300 border border-amber-400/30 flex items-center gap-1.5 shadow-xs">
+                    <Heart className="w-3.5 h-3.5 text-rose-400 animate-pulse" />
+                    <span>{sentimentGaugeData.avgScore}% Positive Polarity</span>
+                  </span>
+                </div>
+              </div>
+
+              {/* Main Gauge & Dimensions Grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+                {/* Left: The Semi-Circular Gauge Display */}
+                <div className="lg:col-span-5 flex flex-col items-center text-center p-4 rounded-2xl bg-slate-900/80 border border-indigo-500/30 backdrop-blur-xl relative">
+                  <div className="relative w-56 h-36 sm:w-64 sm:h-40 flex items-end justify-center">
+                    {/* Semi-Circle SVG Gauge */}
+                    <svg viewBox="0 0 200 120" className="w-full h-full overflow-visible">
+                      <defs>
+                        <linearGradient id="gauge-arc-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" stopColor="#06b6d4" />
+                          <stop offset="35%" stopColor="#10b981" />
+                          <stop offset="65%" stopColor="#f59e0b" />
+                          <stop offset="100%" stopColor="#ec4899" />
+                        </linearGradient>
+                        <filter id="gauge-glow" x="-20%" y="-20%" width="140%" height="140%">
+                          <feGaussianBlur stdDeviation="3" result="blur" />
+                          <feMerge>
+                            <feMergeNode in="blur" />
+                            <feMergeNode in="SourceGraphic" />
+                          </feMerge>
+                        </filter>
+                      </defs>
+
+                      {/* Track Background */}
+                      <path
+                        d="M 20 105 A 80 80 0 0 1 180 105"
+                        fill="none"
+                        stroke="#1e293b"
+                        strokeWidth="16"
+                        strokeLinecap="round"
+                      />
+
+                      {/* Active Glowing Value Arc */}
+                      <path
+                        d="M 20 105 A 80 80 0 0 1 180 105"
+                        fill="none"
+                        stroke="url(#gauge-arc-gradient)"
+                        strokeWidth="16"
+                        strokeLinecap="round"
+                        strokeDasharray="251.2"
+                        strokeDashoffset={`${251.2 * (1 - sentimentGaugeData.avgScore / 100)}`}
+                        filter="url(#gauge-glow)"
+                        className="transition-all duration-1000 ease-out"
+                      />
+
+                      {/* Gauge Ticks */}
+                      <line x1="20" y1="105" x2="10" y2="105" stroke="#64748b" strokeWidth="2" />
+                      <line x1="100" y1="25" x2="100" y2="15" stroke="#64748b" strokeWidth="2" />
+                      <line x1="180" y1="105" x2="190" y2="105" stroke="#64748b" strokeWidth="2" />
+
+                      {/* Gauge Needle Pointer */}
+                      <g 
+                        transform={`rotate(${sentimentGaugeData.gaugeAngle}, 100, 105)`}
+                        className="transition-transform duration-1000 ease-out"
+                      >
+                        <line
+                          x1="100"
+                          y1="105"
+                          x2="100"
+                          y2="32"
+                          stroke="#ffffff"
+                          strokeWidth="3.5"
+                          strokeLinecap="round"
+                          filter="drop-shadow(0 0 6px rgba(255,255,255,0.8))"
+                        />
+                        <circle cx="100" cy="105" r="7" fill="#fbbf24" stroke="#ffffff" strokeWidth="2" />
+                      </g>
+                    </svg>
+
+                    {/* Centered Score in Arc Base */}
+                    <div className="absolute bottom-0 flex flex-col items-center">
+                      <span className="text-3xl sm:text-4xl font-black bg-gradient-to-r from-amber-200 via-rose-200 to-cyan-200 bg-clip-text text-transparent">
+                        {sentimentGaugeData.avgScore}%
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mt-2 space-y-1">
+                    <span className="text-xs font-black uppercase tracking-wider text-purple-300">
+                      Overall Astrological Mood
+                    </span>
+                    <h4 className="text-base sm:text-lg font-black text-white flex items-center justify-center gap-1.5">
+                      <span>{sentimentGaugeData.overallMood}</span>
+                      <Sparkles className="w-4 h-4 text-amber-300" />
+                    </h4>
+                    <p className="text-[11px] text-slate-300">
+                      Harmonic synthesis governed by Jupiter (♃) & Venus (♀) celestial alignment
+                    </p>
+                  </div>
+                </div>
+
+                {/* Right: 4 Sentiment Dimensions & Astrological Interpretation */}
+                <div className="lg:col-span-7 space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    {sentimentGaugeData.dimensions.map((dim) => (
+                      <div key={dim.label} className="p-3 rounded-xl bg-slate-900/70 border border-slate-800 space-y-1.5">
+                        <div className="flex items-center justify-between text-xs font-bold">
+                          <span className="text-slate-300">{dim.label}</span>
+                          <span className={dim.color}>{dim.percentage}%</span>
+                        </div>
+                        <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                          <div 
+                            className={`h-full rounded-full ${dim.bg} transition-all duration-700`}
+                            style={{ width: `${dim.percentage}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="p-3.5 rounded-xl bg-purple-950/40 border border-purple-500/30 flex items-start gap-2.5 text-xs text-indigo-200 leading-relaxed">
+                    <Info className="w-4 h-4 text-purple-300 shrink-0 mt-0.5" />
+                    <div>
+                      <strong className="text-white">Ephemeris Sentiment Synthesis: </strong>
+                      Birthday responses over the preceding 30-day window reveal an exceptionally high positivity quotient (96%). The team radiates reciprocal appreciation, collaborative motivation, and emotional peace, indicating an auspicious karmic cycle for collective strategic milestones.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Recent 30-Day Birthday Wish Responses Stream */}
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black uppercase tracking-wider text-purple-300 flex items-center gap-1.5">
+                    <Activity className="w-3.5 h-3.5 text-amber-300" />
+                    <span>Recent 30-Day Celebrant Wish Responses ({sentimentGaugeData.responses.length})</span>
+                  </span>
+                  <span className="text-[10px] font-mono text-cyan-300">
+                    Live Verified Inbound Responses
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {sentimentGaugeData.responses.map((resp) => (
+                    <div 
+                      key={resp.id}
+                      onClick={() => setSelectedDetailPrediction({
+                        category: `30-Day Wish Response • ${resp.memberName}`,
+                        title: `${resp.memberName}'s Birthday Response & Karmic Alignment`,
+                        badge: `${resp.glyph} ${resp.moodLabel} (${resp.score}% Sentiment)`,
+                        timeframe: `Response Recorded: ${resp.daysAgo} (Birthday: ${resp.birthday})`,
+                        karmicImpact: `High-resonance response governed by ${resp.rulingPlanet} alignment, radiating ${resp.vibeCategory.toLowerCase()} across the squad.`,
+                        plainEnglishExplanation: `${resp.memberName} responded to their birthday tribute with extraordinary warmth: "${resp.response}". Their positive reaction energizes the team's shared morale, reflecting strong inter-departmental affection and shared purpose.`,
+                        realLifeOutcomes: [
+                          resp.response,
+                          `Sentiment score of ${resp.score}% elevating the squad's 30-day astrological mood index.`,
+                          `Governed by ${resp.rulingPlanet} (${resp.glyph}) radiating ${resp.moodLabel.toLowerCase()}.`
+                        ],
+                        iconType: 'joy'
+                      })}
+                      className="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-purple-500/60 transition cursor-pointer tarot-card-3d magical-card-shimmer space-y-2 group"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="w-8 h-8 rounded-full overflow-hidden border border-white/30 bg-slate-800 shrink-0 flex items-center justify-center text-xs font-bold text-white">
+                            {resp.photo ? (
+                              <img src={resp.photo} alt={resp.memberName} className="w-full h-full object-cover" />
+                            ) : (
+                              resp.memberName.charAt(0)
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <h5 className="text-xs font-black text-white truncate group-hover:text-purple-300 transition">
+                              {resp.memberName}
+                            </h5>
+                            <span className="text-[10px] text-slate-400 truncate block">
+                              {resp.designation} • {resp.daysAgo}
+                            </span>
+                          </div>
+                        </div>
+
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-500/20 text-purple-300 border border-purple-400/30 shrink-0 flex items-center gap-1">
+                          <span style={{ color: resp.color }}>{resp.glyph}</span>
+                          <span>{resp.score}%</span>
+                        </span>
+                      </div>
+
+                      <p className="text-xs text-slate-200 font-serif italic line-clamp-2">
+                        "{resp.response}"
+                      </p>
+
+                      <div className="pt-1.5 border-t border-slate-800/80 flex items-center justify-between text-[10px]">
+                        <span className="font-bold text-amber-300 flex items-center gap-1">
+                          <Sparkles className="w-3 h-3" />
+                          <span>{resp.moodLabel}</span>
+                        </span>
+                        <span className="text-purple-300 group-hover:text-white transition flex items-center gap-0.5">
+                          <span>Details</span>
+                          <ArrowUpRight className="w-2.5 h-2.5" />
+                        </span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>

@@ -697,34 +697,83 @@ export default function App() {
         {/* Top Summary Metrics Bar */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 mb-8">
           
-          <div className="bg-white rounded-2xl p-3.5 border border-slate-200 shadow-2xs flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold shrink-0">
-              <Users className="w-4.5 h-4.5" />
+          {/* 1. Total Team Card */}
+          <div className="metric-card-cinematic group relative bg-white rounded-2xl p-3.5 border border-slate-200 shadow-2xs flex items-center gap-3 overflow-hidden transition-all duration-300 hover:border-emerald-300">
+            {/* Top Laser Shimmer Sweep */}
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-500/80 to-transparent -translate-x-full animate-metric-beam pointer-events-none z-20" />
+            
+            {/* Ambient Corner Telemetry Glow */}
+            <div className="absolute -top-6 -right-6 w-16 h-16 rounded-full bg-emerald-400/10 blur-xl pointer-events-none group-hover:bg-emerald-400/20 group-hover:scale-125 transition-all duration-500" />
+            <div className="absolute bottom-2 right-2 w-1 h-1 rounded-full bg-emerald-400/40 animate-ping [animation-duration:3s] pointer-events-none" />
+
+            {/* Subtle Diagonal Glass Shimmer Sweep on Hover */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none z-10" />
+
+            <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold shrink-0 relative z-10 group-hover:scale-110 group-hover:bg-emerald-100/80 group-hover:shadow-[0_0_12px_rgba(16,185,129,0.3)] transition-all duration-300">
+              <Users className="w-4.5 h-4.5 transition-transform duration-300 group-hover:rotate-3" />
             </div>
-            <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Team</p>
-              <p className="text-lg font-bold text-slate-900">{teamMembers.length}</p>
+            <div className="relative z-10 min-w-0">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                Total Team
+                <span className="inline-block w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
+              </p>
+              <p className="text-lg font-bold text-slate-900 tracking-tight">{teamMembers.length}</p>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl p-3.5 border border-amber-200 shadow-2xs flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold shrink-0">
-              <Calendar className="w-4.5 h-4.5" />
+          {/* 2. Today's Birthdays Card */}
+          <div className={`metric-card-cinematic group relative bg-white rounded-2xl p-3.5 border shadow-2xs flex items-center gap-3 overflow-hidden transition-all duration-300 ${
+            todayBirthdays.length > 0 
+              ? 'border-amber-300/90 shadow-[0_0_15px_rgba(245,158,11,0.18)] ring-1 ring-amber-400/30 hover:border-amber-400' 
+              : 'border-amber-200 hover:border-amber-400'
+          }`}>
+            {/* Top Laser Shimmer Sweep */}
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-amber-400/90 to-transparent -translate-x-full animate-metric-beam [animation-delay:0.5s] pointer-events-none z-20" />
+
+            {/* Ambient Corner Telemetry Glow */}
+            <div className="absolute -top-6 -right-6 w-16 h-16 rounded-full bg-amber-400/15 blur-xl pointer-events-none group-hover:bg-amber-400/25 group-hover:scale-125 transition-all duration-500" />
+            <div className="absolute top-2 right-4 w-1 h-1 rounded-full bg-amber-400/50 animate-pulse pointer-events-none" />
+
+            {/* Subtle Diagonal Glass Shimmer Sweep on Hover */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none z-10" />
+
+            <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold shrink-0 relative z-10 group-hover:scale-110 transition-all duration-300 ${
+              todayBirthdays.length > 0
+                ? 'bg-amber-100 text-amber-600 shadow-[0_0_12px_rgba(245,158,11,0.4)] animate-pulse'
+                : 'bg-amber-50 text-amber-600 group-hover:bg-amber-100/80'
+            }`}>
+              <Calendar className="w-4.5 h-4.5 transition-transform duration-300 group-hover:rotate-6" />
             </div>
-            <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Today's Birthdays</p>
-              <p className="text-lg font-bold text-amber-600">{todayBirthdays.length}</p>
+            <div className="relative z-10 min-w-0">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                Today's Birthdays
+                {todayBirthdays.length > 0 && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
+                )}
+              </p>
+              <p className="text-lg font-bold text-amber-600 tracking-tight">{todayBirthdays.length}</p>
             </div>
           </div>
 
+          {/* 3. Name Meanings Card */}
           <div
-            className="bg-white rounded-2xl p-3.5 border border-amber-200 shadow-2xs flex items-center gap-3 cursor-pointer hover:border-amber-400 hover:shadow-xs transition"
+            className="metric-card-cinematic group relative bg-white rounded-2xl p-3.5 border border-amber-200 shadow-2xs flex items-center gap-3 cursor-pointer overflow-hidden transition-all duration-300 hover:border-amber-400"
             onClick={() => setActiveTab('meanings')}
           >
-            <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold shrink-0">
-              <Sparkles className="w-4.5 h-4.5" />
+            {/* Top Laser Shimmer Sweep */}
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-amber-400/90 to-transparent -translate-x-full animate-metric-beam [animation-delay:1s] pointer-events-none z-20" />
+
+            {/* Ambient Corner Telemetry Glow */}
+            <div className="absolute -top-6 -right-6 w-16 h-16 rounded-full bg-amber-400/10 blur-xl pointer-events-none group-hover:bg-amber-400/20 group-hover:scale-125 transition-all duration-500" />
+            <div className="absolute bottom-2 right-2 w-1 h-1 rounded-full bg-amber-400/40 animate-ping [animation-duration:3.2s] pointer-events-none" />
+
+            {/* Subtle Diagonal Glass Shimmer Sweep on Hover */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none z-10" />
+
+            <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold shrink-0 relative z-10 group-hover:scale-110 group-hover:bg-amber-100/80 group-hover:shadow-[0_0_12px_rgba(245,158,11,0.35)] transition-all duration-300">
+              <Sparkles className="w-4.5 h-4.5 transition-transform duration-300 group-hover:rotate-12" />
             </div>
-            <div>
+            <div className="relative z-10 min-w-0">
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Name Meanings</p>
               <p className="text-xs font-bold text-amber-800 mt-0.5 flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
@@ -733,14 +782,25 @@ export default function App() {
             </div>
           </div>
 
+          {/* 4. Festive Hub Card */}
           <div
-            className="bg-white rounded-2xl p-3.5 border border-amber-200 shadow-2xs flex items-center gap-3 cursor-pointer hover:border-amber-400 transition"
+            className="metric-card-cinematic group relative bg-white rounded-2xl p-3.5 border border-amber-200 shadow-2xs flex items-center gap-3 cursor-pointer overflow-hidden transition-all duration-300 hover:border-amber-400"
             onClick={() => setActiveTab('festive')}
           >
-            <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold shrink-0">
-              <Sparkles className="w-4.5 h-4.5" />
+            {/* Top Laser Shimmer Sweep */}
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-amber-400/90 to-transparent -translate-x-full animate-metric-beam [animation-delay:1.5s] pointer-events-none z-20" />
+
+            {/* Ambient Corner Telemetry Glow */}
+            <div className="absolute -top-6 -right-6 w-16 h-16 rounded-full bg-amber-400/10 blur-xl pointer-events-none group-hover:bg-amber-400/20 group-hover:scale-125 transition-all duration-500" />
+            <div className="absolute top-2 right-6 w-1 h-1 rounded-full bg-amber-400/40 animate-pulse pointer-events-none" />
+
+            {/* Subtle Diagonal Glass Shimmer Sweep on Hover */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none z-10" />
+
+            <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold shrink-0 relative z-10 group-hover:scale-110 group-hover:bg-amber-100/80 group-hover:shadow-[0_0_12px_rgba(245,158,11,0.35)] transition-all duration-300">
+              <Sparkles className="w-4.5 h-4.5 transition-transform duration-300 group-hover:rotate-12" />
             </div>
-            <div>
+            <div className="relative z-10 min-w-0">
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Festive Hub</p>
               <p className="text-xs font-bold text-amber-800 mt-0.5 flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
@@ -749,23 +809,48 @@ export default function App() {
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl p-3.5 border border-slate-200 shadow-2xs flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold shrink-0">
-              <PhoneCall className="w-4.5 h-4.5" />
+          {/* 5. Sender WA Card */}
+          <div className="metric-card-cinematic group relative bg-white rounded-2xl p-3.5 border border-slate-200 shadow-2xs flex items-center gap-3 overflow-hidden transition-all duration-300 hover:border-blue-300">
+            {/* Top Laser Shimmer Sweep */}
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-blue-400/80 to-transparent -translate-x-full animate-metric-beam [animation-delay:2s] pointer-events-none z-20" />
+
+            {/* Ambient Corner Telemetry Glow */}
+            <div className="absolute -top-6 -right-6 w-16 h-16 rounded-full bg-blue-400/10 blur-xl pointer-events-none group-hover:bg-blue-400/20 group-hover:scale-125 transition-all duration-500" />
+            <div className="absolute bottom-2 right-2 w-1 h-1 rounded-full bg-blue-400/40 animate-ping [animation-duration:2.8s] pointer-events-none" />
+
+            {/* Subtle Diagonal Glass Shimmer Sweep on Hover */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none z-10" />
+
+            <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold shrink-0 relative z-10 group-hover:scale-110 group-hover:bg-blue-100/80 group-hover:shadow-[0_0_12px_rgba(59,130,246,0.35)] transition-all duration-300">
+              <PhoneCall className="w-4.5 h-4.5 transition-transform duration-300 group-hover:-rotate-6" />
             </div>
-            <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Sender WA</p>
+            <div className="relative z-10 min-w-0">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                Sender WA
+                <span className="w-1 h-1 rounded-full bg-blue-500 animate-pulse" />
+              </p>
               <p className="text-xs font-mono font-bold text-slate-900 mt-0.5 truncate max-w-[95px]" title={adminConfig?.senderWhatsApp || twilioConfig.whatsappNumber}>
                 {(adminConfig?.senderWhatsApp || twilioConfig.whatsappNumber).replace('whatsapp:', '')}
               </p>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl p-3.5 border border-indigo-200 shadow-2xs flex items-center gap-3 cursor-pointer hover:border-indigo-300 transition" onClick={() => setActiveTab('email')}>
-            <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold shrink-0">
-              <Mail className="w-4.5 h-4.5" />
+          {/* 6. Admin Email Card */}
+          <div className="metric-card-cinematic group relative bg-white rounded-2xl p-3.5 border border-indigo-200 shadow-2xs flex items-center gap-3 cursor-pointer overflow-hidden transition-all duration-300 hover:border-indigo-400" onClick={() => setActiveTab('email')}>
+            {/* Top Laser Shimmer Sweep */}
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-indigo-400/80 to-transparent -translate-x-full animate-metric-beam [animation-delay:2.5s] pointer-events-none z-20" />
+
+            {/* Ambient Corner Telemetry Glow */}
+            <div className="absolute -top-6 -right-6 w-16 h-16 rounded-full bg-indigo-400/10 blur-xl pointer-events-none group-hover:bg-indigo-400/20 group-hover:scale-125 transition-all duration-500" />
+            <div className="absolute top-2 right-5 w-1 h-1 rounded-full bg-indigo-400/40 animate-pulse pointer-events-none" />
+
+            {/* Subtle Diagonal Glass Shimmer Sweep on Hover */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none z-10" />
+
+            <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold shrink-0 relative z-10 group-hover:scale-110 group-hover:bg-indigo-100/80 group-hover:shadow-[0_0_12px_rgba(99,102,241,0.35)] transition-all duration-300">
+              <Mail className="w-4.5 h-4.5 transition-transform duration-300 group-hover:scale-105" />
             </div>
-            <div>
+            <div className="relative z-10 min-w-0">
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Admin Email</p>
               <p className="text-xs font-bold text-indigo-700 mt-0.5 flex items-center gap-1 truncate max-w-[95px]" title={adminConfig?.adminEmail || 'anik.barua@kdsgroup.net'}>
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
@@ -774,14 +859,25 @@ export default function App() {
             </div>
           </div>
 
+          {/* 7. Visual Map Card */}
           <div 
             id="visual-map-button"
-            className="bg-white rounded-2xl p-3.5 border border-slate-200 shadow-2xs flex items-center gap-3 cursor-pointer hover:border-indigo-300 hover:shadow-xs transition relative group" 
+            className="metric-card-cinematic group relative bg-white rounded-2xl p-3.5 border border-slate-200 shadow-2xs flex items-center gap-3 cursor-pointer overflow-hidden transition-all duration-300 hover:border-indigo-300" 
             onClick={() => setIsCalendarOpen(true)}
             title={`Visual Map Calendar View${currentWeekBirthdaysCount > 0 ? ` — ${currentWeekBirthdaysCount} birthday${currentWeekBirthdaysCount > 1 ? 's' : ''} this week` : ''}`}
           >
-            <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold shrink-0 relative">
-              <Calendar className="w-4.5 h-4.5" />
+            {/* Top Laser Shimmer Sweep */}
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-rose-400/80 to-transparent -translate-x-full animate-metric-beam [animation-delay:3s] pointer-events-none z-20" />
+
+            {/* Ambient Corner Telemetry Glow */}
+            <div className="absolute -top-6 -right-6 w-16 h-16 rounded-full bg-rose-400/10 blur-xl pointer-events-none group-hover:bg-rose-400/20 group-hover:scale-125 transition-all duration-500" />
+            <div className="absolute bottom-2 right-2 w-1 h-1 rounded-full bg-rose-400/40 animate-ping [animation-duration:3.5s] pointer-events-none" />
+
+            {/* Subtle Diagonal Glass Shimmer Sweep on Hover */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none z-10" />
+
+            <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold shrink-0 relative z-10 group-hover:scale-110 group-hover:bg-indigo-100/80 group-hover:shadow-[0_0_12px_rgba(99,102,241,0.35)] transition-all duration-300">
+              <Calendar className="w-4.5 h-4.5 transition-transform duration-300 group-hover:rotate-6" />
               {currentWeekBirthdaysCount > 0 && (
                 <span 
                   id="visual-map-badge"
@@ -791,13 +887,13 @@ export default function App() {
                 </span>
               )}
             </div>
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1 relative z-10">
               <div className="flex items-center justify-between gap-1">
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Visual Map</p>
                 {currentWeekBirthdaysCount > 0 && (
                   <span 
                     id="visual-map-week-count-tag"
-                    className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-rose-50 text-rose-600 border border-rose-200 shrink-0"
+                    className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-rose-50 text-rose-600 border border-rose-200 shrink-0 shadow-2xs animate-pulse"
                   >
                     {currentWeekBirthdaysCount} this wk
                   </span>
@@ -807,11 +903,22 @@ export default function App() {
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl p-3.5 border border-slate-200 shadow-2xs flex items-center gap-3 cursor-pointer hover:border-slate-300 transition" onClick={() => setIsAdminPlanningOpen(true)}>
-            <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold shrink-0">
-              <Bell className="w-4.5 h-4.5" />
+          {/* 8. Admin Planning Card */}
+          <div className="metric-card-cinematic group relative bg-white rounded-2xl p-3.5 border border-slate-200 shadow-2xs flex items-center gap-3 cursor-pointer overflow-hidden transition-all duration-300 hover:border-amber-300" onClick={() => setIsAdminPlanningOpen(true)}>
+            {/* Top Laser Shimmer Sweep */}
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-amber-400/90 to-transparent -translate-x-full animate-metric-beam [animation-delay:3.5s] pointer-events-none z-20" />
+
+            {/* Ambient Corner Telemetry Glow */}
+            <div className="absolute -top-6 -right-6 w-16 h-16 rounded-full bg-amber-400/10 blur-xl pointer-events-none group-hover:bg-amber-400/20 group-hover:scale-125 transition-all duration-500" />
+            <div className="absolute bottom-2 right-2 w-1 h-1 rounded-full bg-amber-400/40 animate-ping [animation-duration:3s] pointer-events-none" />
+
+            {/* Subtle Diagonal Glass Shimmer Sweep on Hover */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none z-10" />
+
+            <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold shrink-0 relative z-10 group-hover:scale-110 group-hover:bg-amber-100/80 group-hover:shadow-[0_0_12px_rgba(245,158,11,0.35)] transition-all duration-300">
+              <Bell className="w-4.5 h-4.5 transition-transform duration-300 group-hover:rotate-12" />
             </div>
-            <div>
+            <div className="relative z-10 min-w-0">
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Admin Planning</p>
               <p className="text-xs font-bold text-amber-700 flex items-center gap-1 mt-0.5 truncate max-w-[95px]" title={adminConfig?.adminWhatsApp || '+8801625299521'}>
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse inline-block shrink-0"></span>
