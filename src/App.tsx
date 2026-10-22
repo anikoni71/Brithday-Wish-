@@ -698,7 +698,7 @@ export default function App() {
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 mb-8">
           
           {/* 1. Total Team Card */}
-          <div className="metric-card-cinematic group relative bg-white rounded-2xl p-3.5 border border-slate-200 shadow-2xs flex items-center gap-3 overflow-hidden transition-all duration-300 hover:border-emerald-300">
+          <div className="metric-card-cinematic card-float-1 group relative bg-white rounded-2xl p-3.5 border border-slate-200 shadow-2xs flex items-center gap-3 overflow-hidden transition-all duration-300 hover:border-emerald-300">
             {/* Top Laser Shimmer Sweep */}
             <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-500/80 to-transparent -translate-x-full animate-metric-beam pointer-events-none z-20" />
             
@@ -709,8 +709,8 @@ export default function App() {
             {/* Subtle Diagonal Glass Shimmer Sweep on Hover */}
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none z-10" />
 
-            <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold shrink-0 relative z-10 group-hover:scale-110 group-hover:bg-emerald-100/80 group-hover:shadow-[0_0_12px_rgba(16,185,129,0.3)] transition-all duration-300">
-              <Users className="w-4.5 h-4.5 transition-transform duration-300 group-hover:rotate-3" />
+            <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold shrink-0 relative z-10 group-hover:scale-110 group-hover:bg-emerald-100/80 group-hover:shadow-[0_0_12px_rgba(16,185,129,0.3)] transition-all duration-300 cinematic-squircle-live cinematic-squircle-live-emerald">
+              <Users className="w-4.5 h-4.5 transition-transform duration-300 group-hover:rotate-3 cinematic-users-icon" />
             </div>
             <div className="relative z-10 min-w-0">
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -722,7 +722,7 @@ export default function App() {
           </div>
 
           {/* 2. Today's Birthdays Card */}
-          <div className={`metric-card-cinematic group relative bg-white rounded-2xl p-3.5 border shadow-2xs flex items-center gap-3 overflow-hidden transition-all duration-300 ${
+          <div className={`metric-card-cinematic card-float-2 group relative bg-white rounded-2xl p-3.5 border shadow-2xs flex items-center gap-3 overflow-hidden transition-all duration-300 ${
             todayBirthdays.length > 0 
               ? 'border-amber-300/90 shadow-[0_0_15px_rgba(245,158,11,0.18)] ring-1 ring-amber-400/30 hover:border-amber-400' 
               : 'border-amber-200 hover:border-amber-400'
@@ -737,12 +737,12 @@ export default function App() {
             {/* Subtle Diagonal Glass Shimmer Sweep on Hover */}
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none z-10" />
 
-            <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold shrink-0 relative z-10 group-hover:scale-110 transition-all duration-300 ${
+            <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold shrink-0 relative z-10 group-hover:scale-110 transition-all duration-300 cinematic-squircle-live cinematic-squircle-live-amber ${
               todayBirthdays.length > 0
                 ? 'bg-amber-100 text-amber-600 shadow-[0_0_12px_rgba(245,158,11,0.4)] animate-pulse'
                 : 'bg-amber-50 text-amber-600 group-hover:bg-amber-100/80'
             }`}>
-              <Calendar className="w-4.5 h-4.5 transition-transform duration-300 group-hover:rotate-6" />
+              <Calendar className="w-4.5 h-4.5 transition-transform duration-300 group-hover:rotate-6 cinematic-calendar-icon" />
             </div>
             <div className="relative z-10 min-w-0">
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -757,7 +757,7 @@ export default function App() {
 
           {/* 3. Name Meanings Card */}
           <div
-            className="metric-card-cinematic group relative bg-white rounded-2xl p-3.5 border border-amber-200 shadow-2xs flex items-center gap-3 cursor-pointer overflow-hidden transition-all duration-300 hover:border-amber-400"
+            className="metric-card-cinematic card-float-3 group relative bg-white rounded-2xl p-3.5 border border-amber-200 shadow-2xs flex items-center gap-3 cursor-pointer overflow-hidden transition-all duration-300 hover:border-amber-400"
             onClick={() => setActiveTab('meanings')}
           >
             {/* Top Laser Shimmer Sweep */}
@@ -770,8 +770,8 @@ export default function App() {
             {/* Subtle Diagonal Glass Shimmer Sweep on Hover */}
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none z-10" />
 
-            <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold shrink-0 relative z-10 group-hover:scale-110 group-hover:bg-amber-100/80 group-hover:shadow-[0_0_12px_rgba(245,158,11,0.35)] transition-all duration-300">
-              <Sparkles className="w-4.5 h-4.5 transition-transform duration-300 group-hover:rotate-12" />
+            <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold shrink-0 relative z-10 group-hover:scale-110 group-hover:bg-amber-100/80 group-hover:shadow-[0_0_12px_rgba(245,158,11,0.35)] transition-all duration-300 cinematic-squircle-live cinematic-squircle-live-amber">
+              <Sparkles className="w-4.5 h-4.5 transition-transform duration-300 group-hover:rotate-12 cinematic-sparkles-icon" />
             </div>
             <div className="relative z-10 min-w-0">
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Name Meanings</p>
@@ -784,7 +784,7 @@ export default function App() {
 
           {/* 4. Festive Hub Card */}
           <div
-            className="metric-card-cinematic group relative bg-white rounded-2xl p-3.5 border border-amber-200 shadow-2xs flex items-center gap-3 cursor-pointer overflow-hidden transition-all duration-300 hover:border-amber-400"
+            className="metric-card-cinematic card-float-4 group relative bg-white rounded-2xl p-3.5 border border-amber-200 shadow-2xs flex items-center gap-3 cursor-pointer overflow-hidden transition-all duration-300 hover:border-amber-400"
             onClick={() => setActiveTab('festive')}
           >
             {/* Top Laser Shimmer Sweep */}
@@ -797,8 +797,8 @@ export default function App() {
             {/* Subtle Diagonal Glass Shimmer Sweep on Hover */}
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none z-10" />
 
-            <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold shrink-0 relative z-10 group-hover:scale-110 group-hover:bg-amber-100/80 group-hover:shadow-[0_0_12px_rgba(245,158,11,0.35)] transition-all duration-300">
-              <Sparkles className="w-4.5 h-4.5 transition-transform duration-300 group-hover:rotate-12" />
+            <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold shrink-0 relative z-10 group-hover:scale-110 group-hover:bg-amber-100/80 group-hover:shadow-[0_0_12px_rgba(245,158,11,0.35)] transition-all duration-300 cinematic-squircle-live cinematic-squircle-live-amber">
+              <Sparkles className="w-4.5 h-4.5 transition-transform duration-300 group-hover:rotate-12 cinematic-sparkles-icon" />
             </div>
             <div className="relative z-10 min-w-0">
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Festive Hub</p>
@@ -810,7 +810,7 @@ export default function App() {
           </div>
 
           {/* 5. Sender WA Card */}
-          <div className="metric-card-cinematic group relative bg-white rounded-2xl p-3.5 border border-slate-200 shadow-2xs flex items-center gap-3 overflow-hidden transition-all duration-300 hover:border-blue-300">
+          <div className="metric-card-cinematic card-float-5 group relative bg-white rounded-2xl p-3.5 border border-slate-200 shadow-2xs flex items-center gap-3 overflow-hidden transition-all duration-300 hover:border-blue-300">
             {/* Top Laser Shimmer Sweep */}
             <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-blue-400/80 to-transparent -translate-x-full animate-metric-beam [animation-delay:2s] pointer-events-none z-20" />
 
@@ -821,8 +821,8 @@ export default function App() {
             {/* Subtle Diagonal Glass Shimmer Sweep on Hover */}
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none z-10" />
 
-            <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold shrink-0 relative z-10 group-hover:scale-110 group-hover:bg-blue-100/80 group-hover:shadow-[0_0_12px_rgba(59,130,246,0.35)] transition-all duration-300">
-              <PhoneCall className="w-4.5 h-4.5 transition-transform duration-300 group-hover:-rotate-6" />
+            <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold shrink-0 relative z-10 group-hover:scale-110 group-hover:bg-blue-100/80 group-hover:shadow-[0_0_12px_rgba(59,130,246,0.35)] transition-all duration-300 cinematic-squircle-live cinematic-squircle-live-blue">
+              <PhoneCall className="w-4.5 h-4.5 transition-transform duration-300 group-hover:-rotate-6 cinematic-phone-icon" />
             </div>
             <div className="relative z-10 min-w-0">
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -836,7 +836,7 @@ export default function App() {
           </div>
 
           {/* 6. Admin Email Card */}
-          <div className="metric-card-cinematic group relative bg-white rounded-2xl p-3.5 border border-indigo-200 shadow-2xs flex items-center gap-3 cursor-pointer overflow-hidden transition-all duration-300 hover:border-indigo-400" onClick={() => setActiveTab('email')}>
+          <div className="metric-card-cinematic card-float-6 group relative bg-white rounded-2xl p-3.5 border border-indigo-200 shadow-2xs flex items-center gap-3 cursor-pointer overflow-hidden transition-all duration-300 hover:border-indigo-400" onClick={() => setActiveTab('email')}>
             {/* Top Laser Shimmer Sweep */}
             <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-indigo-400/80 to-transparent -translate-x-full animate-metric-beam [animation-delay:2.5s] pointer-events-none z-20" />
 
@@ -847,8 +847,8 @@ export default function App() {
             {/* Subtle Diagonal Glass Shimmer Sweep on Hover */}
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none z-10" />
 
-            <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold shrink-0 relative z-10 group-hover:scale-110 group-hover:bg-indigo-100/80 group-hover:shadow-[0_0_12px_rgba(99,102,241,0.35)] transition-all duration-300">
-              <Mail className="w-4.5 h-4.5 transition-transform duration-300 group-hover:scale-105" />
+            <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold shrink-0 relative z-10 group-hover:scale-110 group-hover:bg-indigo-100/80 group-hover:shadow-[0_0_12px_rgba(99,102,241,0.35)] transition-all duration-300 cinematic-squircle-live cinematic-squircle-live-indigo">
+              <Mail className="w-4.5 h-4.5 transition-transform duration-300 group-hover:scale-105 cinematic-mail-icon" />
             </div>
             <div className="relative z-10 min-w-0">
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Admin Email</p>
@@ -862,7 +862,7 @@ export default function App() {
           {/* 7. Visual Map Card */}
           <div 
             id="visual-map-button"
-            className="metric-card-cinematic group relative bg-white rounded-2xl p-3.5 border border-slate-200 shadow-2xs flex items-center gap-3 cursor-pointer overflow-hidden transition-all duration-300 hover:border-indigo-300" 
+            className="metric-card-cinematic card-float-7 group relative bg-white rounded-2xl p-3.5 border border-slate-200 shadow-2xs flex items-center gap-3 cursor-pointer overflow-hidden transition-all duration-300 hover:border-indigo-300" 
             onClick={() => setIsCalendarOpen(true)}
             title={`Visual Map Calendar View${currentWeekBirthdaysCount > 0 ? ` — ${currentWeekBirthdaysCount} birthday${currentWeekBirthdaysCount > 1 ? 's' : ''} this week` : ''}`}
           >
@@ -876,8 +876,8 @@ export default function App() {
             {/* Subtle Diagonal Glass Shimmer Sweep on Hover */}
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none z-10" />
 
-            <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold shrink-0 relative z-10 group-hover:scale-110 group-hover:bg-indigo-100/80 group-hover:shadow-[0_0_12px_rgba(99,102,241,0.35)] transition-all duration-300">
-              <Calendar className="w-4.5 h-4.5 transition-transform duration-300 group-hover:rotate-6" />
+            <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold shrink-0 relative z-10 group-hover:scale-110 group-hover:bg-indigo-100/80 group-hover:shadow-[0_0_12px_rgba(99,102,241,0.35)] transition-all duration-300 cinematic-squircle-live cinematic-squircle-live-rose">
+              <Calendar className="w-4.5 h-4.5 transition-transform duration-300 group-hover:rotate-6 cinematic-calendar-icon" />
               {currentWeekBirthdaysCount > 0 && (
                 <span 
                   id="visual-map-badge"
@@ -904,7 +904,7 @@ export default function App() {
           </div>
 
           {/* 8. Admin Planning Card */}
-          <div className="metric-card-cinematic group relative bg-white rounded-2xl p-3.5 border border-slate-200 shadow-2xs flex items-center gap-3 cursor-pointer overflow-hidden transition-all duration-300 hover:border-amber-300" onClick={() => setIsAdminPlanningOpen(true)}>
+          <div className="metric-card-cinematic card-float-8 group relative bg-white rounded-2xl p-3.5 border border-slate-200 shadow-2xs flex items-center gap-3 cursor-pointer overflow-hidden transition-all duration-300 hover:border-amber-300" onClick={() => setIsAdminPlanningOpen(true)}>
             {/* Top Laser Shimmer Sweep */}
             <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-amber-400/90 to-transparent -translate-x-full animate-metric-beam [animation-delay:3.5s] pointer-events-none z-20" />
 
@@ -915,8 +915,8 @@ export default function App() {
             {/* Subtle Diagonal Glass Shimmer Sweep on Hover */}
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none z-10" />
 
-            <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold shrink-0 relative z-10 group-hover:scale-110 group-hover:bg-amber-100/80 group-hover:shadow-[0_0_12px_rgba(245,158,11,0.35)] transition-all duration-300">
-              <Bell className="w-4.5 h-4.5 transition-transform duration-300 group-hover:rotate-12" />
+            <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold shrink-0 relative z-10 group-hover:scale-110 group-hover:bg-amber-100/80 group-hover:shadow-[0_0_12px_rgba(245,158,11,0.35)] transition-all duration-300 cinematic-squircle-live cinematic-squircle-live-amber">
+              <Bell className="w-4.5 h-4.5 transition-transform duration-300 group-hover:rotate-12 cinematic-bell-icon" />
             </div>
             <div className="relative z-10 min-w-0">
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Admin Planning</p>
@@ -1038,6 +1038,7 @@ export default function App() {
         {activeTab === 'festive' && (
           <FestiveCalendarWorkstation
             members={teamMembers}
+            automationLogs={automationLogs}
             onOpenGenerator={handleOpenGenerator}
             onSendWhatsApp={handleSendWhatsApp}
             onNavigateToRosterMonth={(month) => {

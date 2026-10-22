@@ -122,7 +122,7 @@ const CountUp: React.FC<{ value: number; duration?: number; suffix?: string }> =
 };
 
 /**
- * Minimalist SVG Sparkline component for FinTech / Enterprise look
+ * Minimalist SVG Sparkline component for FinTech / Enterprise look with Live ECG Heartbeat Motion
  */
 const Sparkline: React.FC<{
   data: number[];
@@ -130,46 +130,142 @@ const Sparkline: React.FC<{
   fillColor?: string;
   height?: number;
   width?: number;
+  delay?: number;
 }> = ({
   data,
   color = '#10b981',
   fillColor = 'rgba(16, 185, 129, 0.12)',
   height = 36,
-  width = 90
+  width = 90,
+  delay = 0
 }) => {
   if (!data || data.length < 2) return null;
   const min = Math.min(...data);
   const max = Math.max(...data) || 1;
   const range = max - min || 1;
 
-  const points = data
-    .map((val, idx) => {
-      const x = (idx / (data.length - 1)) * width;
-      const y = height - ((val - min) / range) * (height - 8) - 4;
-      return `${x},${y}`;
-    })
-    .join(' ');
+  const coords = data.map((val, idx) => {
+    const x = (idx / (data.length - 1)) * width;
+    const y = height - ((val - min) / range) * (height - 8) - 4;
+    return { x, y };
+  });
 
+  const points = coords.map((c) => `${c.x},${c.y}`).join(' ');
   const closedPoints = `0,${height} ${points} ${width},${height}`;
+  const lastCoord = coords[coords.length - 1];
+  const gradId = `spark-grad-${color.replace(/[^a-zA-Z0-9]/g, '')}`;
 
   return (
-    <svg width={width} height={height} className="overflow-visible">
-      <defs>
-        <linearGradient id={`grad-${color.replace('#', '')}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity={0.25} />
-          <stop offset="100%" stopColor={color} stopOpacity={0.0} />
-        </linearGradient>
-      </defs>
-      <polygon points={closedPoints} fill={`url(#grad-${color.replace('#', '')})`} />
-      <polyline
-        fill="none"
-        stroke={color}
-        strokeWidth="1.75"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        points={points}
+    <div className="relative inline-block overflow-hidden" style={{ width, height }}>
+      <svg width={width} height={height} className="overflow-visible block">
+        <defs>
+          <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={color} stopOpacity={0.32}>
+              <animate attributeName="stop-opacity" values="0.32;0.14;0.32" dur="2.8s" repeatCount="indefinite" />
+            </stop>
+            <stop offset="100%" stopColor={color} stopOpacity={0.0} />
+          </linearGradient>
+        </defs>
+
+        {/* 1. Gradient Fill Under Sparkline */}
+        <polygon points={closedPoints} fill={`url(#${gradId})`} />
+
+        {/* 2. Base Polyline Waveform with Systolic Heartbeat Pulse */}
+        <polyline
+          fill="none"
+          stroke={color}
+          strokeWidth="1.75"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          points={points}
+          className="sparkline-live-polyline sparkline-cardiac-wave"
+          style={{ color, animationDelay: `${delay}s` }}
+        />
+
+        {/* 3. Live ECG Heartbeat Electrical Impulse Traveling Along the Wave */}
+        <polyline
+          fill="none"
+          stroke={color === '#a1a1aa' || color === '#71717a' ? '#ffffff' : '#a7f3d0'}
+          strokeWidth="2.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          points={points}
+          className="sparkline-ecg-impulse pointer-events-none"
+          style={{ animationDelay: `${delay}s` }}
+        />
+
+        {/* 4. Live Telemetry Endpoint */}
+        {lastCoord && (
+          <g className="sparkline-endpoint-group">
+            <circle
+              cx={lastCoord.x}
+              cy={lastCoord.y}
+              r={5}
+              fill={color}
+              className="sparkline-live-ping pointer-events-none"
+              style={{ animationDelay: `${delay}s` }}
+            />
+            <circle
+              cx={lastCoord.x}
+              cy={lastCoord.y}
+              r={2.2}
+              fill={color}
+              style={{ filter: `drop-shadow(0 0 4px ${color})` }}
+            />
+          </g>
+        )}
+      </svg>
+
+      {/* 5. ECG Phosphor Sweep Beam (Heartbeat Monitor Moving Scanline) */}
+      <div
+        className="sparkline-ecg-scan-beam pointer-events-none"
+        style={{
+          background: `linear-gradient(90deg, transparent 0%, ${color}15 50%, ${color}75 88%, #ffffff 100%)`,
+          boxShadow: `1px 0 6px ${color}70`,
+          animationDelay: `${delay}s`
+        }}
       />
-    </svg>
+    </div>
+  );
+};
+
+// ==========================================================================
+// LIVE GLOWING DATA POINT COMPONENT FOR ANNUAL AREA CURVE (CARDIAC RADAR PULSE)
+// ==========================================================================
+const LiveAreaDot = (dotProps: any) => {
+  const { cx, cy, value, index } = dotProps;
+  if (value === undefined || value === 0 || !cx || !cy) return null;
+
+  return (
+    <g className="chart-live-dot-group">
+      {/* Expanding cardiac telemetry pulse ring */}
+      <circle
+        cx={cx}
+        cy={cy}
+        r={6}
+        fill="#10b981"
+        className="chart-dot-cardiac-ping pointer-events-none"
+        style={{ animationDelay: `${((index || 0) % 6) * 0.45}s` }}
+      />
+      {/* Central systolic heartbeat dot */}
+      <circle
+        cx={cx}
+        cy={cy}
+        r={3.8}
+        fill="#10b981"
+        className="chart-dot-cardiac-pulse"
+        style={{
+          animationDelay: `${((index || 0) % 6) * 0.45}s`,
+          filter: 'drop-shadow(0 0 6px rgba(16, 185, 129, 0.95)) drop-shadow(0 0 10px rgba(52, 211, 153, 0.6))'
+        }}
+      />
+      <circle
+        cx={cx}
+        cy={cy}
+        r={1.8}
+        fill="#ffffff"
+      />
+    </g>
   );
 };
 
@@ -228,31 +324,33 @@ const CandleBar = (props: any) => {
       />
 
       {/* 3. The Flame (Ambient Glow Aura + Outer Amber Flame + Bright Core) */}
-      {/* Ambient Glow Aura */}
-      <circle
-        cx={centerX}
-        cy={flameCenterY}
-        r={7}
-        fill="#f59e0b"
-        opacity={0.35}
-      />
+      <g className="candle-flame-animated">
+        {/* Ambient Glow Aura */}
+        <circle
+          cx={centerX}
+          cy={flameCenterY}
+          r={7}
+          fill="#f59e0b"
+          opacity={0.35}
+        />
 
-      {/* Outer Flame (#fbbf24 amber glow) */}
-      <path
-        d={`M ${centerX} ${flameCenterY - 6}
-            C ${centerX + 3.5} ${flameCenterY - 2}, ${centerX + 3.5} ${flameCenterY + 3.5}, ${centerX} ${flameCenterY + 3.5}
-            C ${centerX - 3.5} ${flameCenterY + 3.5}, ${centerX - 3.5} ${flameCenterY - 2}, ${centerX} ${flameCenterY - 6} Z`}
-        fill="#fbbf24"
-        style={{ filter: 'drop-shadow(0 0 3px rgba(245, 158, 11, 0.9))' }}
-      />
+        {/* Outer Flame (#fbbf24 amber glow) */}
+        <path
+          d={`M ${centerX} ${flameCenterY - 6}
+              C ${centerX + 3.5} ${flameCenterY - 2}, ${centerX + 3.5} ${flameCenterY + 3.5}, ${centerX} ${flameCenterY + 3.5}
+              C ${centerX - 3.5} ${flameCenterY + 3.5}, ${centerX - 3.5} ${flameCenterY - 2}, ${centerX} ${flameCenterY - 6} Z`}
+          fill="#fbbf24"
+          style={{ filter: 'drop-shadow(0 0 3px rgba(245, 158, 11, 0.9))' }}
+        />
 
-      {/* Inner Flame (Warm Yellow Core) */}
-      <path
-        d={`M ${centerX} ${flameCenterY - 3.5}
-            C ${centerX + 1.8} ${flameCenterY - 1}, ${centerX + 1.8} ${flameCenterY + 2.5}, ${centerX} ${flameCenterY + 2.5}
-            C ${centerX - 1.8} ${flameCenterY + 2.5}, ${centerX - 1.8} ${flameCenterY - 1}, ${centerX} ${flameCenterY - 3.5} Z`}
-        fill="#fef3c7"
-      />
+        {/* Inner Flame (Warm Yellow Core) */}
+        <path
+          d={`M ${centerX} ${flameCenterY - 3.5}
+              C ${centerX + 1.8} ${flameCenterY - 1}, ${centerX + 1.8} ${flameCenterY + 2.5}, ${centerX} ${flameCenterY + 2.5}
+              C ${centerX - 1.8} ${flameCenterY + 2.5}, ${centerX - 1.8} ${flameCenterY - 1}, ${centerX} ${flameCenterY - 3.5} Z`}
+          fill="#fef3c7"
+        />
+      </g>
     </g>
   );
 };
@@ -672,12 +770,12 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
               </div>
 
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-950/80 border border-zinc-800 text-zinc-400 text-[11px] font-mono">
-                <ShieldCheck className="w-3.5 h-3.5 text-zinc-400" />
+                <ShieldCheck className="w-3.5 h-3.5 text-zinc-400 cinematic-icon-shield" />
                 <span className="tracking-wide text-zinc-300">SINGLE SOURCE: GOOGLE SHEET</span>
               </div>
 
               <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-950/80 border border-zinc-800/80 text-zinc-500 text-[11px] font-mono">
-                <Server className="w-3 h-3 text-zinc-400" />
+                <Server className="w-3 h-3 text-zinc-400 cinematic-icon-server" />
                 <span>DAEMON v2.5</span>
               </div>
             </div>
@@ -704,7 +802,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
               className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-zinc-900/90 hover:bg-zinc-800 text-zinc-200 border border-zinc-700/70 hover:border-emerald-500/40 shadow-lg shadow-black/60 transition-all duration-200 cursor-pointer disabled:opacity-50"
               title="Synchronize Google Sheet records"
             >
-              <Car className={`w-3.5 h-3.5 ${isSyncing ? 'f1-speed-motion text-emerald-400' : 'text-zinc-400'}`} />
+              <Car className={`w-3.5 h-3.5 cinematic-icon-car ${isSyncing ? 'f1-speed-motion text-emerald-400' : 'text-zinc-400'}`} />
               <span>{isSyncing ? 'Syncing...' : 'Sync Master'}</span>
             </button>
 
@@ -712,7 +810,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
               onClick={onOpenCalendar}
               className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20 transition-all duration-200 cursor-pointer font-bold"
             >
-              <Calendar className="w-3.5 h-3.5 text-white" />
+              <Calendar className="w-3.5 h-3.5 text-white cinematic-icon-calendar-btn" />
               <span>Calendar View</span>
             </button>
 
@@ -720,7 +818,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
               onClick={onOpenAdminPlanning}
               className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-emerald-500 hover:bg-emerald-400 text-zinc-950 shadow-lg shadow-emerald-500/20 transition-all duration-200 cursor-pointer font-bold"
             >
-              <Bell className="w-3.5 h-3.5 text-zinc-950" />
+              <Bell className="w-3.5 h-3.5 text-zinc-950 cinematic-icon-bell-btn" />
               <span>5:00 PM Alerts</span>
             </button>
 
@@ -738,7 +836,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
               {calendarSyncSuccess ? (
                 <Check className="w-3.5 h-3.5 text-white" />
               ) : (
-                <Calendar className={`w-3.5 h-3.5 ${isSyncingCalendar ? 'animate-spin text-emerald-400' : 'text-emerald-400'}`} />
+                <Calendar className={`w-3.5 h-3.5 cinematic-icon-calendar-btn ${isSyncingCalendar ? 'animate-spin text-emerald-400' : 'text-emerald-400'}`} />
               )}
               <span>
                 {isSyncingCalendar
@@ -755,7 +853,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
               rel="noreferrer"
               className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium bg-zinc-900/80 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 transition-all duration-200"
             >
-              <ExternalLink className="w-3.5 h-3.5 text-zinc-400" />
+              <ExternalLink className="w-3.5 h-3.5 text-zinc-400 cinematic-icon-link" />
               <span className="hidden sm:inline">Google Sheet</span>
             </a>
           </div>
@@ -788,7 +886,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
             <span className="text-[11px] font-mono font-medium tracking-wider text-zinc-400 uppercase">
               TOTAL TEAM
             </span>
-            <Users className="w-4 h-4 text-zinc-400" />
+            <Users className="w-4 h-4 text-zinc-400 cinematic-icon-users" />
           </div>
 
           <div className="relative z-10 mt-3 flex items-end justify-between">
@@ -797,14 +895,14 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
                 <CountUp value={totalMembers} />
               </div>
               <div className="flex items-center gap-1 mt-1 text-[11px] font-medium text-emerald-400 font-mono">
-                <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                <CheckCircle2 className="w-3 h-3 text-emerald-400 cinematic-icon-check" />
                 <span>100% Synced</span>
               </div>
             </div>
 
             {/* Sparkline */}
             <div className="opacity-75 group-hover:opacity-100 transition-opacity">
-              <Sparkline data={[18, 19, 21, 22, 23, 23, totalMembers]} color="#10b981" />
+              <Sparkline data={[18, 19, 21, 22, 23, 23, totalMembers]} color="#10b981" delay={0} />
             </div>
           </div>
         </motion.div>
@@ -827,7 +925,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
             <span className="text-[11px] font-mono font-medium tracking-wider text-zinc-400 uppercase">
               TODAY'S CELEBRANTS
             </span>
-            <Cake className={`w-4 h-4 ${todayCelebrants.length > 0 ? 'text-emerald-400 animate-bounce' : 'text-zinc-500'}`} />
+            <Cake className={`w-4 h-4 cinematic-icon-cake ${todayCelebrants.length > 0 ? 'text-emerald-400 animate-bounce' : 'text-zinc-500'}`} />
           </div>
 
           <div className="relative z-10 mt-3 flex items-end justify-between">
@@ -852,6 +950,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
               <Sparkline
                 data={[0, 1, 0, todayCelebrants.length, todayCelebrants.length]}
                 color={todayCelebrants.length > 0 ? '#10b981' : '#71717a'}
+                delay={0.5}
               />
             </div>
           </div>
@@ -870,7 +969,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
             <span className="text-[11px] font-mono font-medium tracking-wider text-zinc-400 uppercase">
               30-DAY OUTLOOK
             </span>
-            <Calendar className="w-4 h-4 text-zinc-400" />
+            <Calendar className="w-4 h-4 text-zinc-400 cinematic-icon-calendar" />
           </div>
 
           <div className="relative z-10 mt-3 flex items-end justify-between">
@@ -879,14 +978,14 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
                 <CountUp value={upcoming30DaysCelebrants.length} />
               </div>
               <div className="flex items-center gap-1 mt-1 text-[11px] font-medium text-zinc-400 font-mono">
-                <Clock className="w-3 h-3 text-zinc-400" />
+                <Clock className="w-3 h-3 text-zinc-400 cinematic-icon-clock" />
                 <span>Next 30 Days</span>
               </div>
             </div>
 
             {/* Sparkline */}
             <div className="opacity-75 group-hover:opacity-100 transition-opacity">
-              <Sparkline data={[2, 3, 5, 4, upcoming30DaysCelebrants.length]} color="#a1a1aa" />
+              <Sparkline data={[2, 3, 5, 4, upcoming30DaysCelebrants.length]} color="#a1a1aa" delay={1.0} />
             </div>
           </div>
         </motion.div>
@@ -904,7 +1003,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
             <span className="text-[11px] font-mono font-medium tracking-wider text-zinc-400 uppercase">
               DISPATCH RATE
             </span>
-            <Send className="w-4 h-4 text-zinc-400" />
+            <Send className="w-4 h-4 text-zinc-400 cinematic-icon-send" />
           </div>
 
           <div className="relative z-10 mt-3 flex items-end justify-between">
@@ -919,7 +1018,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
 
             {/* Sparkline */}
             <div className="opacity-75 group-hover:opacity-100 transition-opacity">
-              <Sparkline data={[10, 25, 40, 60, dispatchMetrics.completionRate]} color="#10b981" />
+              <Sparkline data={[10, 25, 40, 60, dispatchMetrics.completionRate]} color="#10b981" delay={1.5} />
             </div>
           </div>
         </motion.div>
@@ -937,7 +1036,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
             <span className="text-[11px] font-mono font-medium tracking-wider text-zinc-400 uppercase">
               SYSTEM ENGINE
             </span>
-            <Zap className="w-4 h-4 text-emerald-400" />
+            <Zap className="w-4 h-4 text-emerald-400 cinematic-icon-zap" />
           </div>
 
           <div className="relative z-10 mt-3 flex items-end justify-between">
@@ -956,7 +1055,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
 
             {/* Pulse heartbeat Sparkline */}
             <div className="opacity-75 group-hover:opacity-100 transition-opacity">
-              <Sparkline data={[4, 6, 4, 18, 4, 6, 4]} color="#10b981" />
+              <Sparkline data={[4, 6, 4, 18, 4, 6, 4]} color="#10b981" delay={2.0} />
             </div>
           </div>
         </motion.div>
@@ -990,6 +1089,11 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
 
             {/* Radial Chart */}
             <div className="h-56 relative flex items-center justify-center">
+              {/* Rotating Telemetry Radar Doppler Beam */}
+              <div className="absolute w-44 h-44 rounded-full pointer-events-none overflow-hidden animate-spin-radar opacity-30">
+                <div className="w-full h-full bg-[conic-gradient(from_0deg,transparent_0deg,transparent_270deg,rgba(16,185,129,0.15)_330deg,rgba(52,211,153,0.5)_360deg)] rounded-full" />
+              </div>
+
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <RechartsTooltip
@@ -1040,12 +1144,14 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
                 </PieChart>
               </ResponsiveContainer>
 
-              {/* Center Metrics Readout */}
+              {/* Center Metrics Readout with Ambient Concentric Radar Aura */}
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-3xl font-extrabold text-white font-mono">
+                <div className="absolute w-28 h-28 rounded-full border border-emerald-500/20 animate-donut-pulse pointer-events-none" />
+                <div className="absolute w-36 h-36 rounded-full border border-emerald-500/10 animate-donut-ping pointer-events-none" />
+                <span className="text-3xl font-extrabold text-white font-mono z-10">
                   <CountUp value={dispatchMetrics.sentCount} />
                 </span>
-                <span className="text-[10px] font-mono tracking-widest text-zinc-400 uppercase mt-0.5">
+                <span className="text-[10px] font-mono tracking-widest text-zinc-400 uppercase mt-0.5 z-10">
                   DELIVERED
                 </span>
               </div>
@@ -1056,7 +1162,10 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
           <div className="relative z-10 grid grid-cols-2 gap-3 pt-3 border-t border-zinc-800/80 font-mono">
             <div className="p-2.5 rounded-xl bg-zinc-950/60 border border-zinc-800/80">
               <div className="flex items-center gap-1.5 text-xs text-zinc-400">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span>
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span>
+                </span>
                 <span>Delivered</span>
               </div>
               <p className="text-lg font-bold text-white mt-1">{dispatchMetrics.sentCount}</p>
@@ -1119,17 +1228,23 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
             </div>
 
             {/* High-Fidelity Minimal Area Chart */}
-            <div className="h-60 w-full">
+            <div className="h-60 w-full relative overflow-hidden">
+              {/* Authentic ECG Heartbeat Machine Scanning Sweep Beam */}
+              {chartViewMode === 'area' && <div className="ecg-chart-sweep-beam pointer-events-none" />}
               <ResponsiveContainer width="100%" height="100%">
                 {chartViewMode === 'area' ? (
                   <AreaChart data={annualDensityData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <defs>
                       <linearGradient id="glowBirthdaysZinc" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.4} />
+                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.45}>
+                          <animate attributeName="stop-opacity" values="0.45;0.2;0.45" dur="4s" repeatCount="indefinite" />
+                        </stop>
                         <stop offset="95%" stopColor="#10b981" stopOpacity={0.0} />
                       </linearGradient>
                       <linearGradient id="glowFestiveZinc" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#71717a" stopOpacity={0.3} />
+                        <stop offset="5%" stopColor="#71717a" stopOpacity={0.35}>
+                          <animate attributeName="stop-opacity" values="0.35;0.16;0.35" dur="5s" repeatCount="indefinite" />
+                        </stop>
                         <stop offset="95%" stopColor="#71717a" stopOpacity={0.0} />
                       </linearGradient>
                     </defs>
@@ -1193,6 +1308,9 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
                       strokeWidth={2}
                       fillOpacity={1}
                       fill="url(#glowBirthdaysZinc)"
+                      className="birthday-area-curve"
+                      dot={<LiveAreaDot />}
+                      activeDot={{ r: 6, stroke: '#10b981', strokeWidth: 2, fill: '#ffffff' }}
                     />
                     <Area
                       type="monotone"
@@ -1203,6 +1321,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
                       strokeDasharray="3 3"
                       fillOpacity={1}
                       fill="url(#glowFestiveZinc)"
+                      className="festive-dashed-curve"
                     />
                   </AreaChart>
                 ) : (
