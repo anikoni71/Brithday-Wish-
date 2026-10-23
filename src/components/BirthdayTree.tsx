@@ -264,7 +264,7 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-500/20 via-emerald-500/20 to-teal-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shadow-lg shadow-amber-500/10">
-              <TreePine className="w-6 h-6 text-emerald-400" />
+              <TreePine className="w-6 h-6 text-emerald-400 cinematic-tree-pine-icon" />
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
@@ -272,7 +272,7 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
                   Interactive Birthday Tree
                 </h3>
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 flex items-center gap-1">
-                  <Sparkles className="w-3 h-3 text-amber-400" /> GOOGLE SHEET SYNCED
+                  <Sparkles className="w-3 h-3 text-amber-400 cinematic-action-sparkle" /> GOOGLE SHEET SYNCED
                 </span>
                 {isFullscreen && (
                   <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-zinc-800 text-zinc-300 border border-zinc-700 flex items-center gap-1">
@@ -300,7 +300,7 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
                   : 'bg-zinc-900 border-zinc-800 text-zinc-400'
               }`}
             >
-              <Cake className="w-3.5 h-3.5 text-emerald-400" />
+              <Cake className="w-3.5 h-3.5 text-emerald-400 cinematic-tree-micro-icon" />
               <span>Today: <strong className="text-white">{todayCount}</strong></span>
             </div>
 
@@ -313,7 +313,7 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
                   : 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:border-zinc-700'
               }`}
             >
-              <Calendar className="w-3.5 h-3.5" />
+              <Calendar className="w-3.5 h-3.5 cinematic-tree-micro-icon" />
               <span>{MONTH_NAMES[currentMonthIdx].short}: <strong className={selectedMonth === currentMonthIdx ? 'text-zinc-950' : 'text-white'}>{thisMonthCount}</strong></span>
             </button>
 
@@ -325,7 +325,7 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
                   viewMode === 'tree' ? 'bg-zinc-800 text-emerald-400 font-bold shadow-sm' : 'text-zinc-400 hover:text-white'
                 }`}
               >
-                <TreePine className="w-3 h-3" />
+                <TreePine className="w-3 h-3 cinematic-tree-micro-icon" />
                 <span>Canopy Tree</span>
               </button>
               <button
@@ -334,7 +334,7 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
                   viewMode === 'months' ? 'bg-zinc-800 text-emerald-400 font-bold shadow-sm' : 'text-zinc-400 hover:text-white'
                 }`}
               >
-                <Users className="w-3 h-3" />
+                <Users className="w-3 h-3 cinematic-tree-micro-icon" />
                 <span>12 Boughs</span>
               </button>
             </div>
@@ -348,7 +348,7 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
                   cardDetailLevel === 'compact' ? 'bg-zinc-800 text-amber-400 font-bold shadow-sm' : 'text-zinc-400 hover:text-white'
                 }`}
               >
-                <LayoutGrid className="w-3 h-3" />
+                <LayoutGrid className="w-3 h-3 cinematic-tree-micro-icon" />
                 <span>Compact</span>
               </button>
               <button
@@ -358,7 +358,7 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
                   cardDetailLevel === 'detailed' ? 'bg-zinc-800 text-amber-400 font-bold shadow-sm' : 'text-zinc-400 hover:text-white'
                 }`}
               >
-                <LayoutList className="w-3 h-3" />
+                <LayoutList className="w-3 h-3 cinematic-tree-micro-icon" />
                 <span>Full Details</span>
               </button>
             </div>
@@ -375,12 +375,12 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
             >
               {isFullscreen ? (
                 <>
-                  <Minimize2 className="w-3.5 h-3.5" />
+                  <Minimize2 className="w-3.5 h-3.5 cinematic-tree-micro-icon" />
                   <span className="hidden sm:inline">Exit Full Screen</span>
                 </>
               ) : (
                 <>
-                  <Maximize2 className="w-3.5 h-3.5 text-amber-400" />
+                  <Maximize2 className="w-3.5 h-3.5 text-amber-400 cinematic-tree-micro-icon" />
                   <span className="hidden sm:inline">Full Screen</span>
                 </>
               )}
@@ -436,7 +436,7 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
 
           {/* Search input */}
           <div className="relative shrink-0">
-            <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2 cinematic-tree-micro-icon" />
             <input
               type="text"
               placeholder="Search member on tree..."
@@ -463,14 +463,14 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
           {/* Top Decorative Star Garland */}
           <div className="absolute top-3 left-0 right-0 flex items-center justify-between px-6 pointer-events-none opacity-80 z-0">
             <div className="flex items-center gap-3">
-              <Star className="w-7 h-7 text-amber-400 fill-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.6)] animate-pulse" />
-              <Star className="w-5 h-5 text-orange-400 fill-orange-400 drop-shadow-[0_0_6px_rgba(251,146,60,0.5)]" />
-              <Star className="w-4 h-4 text-emerald-400 fill-emerald-400" />
+              <Star className="w-7 h-7 text-amber-400 fill-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.6)] cinematic-tree-star-1" />
+              <Star className="w-5 h-5 text-orange-400 fill-orange-400 drop-shadow-[0_0_6px_rgba(251,146,60,0.5)] cinematic-tree-star-2" />
+              <Star className="w-4 h-4 text-emerald-400 fill-emerald-400 cinematic-tree-star-3" />
             </div>
             <div className="flex items-center gap-3">
-              <Star className="w-4 h-4 text-cyan-400 fill-cyan-400" />
-              <Star className="w-5 h-5 text-rose-400 fill-rose-400 drop-shadow-[0_0_6px_rgba(244,63,94,0.5)]" />
-              <Star className="w-7 h-7 text-amber-400 fill-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.6)] animate-pulse" />
+              <Star className="w-4 h-4 text-cyan-400 fill-cyan-400 cinematic-tree-star-3" />
+              <Star className="w-5 h-5 text-rose-400 fill-rose-400 drop-shadow-[0_0_6px_rgba(244,63,94,0.5)] cinematic-tree-star-2" />
+              <Star className="w-7 h-7 text-amber-400 fill-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.6)] cinematic-tree-star-1" />
             </div>
           </div>
 
@@ -483,11 +483,11 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
 
               {/* Main Banner Arch */}
               <div className="relative px-8 py-2.5 rounded-2xl bg-gradient-to-r from-zinc-950 via-zinc-900 to-zinc-950 border-2 border-amber-500/80 shadow-[0_0_20px_rgba(245,158,11,0.25)] flex items-center gap-3">
-                <Star className="w-4 h-4 text-amber-400 fill-amber-400 animate-spin [animation-duration:8s]" />
+                <Star className="w-4 h-4 text-amber-400 fill-amber-400 cinematic-tree-star-1 animate-spin [animation-duration:8s]" />
                 <h2 className="text-sm sm:text-base font-black tracking-widest text-amber-300 font-mono uppercase drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
                   ★ BIRTHDAY TREE ★
                 </h2>
-                <Star className="w-4 h-4 text-amber-400 fill-amber-400 animate-spin [animation-duration:8s]" />
+                <Star className="w-4 h-4 text-amber-400 fill-amber-400 cinematic-tree-star-2 animate-spin [animation-duration:8s]" />
               </div>
             </div>
             <p className="text-[10px] text-center font-mono text-zinc-400 mt-1">
@@ -520,82 +520,245 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
 
                 {/* Foliage Glow Canopy */}
                 <radialGradient id="foliageGlow" cx="50%" cy="40%" r="50%">
-                  <stop offset="0%" stopColor="#10b981" stopOpacity="0.12" />
-                  <stop offset="50%" stopColor="#059669" stopOpacity="0.05" />
+                  <stop offset="0%" stopColor="#10b981" stopOpacity="0.14" />
+                  <stop offset="50%" stopColor="#059669" stopOpacity="0.06" />
                   <stop offset="100%" stopColor="transparent" stopOpacity="0" />
                 </radialGradient>
+
+                {/* High-Tech Telemetry Beam Glow Filter */}
+                <filter id="telemetryBeamGlow" x="-40%" y="-40%" width="180%" height="180%">
+                  <feGaussianBlur stdDeviation="3" result="blur1" />
+                  <feGaussianBlur stdDeviation="7" result="blur2" />
+                  <feMerge>
+                    <feMergeNode in="blur2" />
+                    <feMergeNode in="blur1" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+
+                {/* Starlight & Firefly Shimmer Filter */}
+                <filter id="starlightSparkleGlow" x="-60%" y="-60%" width="220%" height="220%">
+                  <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="glow" />
+                  <feMerge>
+                    <feMergeNode in="glow" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+
+                {/* Telemetry ECG Wave Gradient */}
+                <linearGradient id="ecgBeamGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#059669" stopOpacity="0.25" />
+                  <stop offset="35%" stopColor="#34d399" stopOpacity="0.95" />
+                  <stop offset="50%" stopColor="#ffffff" stopOpacity="1" />
+                  <stop offset="65%" stopColor="#fcd34d" stopOpacity="0.95" />
+                  <stop offset="100%" stopColor="#10b981" stopOpacity="0.25" />
+                </linearGradient>
               </defs>
 
               {/* Ambient Foliage Glow Cloud */}
-              <ellipse cx="500" cy="350" rx="440" ry="290" fill="url(#foliageGlow)" />
+              <ellipse cx="500" cy="350" rx="440" ry="290" fill="url(#foliageGlow)" className="tree-foliage-animated" />
 
-              {/* Central Trunk Base Roots */}
-              <path
-                d="M 420 780 C 430 680, 460 550, 470 420 
-                   C 440 380, 360 340, 240 300 
-                   C 200 290, 140 280, 80 270
-                   C 100 285, 180 310, 220 325 
-                   C 340 370, 430 420, 460 480 
-                   C 450 580, 420 680, 380 780 Z"
-                fill="url(#treeBarkGrad)"
-                stroke="#92400e"
-                strokeWidth="1.5"
-              />
+              {/* Central Trunk Base Roots & Main Trunk (Multi-Layered Organic Living Motion) */}
+              <g className="tree-trunk-animated">
+                {/* Central Trunk Base Roots */}
+                <path
+                  d="M 420 780 C 430 680, 460 550, 470 420 
+                     C 440 380, 360 340, 240 300 
+                     C 200 290, 140 280, 80 270
+                     C 100 285, 180 310, 220 325 
+                     C 340 370, 430 420, 460 480 
+                     C 450 580, 420 680, 380 780 Z"
+                  fill="url(#treeBarkGrad)"
+                  stroke="#92400e"
+                  strokeWidth="1.5"
+                />
 
-              {/* Right Lower Branch */}
-              <path
-                d="M 540 460 C 580 430, 680 380, 800 340 
-                   C 860 320, 920 305, 950 295 
-                   C 920 315, 840 340, 770 370 
-                   C 660 420, 580 470, 550 520 Z"
-                fill="url(#treeBarkGrad)"
-                stroke="#92400e"
-                strokeWidth="1.5"
-              />
+                {/* Main Center Trunk and Crown Fork */}
+                <path
+                  d="M 430 780 C 440 680, 470 540, 480 400
+                     C 480 340, 450 280, 390 220
+                     C 340 170, 280 140, 200 120
+                     C 230 135, 300 170, 340 210
+                     C 420 280, 460 350, 475 420
+                     C 485 360, 500 280, 500 170
+                     C 500 130, 495 100, 490 80
+                     C 510 95, 520 130, 520 180
+                     C 520 280, 530 360, 545 420
+                     C 560 350, 600 280, 680 210
+                     C 720 170, 780 135, 810 120
+                     C 740 140, 680 170, 630 220
+                     C 570 280, 540 340, 540 400
+                     C 550 540, 580 680, 590 780 Z"
+                  fill="url(#treeBarkGrad)"
+                  stroke="#92400e"
+                  strokeWidth="1.5"
+                />
+              </g>
 
-              {/* Main Center Trunk and Crown Fork */}
-              <path
-                d="M 430 780 C 440 680, 470 540, 480 400
-                   C 480 340, 450 280, 390 220
-                   C 340 170, 280 140, 200 120
-                   C 230 135, 300 170, 340 210
-                   C 420 280, 460 350, 475 420
-                   C 485 360, 500 280, 500 170
-                   C 500 130, 495 100, 490 80
-                   C 510 95, 520 130, 520 180
-                   C 520 280, 530 360, 545 420
-                   C 560 350, 600 280, 680 210
-                   C 720 170, 780 135, 810 120
-                   C 740 140, 680 170, 630 220
-                   C 570 280, 540 340, 540 400
-                   C 550 540, 580 680, 590 780 Z"
-                fill="url(#treeBarkGrad)"
-                stroke="#92400e"
-                strokeWidth="1.5"
-              />
+              {/* Left Major Boughs (Organic Wind Sway with Flexible Sub-Branch Articulation) */}
+              <g className="tree-branch-left-animated">
+                {/* Secondary flexible sub-branches */}
+                <g className="tree-subbranch-left">
+                  <path
+                    d="M 330 230 C 270 230, 200 210, 130 180 C 170 200, 240 225, 310 240 Z"
+                    fill="url(#treeBarkGrad)"
+                  />
+                  <path
+                    d="M 450 310 C 370 280, 300 250, 220 210 C 270 235, 350 270, 420 295 Z"
+                    fill="url(#treeBarkGrad)"
+                  />
+                </g>
+                {/* Left Branch High-Tech Sap Energy Conduit */}
+                <path
+                  d="M 460 420 C 420 370, 340 330, 220 290 C 160 270, 100 260, 80 270"
+                  stroke="#34d399"
+                  strokeWidth="2.5"
+                  fill="none"
+                  filter="url(#telemetryBeamGlow)"
+                  className="tree-ecg-pulse-line"
+                />
+              </g>
 
-              {/* Mid Sub-Branches */}
-              <path
-                d="M 330 230 C 270 230, 200 210, 130 180 C 170 200, 240 225, 310 240 Z"
-                fill="url(#treeBarkGrad)"
-              />
-              <path
-                d="M 690 230 C 750 230, 820 210, 890 180 C 850 200, 780 225, 710 240 Z"
-                fill="url(#treeBarkGrad)"
-              />
-              <path
-                d="M 450 310 C 370 280, 300 250, 220 210 C 270 235, 350 270, 420 295 Z"
-                fill="url(#treeBarkGrad)"
-              />
-              <path
-                d="M 570 310 C 650 280, 720 250, 800 210 C 750 235, 670 270, 600 295 Z"
-                fill="url(#treeBarkGrad)"
-              />
+              {/* Right Major Boughs (Organic Counter-Sway with Sub-Branch Articulation) */}
+              <g className="tree-branch-right-animated">
+                {/* Right Lower Branch */}
+                <path
+                  d="M 540 460 C 580 430, 680 380, 800 340 
+                     C 860 320, 920 305, 950 295 
+                     C 920 315, 840 340, 770 370 
+                     C 660 420, 580 470, 550 520 Z"
+                  fill="url(#treeBarkGrad)"
+                  stroke="#92400e"
+                  strokeWidth="1.5"
+                />
+                {/* Secondary flexible sub-branches */}
+                <g className="tree-subbranch-right">
+                  <path
+                    d="M 690 230 C 750 230, 820 210, 890 180 C 850 200, 780 225, 710 240 Z"
+                    fill="url(#treeBarkGrad)"
+                  />
+                  <path
+                    d="M 570 310 C 650 280, 720 250, 800 210 C 750 235, 670 270, 600 295 Z"
+                    fill="url(#treeBarkGrad)"
+                  />
+                </g>
+                {/* Right Branch High-Tech Sap Energy Conduit */}
+                <path
+                  d="M 540 460 C 600 420, 700 370, 810 330 C 870 310, 930 295, 950 295"
+                  stroke="#34d399"
+                  strokeWidth="2.5"
+                  fill="none"
+                  filter="url(#telemetryBeamGlow)"
+                  className="tree-ecg-pulse-line-delayed"
+                />
+              </g>
 
-              {/* Bark Grain Lines (like in reference picture) */}
-              <path d="M 460 760 C 470 650, 490 520, 495 440" stroke="#fcd34d" strokeWidth="1.5" strokeDasharray="6 8" opacity="0.35" fill="none" />
-              <path d="M 490 770 C 500 660, 510 530, 510 440" stroke="#fcd34d" strokeWidth="2" opacity="0.4" fill="none" />
-              <path d="M 520 760 C 530 650, 530 520, 525 440" stroke="#fcd34d" strokeWidth="1.5" strokeDasharray="6 8" opacity="0.35" fill="none" />
+              {/* Upper Crown Swaying */}
+              <g className="tree-crown-animated">
+                {/* Crown Center Sap High-Intensity Flow */}
+                <path
+                  d="M 495 400 C 495 320, 500 220, 500 120"
+                  stroke="#fcd34d"
+                  strokeWidth="3"
+                  fill="none"
+                  filter="url(#telemetryBeamGlow)"
+                  className="tree-ecg-pulse-line"
+                />
+              </g>
+
+              {/* HIGH-TECH BIO-LUMINESCENT SAP ENERGY CONDUITS THROUGH TRUNK */}
+              <path d="M 458 760 C 468 650, 488 520, 495 440" stroke="#fcd34d" strokeWidth="2.5" strokeDasharray="10 18" opacity="0.85" fill="none" filter="url(#telemetryBeamGlow)" className="tree-ecg-pulse-line" />
+              <path d="M 490 770 C 500 660, 510 530, 510 440" stroke="#34d399" strokeWidth="3" opacity="0.95" fill="none" filter="url(#telemetryBeamGlow)" className="tree-ecg-pulse-line-delayed" />
+              <path d="M 522 760 C 532 650, 532 520, 525 440" stroke="#a7f3d0" strokeWidth="2.5" strokeDasharray="10 18" opacity="0.85" fill="none" filter="url(#telemetryBeamGlow)" className="tree-ecg-pulse-line" />
+
+              {/* AUTHENTIC HIGH-PRECISION ECG HEARTBEAT MONITOR WAVE ACROSS ROOT BASE */}
+              <g>
+                {/* Underlying guide line and subtle telemetry background grid */}
+                <path
+                  d="M 120 776 L 310 776 L 330 776 L 342 770 L 352 776 L 366 760 L 380 792 L 394 750 L 408 776 L 424 776 L 438 764 L 452 776 L 540 776 L 554 770 L 564 776 L 578 760 L 592 792 L 606 750 L 620 776 L 636 776 L 650 764 L 664 776 L 880 776"
+                  fill="none"
+                  stroke="#059669"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  opacity="0.3"
+                />
+                {/* Secondary ambient glow trace */}
+                <path
+                  d="M 120 776 L 310 776 L 330 776 L 342 770 L 352 776 L 366 760 L 380 792 L 394 750 L 408 776 L 424 776 L 438 764 L 452 776 L 540 776 L 554 770 L 564 776 L 578 760 L 592 792 L 606 750 L 620 776 L 636 776 L 650 764 L 664 776 L 880 776"
+                  fill="none"
+                  stroke="#10b981"
+                  strokeWidth="3.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  opacity="0.5"
+                  filter="url(#telemetryBeamGlow)"
+                  className="tree-ecg-oscilloscope-trace"
+                />
+                {/* Live sweeping high-intensity laser ECG pulse wave */}
+                <path
+                  d="M 120 776 L 310 776 L 330 776 L 342 770 L 352 776 L 366 760 L 380 792 L 394 750 L 408 776 L 424 776 L 438 764 L 452 776 L 540 776 L 554 770 L 564 776 L 578 760 L 592 792 L 606 750 L 620 776 L 636 776 L 650 764 L 664 776 L 880 776"
+                  fill="none"
+                  stroke="url(#ecgBeamGrad)"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  filter="url(#telemetryBeamGlow)"
+                  className="tree-ecg-oscilloscope-trace"
+                />
+              </g>
+
+              {/* CARDIAC BIO-NODES & EXPANDING SONAR RIPPLE RINGS AT BRANCH JUNCTIONS */}
+              <g>
+                {/* Central Primary Heart Node */}
+                <circle cx="495" cy="440" r="14" fill="none" stroke="#34d399" strokeWidth="1" opacity="0.6" className="tree-cardiac-ring" />
+                <circle cx="495" cy="440" r="5" fill="#34d399" filter="url(#telemetryBeamGlow)" className="tree-cardiac-pulse" />
+
+                {/* Left Branch Node */}
+                <circle cx="470" cy="420" r="11" fill="none" stroke="#fcd34d" strokeWidth="1" opacity="0.6" className="tree-cardiac-ring-delayed" />
+                <circle cx="470" cy="420" r="4" fill="#fcd34d" filter="url(#telemetryBeamGlow)" className="tree-cardiac-pulse-delayed" />
+
+                {/* Right Branch Node */}
+                <circle cx="540" cy="460" r="11" fill="none" stroke="#34d399" strokeWidth="1" opacity="0.6" className="tree-cardiac-ring" />
+                <circle cx="540" cy="460" r="4" fill="#34d399" filter="url(#telemetryBeamGlow)" className="tree-cardiac-pulse" />
+
+                {/* Crown Mid Node */}
+                <circle cx="500" cy="280" r="10" fill="none" stroke="#fcd34d" strokeWidth="1" opacity="0.6" className="tree-cardiac-ring-delayed" />
+                <circle cx="500" cy="280" r="3.5" fill="#fcd34d" filter="url(#telemetryBeamGlow)" className="tree-cardiac-pulse-delayed" />
+
+                {/* Outer Canopy Nodes */}
+                <circle cx="340" cy="210" r="3" fill="#34d399" filter="url(#telemetryBeamGlow)" className="tree-cardiac-pulse" />
+                <circle cx="680" cy="210" r="3" fill="#34d399" filter="url(#telemetryBeamGlow)" className="tree-cardiac-pulse-delayed" />
+              </g>
+
+              {/* MAGICAL FLOATING PARTICLES & STARLIGHT FIREFLIES SHIMMERING UPWARD THROUGH CANOPY */}
+              <g className="tree-starlight-canopy pointer-events-none">
+                {/* Glowing bio-luminescent fireflies */}
+                <circle cx="310" cy="180" r="2.5" fill="#fef08a" filter="url(#starlightSparkleGlow)" className="tree-firefly-1" />
+                <circle cx="490" cy="140" r="3" fill="#6ee7b7" filter="url(#starlightSparkleGlow)" className="tree-firefly-2" />
+                <circle cx="670" cy="170" r="2.5" fill="#fef08a" filter="url(#starlightSparkleGlow)" className="tree-firefly-3" />
+                <circle cx="820" cy="230" r="2" fill="#34d399" filter="url(#starlightSparkleGlow)" className="tree-firefly-1" />
+                <circle cx="210" cy="270" r="2" fill="#fef08a" filter="url(#starlightSparkleGlow)" className="tree-firefly-2" />
+                <circle cx="360" cy="260" r="2.5" fill="#a7f3d0" filter="url(#starlightSparkleGlow)" className="tree-firefly-3" />
+                <circle cx="520" cy="290" r="3" fill="#fcd34d" filter="url(#starlightSparkleGlow)" className="tree-firefly-1" />
+                <circle cx="640" cy="270" r="2" fill="#6ee7b7" filter="url(#starlightSparkleGlow)" className="tree-firefly-2" />
+                <circle cx="760" cy="330" r="2.5" fill="#fef08a" filter="url(#starlightSparkleGlow)" className="tree-firefly-3" />
+                <circle cx="160" cy="360" r="2" fill="#34d399" filter="url(#starlightSparkleGlow)" className="tree-firefly-1" />
+                <circle cx="270" cy="390" r="2.5" fill="#fef08a" filter="url(#starlightSparkleGlow)" className="tree-firefly-2" />
+                <circle cx="430" cy="430" r="2.5" fill="#6ee7b7" filter="url(#starlightSparkleGlow)" className="tree-firefly-3" />
+                <circle cx="580" cy="420" r="2.5" fill="#fcd34d" filter="url(#starlightSparkleGlow)" className="tree-firefly-1" />
+                <circle cx="720" cy="440" r="2" fill="#34d399" filter="url(#starlightSparkleGlow)" className="tree-firefly-2" />
+                <circle cx="850" cy="400" r="2" fill="#fef08a" filter="url(#starlightSparkleGlow)" className="tree-firefly-3" />
+                <circle cx="390" cy="530" r="2" fill="#a7f3d0" filter="url(#starlightSparkleGlow)" className="tree-firefly-1" />
+                <circle cx="610" cy="530" r="2" fill="#fef08a" filter="url(#starlightSparkleGlow)" className="tree-firefly-2" />
+
+                {/* 4-Point Starlight Sparkles */}
+                <path d="M 280 150 Q 280 155 285 155 Q 280 155 280 160 Q 280 155 275 155 Q 280 155 280 150 Z" fill="#ffffff" filter="url(#starlightSparkleGlow)" className="tree-sparkle-1" />
+                <path d="M 540 120 Q 540 126 546 126 Q 540 126 540 132 Q 540 126 534 126 Q 540 126 540 120 Z" fill="#fef08a" filter="url(#starlightSparkleGlow)" className="tree-sparkle-2" />
+                <path d="M 730 160 Q 730 165 735 165 Q 730 165 730 170 Q 730 165 725 165 Q 730 165 730 160 Z" fill="#a7f3d0" filter="url(#starlightSparkleGlow)" className="tree-sparkle-3" />
+                <path d="M 440 220 Q 440 225 445 225 Q 440 225 440 230 Q 440 225 435 225 Q 440 225 440 220 Z" fill="#ffffff" filter="url(#starlightSparkleGlow)" className="tree-sparkle-1" />
+                <path d="M 600 240 Q 600 245 605 245 Q 600 245 600 250 Q 600 245 595 245 Q 600 245 600 240 Z" fill="#fef08a" filter="url(#starlightSparkleGlow)" className="tree-sparkle-2" />
+              </g>
 
               {/* Bottom Grass & Flower Trim */}
               <path
@@ -630,7 +793,7 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
                   className="absolute cursor-pointer group select-none z-10 hover:z-30 transition-all duration-300"
                 >
                   {/* SCALLOPED ROSETTE / BALLOON CRAFT SHAPE (MATCHING REFERENCE PICTURE) */}
-                  <div className="relative flex flex-col items-center">
+                  <div className={`relative flex flex-col items-center ${idx % 2 === 0 ? 'tree-blossom-sway-even' : 'tree-blossom-sway-odd'}`}>
                     {/* Top Month Tag */}
                     <div
                       className="px-2 py-0.5 rounded-md text-[9px] font-black font-mono tracking-wider uppercase text-white shadow-md mb-0.5 border"
@@ -647,7 +810,7 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
                       )}
 
                       {/* Scalloped Flower Petal SVG Frame */}
-                      <svg width="68" height="68" viewBox="0 0 100 100" className="drop-shadow-lg transform group-hover:scale-110 transition-transform duration-200">
+                      <svg width="68" height="68" viewBox="0 0 100 100" className="drop-shadow-lg cinematic-ornament-glow transform group-hover:scale-110 transition-transform duration-300">
                         {/* 12-Petal Flower Rosette */}
                         <g fill={theme.petalColor} stroke={theme.ringBorder} strokeWidth="2">
                           <circle cx="50" cy="18" r="16" />
@@ -741,7 +904,7 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
                             title="AI Wish Generator"
                             className="p-1 rounded-md bg-zinc-800 hover:bg-amber-500 hover:text-zinc-950 text-amber-400 transition cursor-pointer"
                           >
-                            <Sparkles className="w-2.5 h-2.5" />
+                            <Sparkles className="w-2.5 h-2.5 cinematic-action-sparkle" />
                           </button>
                           <button
                             type="button"
@@ -749,14 +912,14 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
                             title="WhatsApp Wish"
                             className="p-1 rounded-md bg-zinc-800 hover:bg-emerald-500 hover:text-zinc-950 text-emerald-400 transition cursor-pointer"
                           >
-                            <Send className="w-2.5 h-2.5" />
+                            <Send className="w-2.5 h-2.5 cinematic-action-send" />
                           </button>
                         </div>
                       </div>
                     )}
 
                     {/* Squiggly Ribbon Tail (Like in reference picture) */}
-                    <svg width="20" height="28" viewBox="0 0 20 28" className="mt-0.5 opacity-85">
+                    <svg width="20" height="28" viewBox="0 0 20 28" className="mt-0.5 opacity-85 ribbon-tail-animated">
                       <path
                         d="M 10 0 Q 3 7, 10 14 T 10 28"
                         fill="none"
@@ -928,7 +1091,7 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
 
                           <div className="mt-2 pt-1.5 border-t border-zinc-800/80 flex items-center justify-between text-[10px] font-mono text-zinc-400">
                             <span className="flex items-center gap-1 text-amber-300 font-semibold">
-                              <Cake className="w-3 h-3 text-amber-400" />
+                              <Cake className="w-3 h-3 text-amber-400 cinematic-tree-micro-icon" />
                               {mem.formattedBirthday}
                             </span>
                             {mem.department && (
@@ -944,7 +1107,7 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
                               onClick={() => onOpenGenerator(mem)}
                               className="flex-1 py-1 px-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white text-[10px] font-mono font-medium flex items-center justify-center gap-1 transition cursor-pointer border border-zinc-700/60"
                             >
-                              <Sparkles className="w-2.5 h-2.5 text-amber-400" />
+                              <Sparkles className="w-2.5 h-2.5 text-amber-400 cinematic-action-sparkle" />
                               <span>AI Wish</span>
                             </button>
                             <button
@@ -953,7 +1116,7 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
                               disabled={isSendingWhatsApp}
                               className="flex-1 py-1 px-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-bold text-[10px] font-mono flex items-center justify-center gap-1 transition cursor-pointer shadow-sm disabled:opacity-50"
                             >
-                              <Send className="w-2.5 h-2.5" />
+                              <Send className="w-2.5 h-2.5 cinematic-action-send" />
                               <span>WhatsApp</span>
                             </button>
                           </div>
@@ -1049,7 +1212,7 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
                     <div className="p-3.5 rounded-2xl bg-gradient-to-br from-amber-500/10 via-zinc-900/90 to-zinc-900/90 border border-amber-500/25 flex flex-col gap-1.5 shadow-sm">
                       <div className="flex items-center justify-between">
                         <span className="text-amber-400 text-[10px] uppercase font-bold tracking-wider flex items-center gap-1.5">
-                          <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Name Meaning
+                          <Sparkles className="w-3.5 h-3.5 text-amber-400 cinematic-action-sparkle" /> Name Meaning
                         </span>
                         <span className="text-base select-none">{emoji}</span>
                       </div>
@@ -1083,7 +1246,7 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
 
                 <div className="p-3 rounded-xl bg-zinc-900/80 border border-zinc-800/80 flex items-center justify-between">
                   <span className="text-zinc-400 flex items-center gap-2">
-                    <Cake className="w-3.5 h-3.5 text-amber-400" /> Birthday:
+                    <Cake className="w-3.5 h-3.5 text-amber-400 cinematic-tree-micro-icon" /> Birthday:
                   </span>
                   <span className="font-bold text-white">
                     {activeMember.formattedBirthday} ({MONTH_NAMES[activeMember.parsedMonth]?.full || 'Celebration'})
@@ -1093,7 +1256,7 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
                 {activeMember.whatsapp && (
                   <div className="p-3 rounded-xl bg-zinc-900/80 border border-zinc-800/80 flex items-center justify-between">
                     <span className="text-zinc-400 flex items-center gap-2">
-                      <Phone className="w-3.5 h-3.5 text-emerald-400" /> WhatsApp:
+                      <Phone className="w-3.5 h-3.5 text-emerald-400 cinematic-tree-micro-icon" /> WhatsApp:
                     </span>
                     <span className="font-bold text-emerald-400">{activeMember.whatsapp}</span>
                   </div>
@@ -1102,7 +1265,7 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
                 {activeMember.email && (
                   <div className="p-3 rounded-xl bg-zinc-900/80 border border-zinc-800/80 flex items-center justify-between">
                     <span className="text-zinc-400 flex items-center gap-2">
-                      <Mail className="w-3.5 h-3.5 text-zinc-400" /> Email:
+                      <Mail className="w-3.5 h-3.5 text-zinc-400 cinematic-tree-micro-icon" /> Email:
                     </span>
                     <span className="font-semibold text-zinc-200 truncate max-w-[200px]">{activeMember.email}</span>
                   </div>
@@ -1118,7 +1281,7 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
                   }}
                   className="px-4 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold text-xs transition flex items-center justify-center gap-2 cursor-pointer border border-zinc-700"
                 >
-                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400 cinematic-action-sparkle" />
                   <span>AI Wish</span>
                 </button>
 
@@ -1130,7 +1293,7 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
                   disabled={isSendingWhatsApp}
                   className="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-black text-xs transition flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-emerald-500/20 disabled:opacity-50"
                 >
-                  <Send className="w-3.5 h-3.5" />
+                  <Send className="w-3.5 h-3.5 cinematic-action-send" />
                   <span>Send Wish</span>
                 </button>
               </div>
