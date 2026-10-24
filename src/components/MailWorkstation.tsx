@@ -5,6 +5,7 @@ import { checkIsTodayBirthday, getBirthMonth, MONTH_NAMES } from '../utils/dateU
 import { triggerBirthdayConfetti } from '../utils/confetti';
 import { MailAnalyticsGraph } from './MailAnalyticsGraph';
 import { MailSuccessRateDonut } from './MailSuccessRateDonut';
+import { IntegrationConnectivityDrawer } from './IntegrationConnectivityDrawer';
 import { 
   Mail, 
   Send, 
@@ -142,6 +143,7 @@ export const MailWorkstation: React.FC<MailWorkstationProps> = ({
   const [showEmbeddedGraph, setShowEmbeddedGraph] = useState<boolean>(true);
   const [viewLayout, setViewLayout] = useState<'table' | 'grid'>('table');
   const [includeFestiveCard, setIncludeFestiveCard] = useState<boolean>(true);
+  const [isIntegrationDrawerOpen, setIsIntegrationDrawerOpen] = useState<boolean>(false);
   const [sentEmailMap, setSentEmailMap] = useState<Record<string, boolean>>(() => {
     const saved = localStorage.getItem('birthday_sent_email_map');
     if (saved) {
@@ -701,14 +703,14 @@ function isToday(bdayStr, curMonth, curDay) {
   return (
     <div className="space-y-6">
       {/* Top Automated Banner */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-2xl border border-indigo-500/30 p-6 shadow-xl text-white relative overflow-hidden">
+      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-2xl border border-indigo-500/30 p-6 shadow-xl text-white relative overflow-hidden mail-workstation-aurora mail-shimmer-track mail-3d-banner-container mail-3d-specular-track">
         {/* Subtle radial decorative background */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
+        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/15 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20 animate-pulse"></div>
 
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="flex items-center gap-2.5 flex-wrap">
-              <div className="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-400/40 flex items-center justify-center text-indigo-300">
+              <div className="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-400/40 flex items-center justify-center text-indigo-300 mail-icon-glow">
                 <Mail className="w-5 h-5" />
               </div>
               <div>
@@ -716,7 +718,7 @@ function isToday(bdayStr, curMonth, curDay) {
                   Birthday Mail Workstation & Automated Dispatcher
                 </h2>
                 <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                  <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold flex items-center gap-1">
+                  <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold flex items-center gap-1 mail-badge-pulse-emerald">
                     <Radio className="w-2.5 h-2.5 animate-pulse text-emerald-400" />
                     Automated 8:00 AM Cloud Engine Ready
                   </span>
@@ -746,7 +748,7 @@ function isToday(bdayStr, curMonth, curDay) {
             <button
               onClick={handleAutoDispatchToday}
               disabled={isAutoSending || todayMembers.length === 0}
-              className="px-5 py-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-lg shadow-emerald-500/20 transition cursor-pointer flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-5 py-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-lg shadow-emerald-500/20 transition cursor-pointer flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed mail-btn-gradient-shimmer"
             >
               <Zap className={`w-4 h-4 text-amber-200 ${isAutoSending ? 'animate-spin' : ''}`} />
               {isAutoSending ? 'Auto-Dispatching Emails...' : `Auto-Send to Today's Celebrants (${todayMembers.length})`}
@@ -759,30 +761,54 @@ function isToday(bdayStr, curMonth, curDay) {
             >
               <RefreshCw className={`w-4 h-4 ${isLoadingLogs ? 'animate-spin text-emerald-400' : ''}`} />
             </button>
+
+            {/* Real-time Twilio & Google Sheets Connectivity Health Logs Drawer Trigger */}
+            <button
+              onClick={() => setIsIntegrationDrawerOpen(true)}
+              className="px-3.5 py-2.5 rounded-xl text-xs font-bold bg-slate-800/90 hover:bg-slate-750 text-indigo-200 hover:text-white border border-indigo-400/40 transition cursor-pointer flex items-center gap-2 shadow-sm hover:border-indigo-400/70"
+              title="Real-Time Twilio & Google Sheets Connection Status Logs"
+            >
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <Activity className="w-3.5 h-3.5 text-indigo-400 mail-icon-glow" />
+              <span className="hidden sm:inline">Connectivity Health</span>
+              <span className="text-[10px] bg-emerald-500/20 text-emerald-300 font-mono px-1.5 py-0.5 rounded border border-emerald-500/30 font-bold">
+                LOGS
+              </span>
+            </button>
           </div>
         </div>
 
         {/* Quick KPI Counters */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-5 border-t border-slate-800/80">
-          <div className="bg-slate-850/80 border border-slate-800 rounded-xl p-3">
+          <div className="bg-slate-850/80 border border-slate-800 rounded-xl p-3 mail-dark-kpi-live mail-3d-dark-kpi cursor-pointer">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Total Team Mails</span>
             <span className="text-lg font-black font-mono text-white mt-0.5 block">{membersWithEmail.length} / {members.length}</span>
           </div>
 
-          <div className="bg-slate-850/80 border border-slate-800 rounded-xl p-3">
+          <div className="bg-slate-850/80 border border-slate-800 rounded-xl p-3 mail-dark-kpi-live-1 mail-3d-dark-kpi mail-3d-dark-kpi-delay-1 cursor-pointer">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Today's Birthday Mails</span>
             <span className="text-lg font-black font-mono text-amber-400 mt-0.5 block">{todayMembers.length} Celebrant{todayMembers.length === 1 ? '' : 's'}</span>
           </div>
 
-          <div className="bg-slate-850/80 border border-slate-800 rounded-xl p-3">
+          <div className="bg-slate-850/80 border border-slate-800 rounded-xl p-3 mail-dark-kpi-live-2 mail-3d-dark-kpi mail-3d-dark-kpi-delay-2 cursor-pointer">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Dispatches Recorded</span>
             <span className="text-lg font-black font-mono text-emerald-400 mt-0.5 block">{emailLogs.length} Delivered</span>
           </div>
 
-          <div className="bg-slate-850/80 border border-slate-800 rounded-xl p-3">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Delivery Automation</span>
+          <div 
+            onClick={() => setIsIntegrationDrawerOpen(true)}
+            className="bg-slate-850/80 border border-slate-800 rounded-xl p-3 mail-dark-kpi-live-3 mail-3d-dark-kpi mail-3d-dark-kpi-delay-3 cursor-pointer hover:border-indigo-400/50 transition"
+            title="Click to view real-time Twilio & Google Sheets integration logs"
+          >
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+              <span>Delivery Automation</span>
+              <span className="text-[9px] text-indigo-400 underline">Logs →</span>
+            </span>
             <span className="text-xs font-bold text-emerald-300 flex items-center gap-1 mt-1.5 font-mono">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 mail-icon-glow" />
               100% Zero-Touch
             </span>
           </div>
@@ -790,10 +816,10 @@ function isToday(bdayStr, curMonth, curDay) {
       </div>
 
       {/* Monthly Auto-Wish Performance & Pending Summary Card Grid */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs p-5 space-y-4">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs p-5 space-y-4 mail-shimmer-track mail-3d-surface mail-3d-specular-track">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3.5">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
+            <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold mail-icon-glow">
               <CalendarClock className="w-4.5 h-4.5" />
             </div>
             <div>
@@ -801,7 +827,7 @@ function isToday(bdayStr, curMonth, curDay) {
                 <h3 className="text-sm font-bold text-slate-900">
                   {currentMonthName} {currentYear} Birthday Auto-Wish Summary
                 </h3>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 mail-badge-pulse-indigo">
                   Current Month
                 </span>
               </div>
@@ -818,7 +844,7 @@ function isToday(bdayStr, curMonth, curDay) {
             </div>
             <div className="w-24 h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
               <div
-                className="h-full bg-emerald-500 rounded-full transition-all duration-500"
+                className="h-full bg-emerald-500 rounded-full transition-all duration-500 mail-progress-stream"
                 style={{ width: `${monthCompletionRate}%` }}
               ></div>
             </div>
@@ -828,11 +854,11 @@ function isToday(bdayStr, curMonth, curDay) {
         {/* Clean Modern 5-Column Grid with Delivery Health Metric */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5">
           {/* 1. Successfully Sent This Month */}
-          <div className="bg-emerald-50/50 hover:bg-emerald-50/80 border border-emerald-200/80 rounded-xl p-4 transition duration-200 flex flex-col justify-between">
+          <div className="bg-emerald-50/50 hover:bg-emerald-50/80 border border-emerald-200/80 rounded-xl p-4 transition duration-200 flex flex-col justify-between mail-card-breathe mail-3d-metric-card cursor-pointer">
             <div>
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-800 flex items-center gap-1.5">
-                  <CheckCheck className="w-3.5 h-3.5 text-emerald-600" />
+                  <CheckCheck className="w-3.5 h-3.5 text-emerald-600 mail-icon-glow" />
                   Successfully Sent
                 </span>
                 <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100/90 px-2 py-0.5 rounded-full">
@@ -858,11 +884,11 @@ function isToday(bdayStr, curMonth, curDay) {
           </div>
 
           {/* 2. Pending Automated Wishes Counter */}
-          <div className="bg-amber-50/50 hover:bg-amber-50/80 border border-amber-200/80 rounded-xl p-4 transition duration-200 flex flex-col justify-between">
+          <div className="bg-amber-50/50 hover:bg-amber-50/80 border border-amber-200/80 rounded-xl p-4 transition duration-200 flex flex-col justify-between mail-card-breathe-delay-1 mail-3d-metric-card mail-3d-metric-card-delay-1 cursor-pointer">
             <div>
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-amber-800 flex items-center gap-1.5">
-                  <Hourglass className="w-3.5 h-3.5 text-amber-600" />
+                  <Hourglass className="w-3.5 h-3.5 text-amber-600 mail-icon-glow" />
                   Pending Wishes
                 </span>
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
@@ -895,14 +921,14 @@ function isToday(bdayStr, curMonth, curDay) {
           </div>
 
           {/* 3. Delivery Health Metric (%) */}
-          <div className="bg-teal-50/50 hover:bg-teal-50/80 border border-teal-200/80 rounded-xl p-4 transition duration-200 flex flex-col justify-between">
+          <div className="bg-teal-50/50 hover:bg-teal-50/80 border border-teal-200/80 rounded-xl p-4 transition duration-200 flex flex-col justify-between mail-card-breathe-delay-2 mail-3d-metric-card mail-3d-metric-card-delay-2 cursor-pointer">
             <div>
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-teal-800 flex items-center gap-1.5">
-                  <HeartPulse className="w-3.5 h-3.5 text-teal-600" />
+                  <HeartPulse className="w-3.5 h-3.5 text-teal-600 mail-icon-heartbeat" />
                   Delivery Health
                 </span>
-                <span className="text-[10px] font-bold text-teal-700 bg-teal-100/90 px-2 py-0.5 rounded-full flex items-center gap-1">
+                <span className="text-[10px] font-bold text-teal-700 bg-teal-100/90 px-2 py-0.5 rounded-full flex items-center gap-1 mail-badge-pulse-emerald">
                   <span className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse"></span>
                   {parseFloat(deliveryHealthPercentage) >= 95 ? 'Optimal' : parseFloat(deliveryHealthPercentage) >= 80 ? 'Good' : 'Needs Review'}
                 </span>
@@ -927,11 +953,11 @@ function isToday(bdayStr, curMonth, curDay) {
           </div>
 
           {/* 4. Total Celebrants in Month */}
-          <div className="bg-slate-50 hover:bg-slate-100/70 border border-slate-200 rounded-xl p-4 transition duration-200 flex flex-col justify-between">
+          <div className="bg-slate-50 hover:bg-slate-100/70 border border-slate-200 rounded-xl p-4 transition duration-200 flex flex-col justify-between mail-card-breathe-delay-3 mail-3d-metric-card mail-3d-metric-card-delay-3 cursor-pointer">
             <div>
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
-                  <Cake className="w-3.5 h-3.5 text-slate-500" />
+                  <Cake className="w-3.5 h-3.5 text-slate-500 mail-icon-glow" />
                   Month Total
                 </span>
                 <span className="text-[10px] font-bold text-slate-600 bg-slate-200/80 px-2 py-0.5 rounded-full font-mono">
@@ -959,21 +985,21 @@ function isToday(bdayStr, curMonth, curDay) {
           </div>
 
           {/* 5. Automated Cloud Dispatch Status */}
-          <div className="bg-indigo-50/40 hover:bg-indigo-50/70 border border-indigo-200/80 rounded-xl p-4 transition duration-200 flex flex-col justify-between">
+          <div className="bg-indigo-50/40 hover:bg-indigo-50/70 border border-indigo-200/80 rounded-xl p-4 transition duration-200 flex flex-col justify-between mail-card-breathe-delay-4 mail-3d-metric-card mail-3d-metric-card-delay-4 cursor-pointer">
             <div>
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-800 flex items-center gap-1.5">
-                  <Bot className="w-3.5 h-3.5 text-indigo-600" />
+                  <Bot className="w-3.5 h-3.5 text-indigo-600 mail-icon-glow" />
                   Cloud Automation
                 </span>
-                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100/90 px-2 py-0.5 rounded-full flex items-center gap-1">
+                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100/90 px-2 py-0.5 rounded-full flex items-center gap-1 mail-badge-pulse-emerald">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                   Active
                 </span>
               </div>
               <div className="mt-2.5 flex items-baseline gap-1.5">
                 <span className="text-sm font-bold text-indigo-950 flex items-center gap-1">
-                  <Zap className="w-4 h-4 text-indigo-600" />
+                  <Zap className="w-4 h-4 text-indigo-600 mail-icon-glow" />
                   Daily 8:00 AM Cron
                 </span>
               </div>
@@ -1044,6 +1070,17 @@ function isToday(bdayStr, curMonth, curDay) {
           >
             <Code2 className="w-3.5 h-3.5" />
             Gmail Apps Script Code (.gs)
+          </button>
+
+          {/* Quick Trigger Button for Twilio & Google Sheets Real-Time Connection Logs */}
+          <button
+            onClick={() => setIsIntegrationDrawerOpen(true)}
+            className="px-3.5 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/80 shadow-2xs"
+            title="Open Real-Time Twilio & Google Sheets Connectivity Logs Drawer"
+          >
+            <Radio className="w-3.5 h-3.5 text-indigo-600 animate-pulse" />
+            <span>Twilio & Sheets Logs</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
           </button>
         </div>
 
@@ -1982,6 +2019,13 @@ function isToday(bdayStr, curMonth, curDay) {
           </div>
         </div>
       )}
+
+      {/* Integration Connectivity Health & Status Logs Side-Drawer */}
+      <IntegrationConnectivityDrawer
+        isOpen={isIntegrationDrawerOpen}
+        onClose={() => setIsIntegrationDrawerOpen(false)}
+        teamMembersCount={members.length}
+      />
     </div>
   );
 };

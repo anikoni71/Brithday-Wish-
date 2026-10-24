@@ -67,9 +67,11 @@ import {
   getUpcomingCelebrantsPlanningList,
   checkIsTodayBirthday,
   getUpcomingBirthdayInfo,
-  normalizeBirthdayString
+  normalizeBirthdayString,
+  parseBirthdayDate
 } from '../utils/dateUtils';
 import { BirthdayTree } from './BirthdayTree';
+import { CustomTooltip, MemberCardTooltip } from './CustomTooltip';
 
 interface ExecutiveDashboardProps {
   members: TeamMember[];
@@ -530,6 +532,29 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
     });
   }, [members]);
 
+  // Real-time 7-day birthday distribution for current week (Sun through Sat)
+  const currentWeekDistribution = useMemo(() => {
+    const today = new Date();
+    const dayOfWeek = today.getDay();
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - dayOfWeek);
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const counts = [0, 0, 0, 0, 0, 0, 0];
+    members.forEach((m) => {
+      const parsed = parseBirthdayDate(m.birthday);
+      if (!parsed) return;
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(startOfWeek);
+        d.setDate(startOfWeek.getDate() + i);
+        if (parsed.month === d.getMonth() && parsed.day === d.getDate()) {
+          counts[i] += 1;
+        }
+      }
+    });
+    return counts;
+  }, [members]);
+
   // Comprehensive 30-Day Outlook List
   const upcoming30DaysCelebrants = useMemo(() => {
     return getUpcomingCelebrantsPlanningList(members, outlookRange).filter((c) => {
@@ -873,192 +898,283 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
       {/* 3. TOP METRIC BENTO CARDS WITH INTEGRATED SPARKLINES & CINEMATIC TELEMETRY */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
         {/* Card 1: Total Team Members */}
-        <motion.div
-          variants={itemVariants}
-          className="group relative rounded-xl bg-zinc-900/50 backdrop-blur-xl p-4 sm:p-5 border border-zinc-800/80 hover:border-zinc-700 transition-all duration-300 shadow-xl shadow-black/40 overflow-hidden executive-card-cinematic executive-metric-1"
+        <CustomTooltip
+          title="Total Team Strength"
+          subtitle="Central Industrial Engineering"
+          category="MASTER WORKFORCE"
+          badge="100% SYNCED"
+          badgeColor="emerald"
+          icon={<Users className="w-4 h-4 text-emerald-400" />}
+          summary={`Total verified team strength of ${totalMembers} industrial engineers synchronized from Google Sheets master table.`}
+          metrics={[
+            { label: 'Active Engineers', value: totalMembers, highlight: true },
+            { label: "Today's Birthdays", value: todayCelebrants.length },
+            { label: 'Sync Verification', value: 'Verified OK' },
+            { label: 'Data Integrity', value: 'Single Source' },
+          ]}
+          footer="Real-Time Telemetry Feed"
         >
-          {/* Ambient Futuristic Telemetry Glow */}
-          <div className="absolute -top-10 -right-10 w-28 h-28 rounded-full bg-emerald-500/10 blur-2xl pointer-events-none" />
-          <div className="absolute bottom-1 right-2 w-1 h-1 rounded-full bg-emerald-400/40 animate-ping [animation-duration:3s] pointer-events-none" />
-          <div className="absolute top-2 left-1/3 w-1 h-1 rounded-full bg-cyan-400/30 animate-pulse pointer-events-none" />
+          <motion.div
+            variants={itemVariants}
+            className="group relative rounded-xl bg-zinc-900/50 backdrop-blur-xl p-4 sm:p-5 border border-zinc-800/80 hover:border-zinc-700 transition-all duration-300 shadow-xl shadow-black/40 overflow-hidden executive-card-cinematic executive-metric-1"
+          >
+            {/* Ambient Futuristic Telemetry Glow */}
+            <div className="absolute -top-10 -right-10 w-28 h-28 rounded-full bg-emerald-500/10 blur-2xl pointer-events-none" />
+            <div className="absolute bottom-1 right-2 w-1 h-1 rounded-full bg-emerald-400/40 animate-ping [animation-duration:3s] pointer-events-none" />
+            <div className="absolute top-2 left-1/3 w-1 h-1 rounded-full bg-cyan-400/30 animate-pulse pointer-events-none" />
 
-          <div className="relative z-10 flex items-center justify-between">
-            <span className="text-[11px] font-mono font-medium tracking-wider text-zinc-400 uppercase">
-              TOTAL TEAM
-            </span>
-            <Users className="w-4 h-4 text-zinc-400 cinematic-icon-users" />
-          </div>
-
-          <div className="relative z-10 mt-3 flex items-end justify-between">
-            <div>
-              <div className="text-3xl font-extrabold tracking-tight text-white font-mono">
-                <CountUp value={totalMembers} />
-              </div>
-              <div className="flex items-center gap-1 mt-1 text-[11px] font-medium text-emerald-400 font-mono">
-                <CheckCircle2 className="w-3 h-3 text-emerald-400 cinematic-icon-check" />
-                <span>100% Synced</span>
-              </div>
+            <div className="relative z-10 flex items-center justify-between">
+              <span className="text-[11px] font-mono font-medium tracking-wider text-zinc-400 uppercase">
+                TOTAL TEAM
+              </span>
+              <Users className="w-4 h-4 text-zinc-400 cinematic-icon-users" />
             </div>
 
-            {/* Sparkline */}
-            <div className="opacity-75 group-hover:opacity-100 transition-opacity">
-              <Sparkline data={[18, 19, 21, 22, 23, 23, totalMembers]} color="#10b981" delay={0} />
+            <div className="relative z-10 mt-3 flex items-end justify-between">
+              <div>
+                <div className="text-3xl font-extrabold tracking-tight text-white font-mono">
+                  <CountUp value={totalMembers} />
+                </div>
+                <div className="flex items-center gap-1 mt-1 text-[11px] font-medium text-emerald-400 font-mono">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-400 cinematic-icon-check" />
+                  <span>100% Synced</span>
+                </div>
+              </div>
+
+              {/* Sparkline */}
+              <div className="opacity-75 group-hover:opacity-100 transition-opacity">
+                <Sparkline data={[18, 19, 21, 22, 23, 23, totalMembers]} color="#10b981" delay={0} />
+              </div>
             </div>
-          </div>
-        </motion.div>
+          </motion.div>
+        </CustomTooltip>
 
         {/* Card 2: Today's Celebrants */}
-        <motion.div
-          variants={itemVariants}
-          className={`group relative rounded-xl p-4 sm:p-5 backdrop-blur-xl border transition-all duration-300 shadow-xl shadow-black/40 overflow-hidden executive-card-cinematic executive-metric-2 ${
-            todayCelebrants.length > 0
-              ? 'bg-zinc-900/80 border-emerald-500/60 shadow-[0_0_25px_rgba(16,185,129,0.2)] ring-1 ring-emerald-500/30'
-              : 'bg-zinc-900/50 border-zinc-800/80 hover:border-zinc-700'
-          }`}
+        <CustomTooltip
+          title="Today's Birthday Roster"
+          subtitle={todayCelebrants.length > 0 ? `${todayCelebrants.length} Active Celebrant(s)` : 'Zero birthdays today'}
+          category="DAILY MILESTONES"
+          badge={todayCelebrants.length > 0 ? 'CELEBRATION ACTIVE 🎉' : 'STANDBY'}
+          badgeColor={todayCelebrants.length > 0 ? 'emerald' : 'zinc'}
+          icon={<Cake className="w-4 h-4 text-emerald-400" />}
+          summary={todayCelebrants.length > 0
+            ? `Today's celebrants: ${todayCelebrants.map((c) => c.name).join(', ')}. Automated WhatsApp & email greetings queued.`
+            : 'No birthdays scheduled for today. Automated background checks run daily at 8:00 AM.'}
+          metrics={[
+            { label: 'Active Today', value: todayCelebrants.length, highlight: todayCelebrants.length > 0 },
+            { label: 'This Week Dist.', value: `${currentWeekDistribution.reduce((a, b) => a + b, 0)} this week` },
+            { label: 'Morning Sequence', value: '8:00 AM Auto' },
+            { label: 'Delivery Gateways', value: 'WhatsApp / Email' },
+            { label: 'Celebration Status', value: todayCelebrants.length > 0 ? 'In Progress' : 'Standby' },
+          ]}
+          footer="Real-time Dispatch Engine"
         >
-          {/* Ambient Futuristic Telemetry Glow */}
-          <div className={`absolute -top-10 -right-10 w-28 h-28 rounded-full blur-2xl pointer-events-none ${todayCelebrants.length > 0 ? 'bg-emerald-500/20 animate-pulse' : 'bg-zinc-500/10'}`} />
-          <div className="absolute top-2 right-8 w-1.5 h-1.5 rounded-full bg-emerald-400/50 animate-pulse pointer-events-none" />
-          <div className="absolute bottom-2 left-2 w-1 h-1 rounded-full bg-emerald-400/30 animate-ping [animation-duration:2.5s] pointer-events-none" />
+          <motion.div
+            variants={itemVariants}
+            className={`group relative rounded-xl p-4 sm:p-5 backdrop-blur-xl border transition-all duration-300 shadow-xl shadow-black/40 overflow-hidden executive-card-cinematic executive-metric-2 ${
+              todayCelebrants.length > 0
+                ? 'bg-zinc-900/80 border-emerald-500/60 shadow-[0_0_25px_rgba(16,185,129,0.2)] ring-1 ring-emerald-500/30'
+                : 'bg-zinc-900/50 border-zinc-800/80 hover:border-zinc-700'
+            }`}
+          >
+            {/* Ambient Futuristic Telemetry Glow */}
+            <div className={`absolute -top-10 -right-10 w-28 h-28 rounded-full blur-2xl pointer-events-none ${todayCelebrants.length > 0 ? 'bg-emerald-500/20 animate-pulse' : 'bg-zinc-500/10'}`} />
+            <div className="absolute top-2 right-8 w-1.5 h-1.5 rounded-full bg-emerald-400/50 animate-pulse pointer-events-none" />
+            <div className="absolute bottom-2 left-2 w-1 h-1 rounded-full bg-emerald-400/30 animate-ping [animation-duration:2.5s] pointer-events-none" />
 
-          <div className="relative z-10 flex items-center justify-between">
-            <span className="text-[11px] font-mono font-medium tracking-wider text-zinc-400 uppercase">
-              TODAY'S CELEBRANTS
-            </span>
-            <Cake className={`w-4 h-4 cinematic-icon-cake ${todayCelebrants.length > 0 ? 'text-emerald-400 animate-bounce' : 'text-zinc-500'}`} />
-          </div>
+            <div className="relative z-10 flex items-center justify-between">
+              <span className="text-[11px] font-mono font-medium tracking-wider text-zinc-400 uppercase">
+                TODAY'S CELEBRANTS
+              </span>
+              <Cake className={`w-4 h-4 cinematic-icon-cake ${todayCelebrants.length > 0 ? 'text-emerald-400 animate-bounce' : 'text-zinc-500'}`} />
+            </div>
 
-          <div className="relative z-10 mt-3 flex items-end justify-between">
-            <div>
-              <div className="text-3xl font-extrabold tracking-tight text-white font-mono flex items-center gap-2">
-                <CountUp value={todayCelebrants.length} />
-                {todayCelebrants.length > 0 && (
-                  <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                    ACTIVE
-                  </span>
-                )}
+            <div className="relative z-10 mt-3 flex items-end justify-between">
+              <div>
+                <div className="text-3xl font-extrabold tracking-tight text-white font-mono flex items-center gap-2">
+                  <CountUp value={todayCelebrants.length} />
+                  {todayCelebrants.length > 0 && (
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                      ACTIVE
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-zinc-400 mt-1 truncate max-w-[130px]">
+                  {todayCelebrants.length > 0
+                    ? todayCelebrants.map((c) => c.name).join(', ')
+                    : 'Zero today'}
+                </p>
               </div>
-              <p className="text-[11px] text-zinc-400 mt-1 truncate max-w-[130px]">
-                {todayCelebrants.length > 0
-                  ? todayCelebrants.map((c) => c.name).join(', ')
-                  : 'Zero today'}
-              </p>
-            </div>
 
-            {/* Sparkline */}
-            <div className="opacity-75 group-hover:opacity-100 transition-opacity">
-              <Sparkline
-                data={[0, 1, 0, todayCelebrants.length, todayCelebrants.length]}
-                color={todayCelebrants.length > 0 ? '#10b981' : '#71717a'}
-                delay={0.5}
-              />
+              {/* Sparkline: 7-Day Current Week Distribution */}
+              <div 
+                className="opacity-75 group-hover:opacity-100 transition-opacity"
+                title={`Current Week Birthday Distribution: Sun (${currentWeekDistribution[0]}), Mon (${currentWeekDistribution[1]}), Tue (${currentWeekDistribution[2]}), Wed (${currentWeekDistribution[3]}), Thu (${currentWeekDistribution[4]}), Fri (${currentWeekDistribution[5]}), Sat (${currentWeekDistribution[6]})`}
+              >
+                <Sparkline
+                  data={currentWeekDistribution}
+                  color={todayCelebrants.length > 0 ? '#10b981' : '#71717a'}
+                  delay={0.5}
+                />
+              </div>
             </div>
-          </div>
-        </motion.div>
+          </motion.div>
+        </CustomTooltip>
 
         {/* Card 3: 30-Day Lookahead */}
-        <motion.div
-          variants={itemVariants}
-          className="group relative rounded-xl bg-zinc-900/50 backdrop-blur-xl p-4 sm:p-5 border border-zinc-800/80 hover:border-zinc-700 transition-all duration-300 shadow-xl shadow-black/40 overflow-hidden executive-card-cinematic executive-metric-3"
+        <CustomTooltip
+          title="30-Day Celebrant Outlook"
+          subtitle="Upcoming Birthday Milestones"
+          category="ADVANCE RADAR"
+          badge="PROACTIVE PLANNING"
+          badgeColor="indigo"
+          icon={<Calendar className="w-4 h-4 text-indigo-400" />}
+          summary={`Upcoming calendar horizon with ${upcoming30DaysCelebrants.length} celebrants approaching in the next 30 days.`}
+          metrics={[
+            { label: 'Next 30 Days', value: `${upcoming30DaysCelebrants.length} Celebrants`, highlight: true },
+            { label: 'Next 7 Days', value: `${upcoming7DaysCelebrants.length} Due Soon` },
+            { label: 'Advance Briefing', value: 'Daily 5:00 PM' },
+            { label: 'Timeline Horizon', value: 'Active' },
+          ]}
+          footer="Advance Departmental Coordination"
         >
-          {/* Ambient Futuristic Telemetry Glow */}
-          <div className="absolute -top-10 -right-10 w-28 h-28 rounded-full bg-indigo-500/10 blur-2xl pointer-events-none" />
-          <div className="absolute bottom-2 left-4 w-1 h-1 rounded-full bg-indigo-400/40 animate-ping [animation-duration:4s] pointer-events-none" />
+          <motion.div
+            variants={itemVariants}
+            className="group relative rounded-xl bg-zinc-900/50 backdrop-blur-xl p-4 sm:p-5 border border-zinc-800/80 hover:border-zinc-700 transition-all duration-300 shadow-xl shadow-black/40 overflow-hidden executive-card-cinematic executive-metric-3"
+          >
+            {/* Ambient Futuristic Telemetry Glow */}
+            <div className="absolute -top-10 -right-10 w-28 h-28 rounded-full bg-indigo-500/10 blur-2xl pointer-events-none" />
+            <div className="absolute bottom-2 left-4 w-1 h-1 rounded-full bg-indigo-400/40 animate-ping [animation-duration:4s] pointer-events-none" />
 
-          <div className="relative z-10 flex items-center justify-between">
-            <span className="text-[11px] font-mono font-medium tracking-wider text-zinc-400 uppercase">
-              30-DAY OUTLOOK
-            </span>
-            <Calendar className="w-4 h-4 text-zinc-400 cinematic-icon-calendar" />
-          </div>
-
-          <div className="relative z-10 mt-3 flex items-end justify-between">
-            <div>
-              <div className="text-3xl font-extrabold tracking-tight text-white font-mono">
-                <CountUp value={upcoming30DaysCelebrants.length} />
-              </div>
-              <div className="flex items-center gap-1 mt-1 text-[11px] font-medium text-zinc-400 font-mono">
-                <Clock className="w-3 h-3 text-zinc-400 cinematic-icon-clock" />
-                <span>Next 30 Days</span>
-              </div>
+            <div className="relative z-10 flex items-center justify-between">
+              <span className="text-[11px] font-mono font-medium tracking-wider text-zinc-400 uppercase">
+                30-DAY OUTLOOK
+              </span>
+              <Calendar className="w-4 h-4 text-zinc-400 cinematic-icon-calendar" />
             </div>
 
-            {/* Sparkline */}
-            <div className="opacity-75 group-hover:opacity-100 transition-opacity">
-              <Sparkline data={[2, 3, 5, 4, upcoming30DaysCelebrants.length]} color="#a1a1aa" delay={1.0} />
+            <div className="relative z-10 mt-3 flex items-end justify-between">
+              <div>
+                <div className="text-3xl font-extrabold tracking-tight text-white font-mono">
+                  <CountUp value={upcoming30DaysCelebrants.length} />
+                </div>
+                <div className="flex items-center gap-1 mt-1 text-[11px] font-medium text-zinc-400 font-mono">
+                  <Clock className="w-3 h-3 text-zinc-400 cinematic-icon-clock" />
+                  <span>Next 30 Days</span>
+                </div>
+              </div>
+
+              {/* Sparkline */}
+              <div className="opacity-75 group-hover:opacity-100 transition-opacity">
+                <Sparkline data={[2, 3, 5, 4, upcoming30DaysCelebrants.length]} color="#a1a1aa" delay={1.0} />
+              </div>
             </div>
-          </div>
-        </motion.div>
+          </motion.div>
+        </CustomTooltip>
 
         {/* Card 4: Wish Dispatch Rate */}
-        <motion.div
-          variants={itemVariants}
-          className="group relative rounded-xl bg-zinc-900/50 backdrop-blur-xl p-4 sm:p-5 border border-zinc-800/80 hover:border-zinc-700 transition-all duration-300 shadow-xl shadow-black/40 overflow-hidden executive-card-cinematic executive-metric-4"
+        <CustomTooltip
+          title="Annual Wish Dispatch Progress"
+          subtitle={`${currentYear} Completion Metric`}
+          category="DELIVERY EFFICIENCY"
+          badge={`${dispatchMetrics.completionRate}% RATE`}
+          badgeColor="emerald"
+          icon={<Send className="w-4 h-4 text-emerald-400" />}
+          summary={`Overall annual dispatch progress: ${dispatchMetrics.sentCount} out of ${totalMembers} team members celebrated (${dispatchMetrics.completionRate}% completion).`}
+          metrics={[
+            { label: 'Dispatched Wishes', value: dispatchMetrics.sentCount, highlight: true },
+            { label: 'Pending Milestones', value: dispatchMetrics.pendingCount },
+            { label: 'Success Rate', value: '100% Delivery' },
+            { label: 'Annual Target', value: `${totalMembers} Wishes` },
+          ]}
+          footer="Year-to-date Milestone Tracker"
         >
-          {/* Ambient Futuristic Telemetry Glow */}
-          <div className="absolute -top-10 -right-10 w-28 h-28 rounded-full bg-emerald-500/10 blur-2xl pointer-events-none" />
-          <div className="absolute top-3 left-1/2 w-1 h-1 rounded-full bg-emerald-300/40 animate-pulse pointer-events-none" />
+          <motion.div
+            variants={itemVariants}
+            className="group relative rounded-xl bg-zinc-900/50 backdrop-blur-xl p-4 sm:p-5 border border-zinc-800/80 hover:border-zinc-700 transition-all duration-300 shadow-xl shadow-black/40 overflow-hidden executive-card-cinematic executive-metric-4"
+          >
+            {/* Ambient Futuristic Telemetry Glow */}
+            <div className="absolute -top-10 -right-10 w-28 h-28 rounded-full bg-emerald-500/10 blur-2xl pointer-events-none" />
+            <div className="absolute top-3 left-1/2 w-1 h-1 rounded-full bg-emerald-300/40 animate-pulse pointer-events-none" />
 
-          <div className="relative z-10 flex items-center justify-between">
-            <span className="text-[11px] font-mono font-medium tracking-wider text-zinc-400 uppercase">
-              DISPATCH RATE
-            </span>
-            <Send className="w-4 h-4 text-zinc-400 cinematic-icon-send" />
-          </div>
-
-          <div className="relative z-10 mt-3 flex items-end justify-between">
-            <div>
-              <div className="text-3xl font-extrabold tracking-tight text-white font-mono">
-                <CountUp value={dispatchMetrics.completionRate} suffix="%" />
-              </div>
-              <div className="text-[11px] font-mono text-zinc-400 mt-1">
-                <span className="text-emerald-400 font-semibold">{dispatchMetrics.sentCount}</span> / {totalMembers} Sent
-              </div>
+            <div className="relative z-10 flex items-center justify-between">
+              <span className="text-[11px] font-mono font-medium tracking-wider text-zinc-400 uppercase">
+                DISPATCH RATE
+              </span>
+              <Send className="w-4 h-4 text-zinc-400 cinematic-icon-send" />
             </div>
 
-            {/* Sparkline */}
-            <div className="opacity-75 group-hover:opacity-100 transition-opacity">
-              <Sparkline data={[10, 25, 40, 60, dispatchMetrics.completionRate]} color="#10b981" delay={1.5} />
+            <div className="relative z-10 mt-3 flex items-end justify-between">
+              <div>
+                <div className="text-3xl font-extrabold tracking-tight text-white font-mono">
+                  <CountUp value={dispatchMetrics.completionRate} suffix="%" />
+                </div>
+                <div className="text-[11px] font-mono text-zinc-400 mt-1">
+                  <span className="text-emerald-400 font-semibold">{dispatchMetrics.sentCount}</span> / {totalMembers} Sent
+                </div>
+              </div>
+
+              {/* Sparkline */}
+              <div className="opacity-75 group-hover:opacity-100 transition-opacity">
+                <Sparkline data={[10, 25, 40, 60, dispatchMetrics.completionRate]} color="#10b981" delay={1.5} />
+              </div>
             </div>
-          </div>
-        </motion.div>
+          </motion.div>
+        </CustomTooltip>
 
         {/* Card 5: Engine Telemetry Status */}
-        <motion.div
-          variants={itemVariants}
-          className="group relative rounded-xl bg-zinc-900/50 backdrop-blur-xl p-4 sm:p-5 border border-zinc-800/80 hover:border-zinc-700 transition-all duration-300 shadow-xl shadow-black/40 overflow-hidden executive-card-cinematic executive-metric-5"
+        <CustomTooltip
+          title="System Engine & Dispatch Daemon"
+          subtitle={displaySender}
+          category="OPERATIONAL INFRASTRUCTURE"
+          badge="ARMED & READY"
+          badgeColor="emerald"
+          icon={<Zap className="w-4 h-4 text-emerald-400" />}
+          summary="Core automated communication daemon with validated Twilio API credentials, active SSE telemetry, and daily 8:00 AM auto-dispatch triggers."
+          metrics={[
+            { label: 'Gateway Line', value: displaySender },
+            { label: 'Daemon V-Core', value: 'Active (200 OK)', highlight: true },
+            { label: 'SSE Telemetry', value: 'Persistent Stream' },
+            { label: 'Auto Dispatch', value: 'Enabled' },
+          ]}
+          footer="Enterprise Cloud Automation"
         >
-          {/* Ambient Futuristic Telemetry Glow */}
-          <div className="absolute -top-10 -right-10 w-28 h-28 rounded-full bg-emerald-500/15 blur-2xl pointer-events-none animate-pulse" />
-          <div className="absolute bottom-2 right-12 w-1.5 h-1.5 rounded-full bg-emerald-400/50 animate-ping [animation-duration:2.5s] pointer-events-none" />
+          <motion.div
+            variants={itemVariants}
+            className="group relative rounded-xl bg-zinc-900/50 backdrop-blur-xl p-4 sm:p-5 border border-zinc-800/80 hover:border-zinc-700 transition-all duration-300 shadow-xl shadow-black/40 overflow-hidden executive-card-cinematic executive-metric-5"
+          >
+            {/* Ambient Futuristic Telemetry Glow */}
+            <div className="absolute -top-10 -right-10 w-28 h-28 rounded-full bg-emerald-500/15 blur-2xl pointer-events-none animate-pulse" />
+            <div className="absolute bottom-2 right-12 w-1.5 h-1.5 rounded-full bg-emerald-400/50 animate-ping [animation-duration:2.5s] pointer-events-none" />
 
-          <div className="relative z-10 flex items-center justify-between">
-            <span className="text-[11px] font-mono font-medium tracking-wider text-zinc-400 uppercase">
-              SYSTEM ENGINE
-            </span>
-            <Zap className="w-4 h-4 text-emerald-400 cinematic-icon-zap" />
-          </div>
+            <div className="relative z-10 flex items-center justify-between">
+              <span className="text-[11px] font-mono font-medium tracking-wider text-zinc-400 uppercase">
+                SYSTEM ENGINE
+              </span>
+              <Zap className="w-4 h-4 text-emerald-400 cinematic-icon-zap" />
+            </div>
 
-          <div className="relative z-10 mt-3 flex items-end justify-between">
-            <div>
-              <div className="flex items-center gap-1.5 text-sm font-bold text-emerald-400 font-mono">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
-                </span>
-                ARMED & READY
+            <div className="relative z-10 mt-3 flex items-end justify-between">
+              <div>
+                <div className="flex items-center gap-1.5 text-sm font-bold text-emerald-400 font-mono">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
+                  </span>
+                  ARMED & READY
+                </div>
+                <p className="text-[11px] font-mono text-zinc-400 mt-1 truncate" title={displaySender}>
+                  WA: {displaySender}
+                </p>
               </div>
-              <p className="text-[11px] font-mono text-zinc-400 mt-1 truncate" title={displaySender}>
-                WA: {displaySender}
-              </p>
-            </div>
 
-            {/* Pulse heartbeat Sparkline */}
-            <div className="opacity-75 group-hover:opacity-100 transition-opacity">
-              <Sparkline data={[4, 6, 4, 18, 4, 6, 4]} color="#10b981" delay={2.0} />
+              {/* Pulse heartbeat Sparkline */}
+              <div className="opacity-75 group-hover:opacity-100 transition-opacity">
+                <Sparkline data={[4, 6, 4, 18, 4, 6, 4]} color="#10b981" delay={2.0} />
+              </div>
             </div>
-          </div>
-        </motion.div>
+          </motion.div>
+        </CustomTooltip>
       </div>
 
       {/* 3. CHARTS ROW: FINTECH PRECISION RADIAL & DENSITY AREA */}
@@ -1465,99 +1581,115 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
             {upcoming30DaysCelebrants.map((item, idx) => {
               const fullMember = members.find((m) => m.id === item.id || m.sl === item.sl);
               const isToday = item.daysRemaining === 0;
+              const cardMember: TeamMember = fullMember || {
+                sl: item.sl || idx + 1,
+                id: item.id || String(idx + 1),
+                name: item.name,
+                designation: item.designation,
+                department: item.department,
+                birthday: item.normalizedBirthday,
+                whatsapp: item.hasWhatsApp ? 'Verified' : '',
+                mobile: '',
+                email: '',
+                wishingMessage: '',
+              };
 
               return (
-                <div
+                <MemberCardTooltip
                   key={`exec-30d-${item.id || item.sl || item.name}-${idx}`}
-                  className={`p-3.5 rounded-xl border transition-all duration-200 backdrop-blur-md flex flex-col justify-between gap-3 ${
-                    isToday
-                      ? 'bg-zinc-950/90 border-emerald-500/60 shadow-lg shadow-emerald-500/5'
-                      : 'bg-zinc-950/60 border-zinc-800/80 hover:border-zinc-700'
-                  }`}
+                  member={cardMember}
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      {/* Avatar Initials Badge */}
-                      <div
-                        className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs font-mono shrink-0 ${
-                          isToday
-                            ? 'bg-emerald-500 text-zinc-950 shadow-md shadow-emerald-500/20'
-                            : 'bg-zinc-800 text-zinc-200 border border-zinc-700'
-                        }`}
-                      >
-                        {item.name
-                          .split(' ')
-                          .map((n) => n[0])
-                          .slice(0, 2)
-                          .join('')}
-                      </div>
-
-                      <div>
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-xs font-bold text-white">{item.name}</span>
-                          {isToday ? (
-                            <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
-                              TODAY
-                            </span>
-                          ) : (
-                            <span className="text-[10px] font-mono text-zinc-400">
-                              in {item.daysRemaining} {item.daysRemaining === 1 ? 'day' : 'days'}
-                            </span>
-                          )}
+                  <div
+                    className={`p-3.5 rounded-xl border transition-all duration-200 backdrop-blur-md flex flex-col justify-between gap-3 ${
+                      isToday
+                        ? 'bg-zinc-950/90 border-emerald-500/60 shadow-lg shadow-emerald-500/5'
+                        : 'bg-zinc-950/60 border-zinc-800/80 hover:border-zinc-700'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        {/* Avatar Initials Badge */}
+                        <div
+                          className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs font-mono shrink-0 ${
+                            isToday
+                              ? 'bg-emerald-500 text-zinc-950 shadow-md shadow-emerald-500/20'
+                              : 'bg-zinc-800 text-zinc-200 border border-zinc-700'
+                          }`}
+                        >
+                          {item.name
+                            .split(' ')
+                            .map((n) => n[0])
+                            .slice(0, 2)
+                            .join('')}
                         </div>
-                        <p className="text-[11px] text-zinc-400 truncate max-w-[200px]">
-                          {item.designation} {item.department ? `• ${item.department}` : ''}
-                        </p>
+
+                        <div>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-xs font-bold text-white">{item.name}</span>
+                            {isToday ? (
+                              <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                                TODAY
+                              </span>
+                            ) : (
+                              <span className="text-[10px] font-mono text-zinc-400">
+                                in {item.daysRemaining} {item.daysRemaining === 1 ? 'day' : 'days'}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-zinc-400 truncate max-w-[200px]">
+                            {item.designation} {item.department ? `• ${item.department}` : ''}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Date Pill */}
+                      <div className="text-right shrink-0">
+                        <span className="text-xs font-mono font-bold text-zinc-200 block">
+                          {item.normalizedBirthday}
+                        </span>
+                        <span className="text-[10px] font-mono text-zinc-500">
+                          {item.timeframeLabel}
+                        </span>
                       </div>
                     </div>
 
-                    {/* Date Pill */}
-                    <div className="text-right shrink-0">
-                      <span className="text-xs font-mono font-bold text-zinc-200 block">
-                        {item.normalizedBirthday}
-                      </span>
-                      <span className="text-[10px] font-mono text-zinc-500">
-                        {item.timeframeLabel}
-                      </span>
+                    {/* Actions & Channels */}
+                    <div className="flex items-center justify-between pt-2 border-t border-zinc-900">
+                      <div className="flex items-center gap-2">
+                        {item.hasWhatsApp ? (
+                          <span className="text-[10px] font-mono text-emerald-400 flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-400" /> WhatsApp
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-mono text-zinc-500 flex items-center gap-1">
+                            <Mail className="w-3 h-3 text-zinc-500" /> Email Only
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-1.5">
+                        {fullMember && (
+                          <>
+                            <button
+                              onClick={() => onOpenGenerator(fullMember)}
+                              className="px-2 py-1 rounded text-[10px] font-mono font-semibold bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition cursor-pointer"
+                            >
+                              AI Wish
+                            </button>
+                            <button
+                              onClick={() => onSendWhatsApp(fullMember)}
+                              disabled={isSendingWhatsApp}
+                              className="px-2.5 py-1 rounded text-[10px] font-mono font-bold bg-emerald-500 hover:bg-emerald-400 text-zinc-950 transition cursor-pointer disabled:opacity-50 flex items-center gap-1"
+                            >
+                              <Send className="w-2.5 h-2.5" />
+                              Send
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
-
-                  {/* Actions & Channels */}
-                  <div className="flex items-center justify-between pt-2 border-t border-zinc-900">
-                    <div className="flex items-center gap-2">
-                      {item.hasWhatsApp ? (
-                        <span className="text-[10px] font-mono text-emerald-400 flex items-center gap-1">
-                          <CheckCircle2 className="w-3 h-3 text-emerald-400" /> WhatsApp
-                        </span>
-                      ) : (
-                        <span className="text-[10px] font-mono text-zinc-500 flex items-center gap-1">
-                          <Mail className="w-3 h-3 text-zinc-500" /> Email Only
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-1.5">
-                      {fullMember && (
-                        <>
-                          <button
-                            onClick={() => onOpenGenerator(fullMember)}
-                            className="px-2 py-1 rounded text-[10px] font-mono font-semibold bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition cursor-pointer"
-                          >
-                            AI Wish
-                          </button>
-                          <button
-                            onClick={() => onSendWhatsApp(fullMember)}
-                            disabled={isSendingWhatsApp}
-                            className="px-2.5 py-1 rounded text-[10px] font-mono font-bold bg-emerald-500 hover:bg-emerald-400 text-zinc-950 transition cursor-pointer disabled:opacity-50 flex items-center gap-1"
-                          >
-                            <Send className="w-2.5 h-2.5" />
-                            Send
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                </MemberCardTooltip>
               );
             })}
           </div>
@@ -1610,40 +1742,45 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
             const note = m.nameMeaningNote || m.nameMeaning || details.note;
 
             return (
-              <div
+              <MemberCardTooltip
                 key={m.id || m.sl || idx}
-                className="group relative rounded-xl bg-zinc-950/80 border border-zinc-800/80 hover:border-amber-500/40 p-3.5 transition-all flex flex-col justify-between"
+                member={m}
+                customSummary={`${m.name}: "${note}" (${emoji}). Designation: ${m.designation || 'IE Specialist'}. Birthday: ${m.birthday || 'TBD'}.`}
               >
-                <div>
-                  <div className="flex items-center justify-between gap-2 mb-2">
-                    <span className="text-[10px] font-mono text-zinc-500">#{m.sl || m.id}</span>
-                    <div className="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-sm">
-                      {emoji}
+                <div
+                  className="group relative rounded-xl bg-zinc-950/80 border border-zinc-800/80 hover:border-amber-500/40 p-3.5 transition-all flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <span className="text-[10px] font-mono text-zinc-500">#{m.sl || m.id}</span>
+                      <div className="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-sm">
+                        {emoji}
+                      </div>
+                    </div>
+
+                    <h4 className="text-xs font-bold text-zinc-200 group-hover:text-amber-300 transition truncate" title={m.name}>
+                      {m.name}
+                    </h4>
+                    <p className="text-[10px] text-zinc-500 truncate mb-2">
+                      {m.designation || 'IE Specialist'}
+                    </p>
+
+                    <div className="p-2 rounded-lg bg-zinc-900/80 border border-zinc-800/80 text-[11px] text-amber-200/90 font-medium italic leading-snug">
+                      "{note}"
                     </div>
                   </div>
 
-                  <h4 className="text-xs font-bold text-zinc-200 group-hover:text-amber-300 transition truncate" title={m.name}>
-                    {m.name}
-                  </h4>
-                  <p className="text-[10px] text-zinc-500 truncate mb-2">
-                    {m.designation || 'IE Specialist'}
-                  </p>
-
-                  <div className="p-2 rounded-lg bg-zinc-900/80 border border-zinc-800/80 text-[11px] text-amber-200/90 font-medium italic leading-snug">
-                    "{note}"
+                  <div className="mt-3 pt-2 border-t border-zinc-900 flex items-center justify-between text-[10px] font-mono text-zinc-500">
+                    <span>🎂 {m.birthday || 'TBD'}</span>
+                    <button
+                      onClick={() => onOpenGenerator(m)}
+                      className="text-amber-400 hover:text-amber-300 font-bold cursor-pointer"
+                    >
+                      AI Wish →
+                    </button>
                   </div>
                 </div>
-
-                <div className="mt-3 pt-2 border-t border-zinc-900 flex items-center justify-between text-[10px] font-mono text-zinc-500">
-                  <span>🎂 {m.birthday || 'TBD'}</span>
-                  <button
-                    onClick={() => onOpenGenerator(m)}
-                    className="text-amber-400 hover:text-amber-300 font-bold cursor-pointer"
-                  >
-                    AI Wish →
-                  </button>
-                </div>
-              </div>
+              </MemberCardTooltip>
             );
           })}
         </div>

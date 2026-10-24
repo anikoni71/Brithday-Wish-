@@ -2152,3 +2152,732 @@ html.dark table thead tr {
   transform-origin: center center;
 }
 
+/* ==========================================================================
+   Custom Tooltip Component Keyframes (Smooth Fade-In & Scale-Up)
+   ========================================================================== */
+@keyframes custom-tooltip-enter {
+  0% {
+    opacity: 0;
+    transform: scale(0.92) translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.custom-tooltip-animate {
+  animation: custom-tooltip-enter 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+  transform-origin: center bottom;
+}
+
+/* ==========================================================================
+   Cinematic Animations for Birthday Mail Workstation & Analytics Visualizer
+   ========================================================================== */
+
+/* 1. Subtle Aurora Glow Sweep for Mail Workstation Top Banner */
+@keyframes mail-aurora-sweep {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.mail-workstation-aurora {
+  background-size: 200% 200%;
+  animation: mail-aurora-sweep 12s ease infinite;
+}
+
+/* 2. Shimmer Wave Highlight across Card Borders & Headers */
+@keyframes mail-shimmer-sweep {
+  0% {
+    transform: translateX(-150%);
+  }
+  50%, 100% {
+    transform: translateX(150%);
+  }
+}
+
+.mail-shimmer-track {
+  position: relative;
+  overflow: hidden;
+}
+
+.mail-shimmer-track::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    transparent 100%
+  );
+  transform: translateX(-150%);
+  animation: mail-shimmer-sweep 4.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* 3. Smooth Breathing Floating for Mail Metric Cards */
+@keyframes mail-card-breathe-subtle {
+  0%, 100% {
+    transform: translateY(0px);
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+  }
+  50% {
+    transform: translateY(-2.5px);
+    box-shadow: 0 6px 16px -2px rgba(0, 0, 0, 0.08);
+  }
+}
+
+.mail-card-breathe {
+  animation: mail-card-breathe-subtle 4.2s ease-in-out infinite;
+  will-change: transform, box-shadow;
+}
+
+.mail-card-breathe-delay-1 {
+  animation: mail-card-breathe-subtle 4.2s ease-in-out 0.4s infinite;
+  will-change: transform, box-shadow;
+}
+
+.mail-card-breathe-delay-2 {
+  animation: mail-card-breathe-subtle 4.2s ease-in-out 0.8s infinite;
+  will-change: transform, box-shadow;
+}
+
+.mail-card-breathe-delay-3 {
+  animation: mail-card-breathe-subtle 4.2s ease-in-out 1.2s infinite;
+  will-change: transform, box-shadow;
+}
+
+.mail-card-breathe-delay-4 {
+  animation: mail-card-breathe-subtle 4.2s ease-in-out 1.6s infinite;
+  will-change: transform, box-shadow;
+}
+
+/* Dark KPI Card Floating */
+@keyframes mail-dark-kpi-breathe {
+  0%, 100% {
+    transform: translateY(0px);
+    border-color: rgba(51, 65, 85, 0.8);
+    box-shadow: 0 0 0 rgba(99, 102, 241, 0);
+  }
+  50% {
+    transform: translateY(-2px);
+    border-color: rgba(99, 102, 241, 0.4);
+    box-shadow: 0 4px 14px -1px rgba(0, 0, 0, 0.4), 0 0 8px rgba(99, 102, 241, 0.15);
+  }
+}
+
+.mail-dark-kpi-live {
+  animation: mail-dark-kpi-breathe 4s ease-in-out infinite;
+  will-change: transform, border-color, box-shadow;
+}
+
+.mail-dark-kpi-live-1 {
+  animation: mail-dark-kpi-breathe 4s ease-in-out 0.3s infinite;
+  will-change: transform, border-color, box-shadow;
+}
+
+.mail-dark-kpi-live-2 {
+  animation: mail-dark-kpi-breathe 4s ease-in-out 0.6s infinite;
+  will-change: transform, border-color, box-shadow;
+}
+
+.mail-dark-kpi-live-3 {
+  animation: mail-dark-kpi-breathe 4s ease-in-out 0.9s infinite;
+  will-change: transform, border-color, box-shadow;
+}
+
+/* 4. Live Telemetry Radio Pulse Glow */
+@keyframes mail-telemetry-ping {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+.mail-badge-pulse-emerald {
+  animation: mail-telemetry-ping 2.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes mail-badge-pulse-indigo-kf {
+  0% {
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.45);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(99, 102, 241, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
+  }
+}
+
+.mail-badge-pulse-indigo {
+  animation: mail-badge-pulse-indigo-kf 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* 5. Live Progress Bar Wave Shimmer */
+@keyframes mail-bar-gradient-stream {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+.mail-progress-stream {
+  background-image: linear-gradient(
+    90deg,
+    #10b981 0%,
+    #34d399 25%,
+    #6ee7b7 50%,
+    #34d399 75%,
+    #10b981 100%
+  );
+  background-size: 200% 100%;
+  animation: mail-bar-gradient-stream 2.8s linear infinite;
+}
+
+/* 6. Continuous Micro-animations for Mail Icons */
+@keyframes mail-icon-subtle-glow {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 1px rgba(99, 102, 241, 0.3));
+  }
+  50% {
+    transform: scale(1.08);
+    filter: drop-shadow(0 0 6px rgba(99, 102, 241, 0.6));
+  }
+}
+
+.mail-icon-glow {
+  display: inline-block;
+  animation: mail-icon-subtle-glow 3s ease-in-out infinite;
+  will-change: transform, filter;
+  transform-origin: center center;
+}
+
+@keyframes mail-icon-heartbeat-kf {
+  0%, 100% {
+    transform: scale(1);
+  }
+  20% {
+    transform: scale(1.14);
+  }
+  35% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  65% {
+    transform: scale(1);
+  }
+}
+
+.mail-icon-heartbeat {
+  display: inline-block;
+  animation: mail-icon-heartbeat-kf 2.6s ease-in-out infinite;
+  transform-origin: center center;
+  will-change: transform;
+}
+
+/* 7. Live Data Stream Shimmer for SVG Chart Bars */
+@keyframes mail-svg-bar-stream {
+  0%, 100% {
+    filter: brightness(1);
+    opacity: 0.95;
+  }
+  50% {
+    filter: brightness(1.14) drop-shadow(0 0 3px rgba(16, 185, 129, 0.5));
+    opacity: 1;
+  }
+}
+
+.mail-chart-live-bar {
+  animation: mail-svg-bar-stream 2.8s ease-in-out infinite;
+  will-change: filter, opacity;
+}
+
+/* 8. Delivery Health Donut Heartbeat & Breathing Ring */
+@keyframes mail-donut-glow-ring {
+  0%, 100% {
+    filter: drop-shadow(0 0 2px rgba(16, 185, 129, 0.25));
+  }
+  50% {
+    filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.6));
+  }
+}
+
+.mail-donut-live-ring {
+  animation: mail-donut-glow-ring 3.2s ease-in-out infinite;
+  will-change: filter;
+}
+
+@keyframes mail-action-button-shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.mail-btn-gradient-shimmer {
+  background-size: 200% 200%;
+  animation: mail-action-button-shimmer 4s ease infinite;
+}
+
+/* ==========================================================================
+   Advanced 3D Cinematic Animations & Volumetric Lighting
+   ========================================================================== */
+
+/* 3D Perspective Stage Container */
+.mail-3d-stage {
+  perspective: 1200px;
+  transform-style: preserve-3d;
+}
+
+/* 3D Volumetric Lighting Sweep for Main Top Banner */
+@keyframes mail-3d-volumetric-aurora {
+  0% {
+    background-position: 0% 50%;
+    filter: drop-shadow(0 15px 35px rgba(15, 23, 42, 0.6)) brightness(1);
+  }
+  50% {
+    background-position: 100% 50%;
+    filter: drop-shadow(0 22px 45px rgba(79, 70, 229, 0.25)) brightness(1.04);
+  }
+  100% {
+    background-position: 0% 50%;
+    filter: drop-shadow(0 15px 35px rgba(15, 23, 42, 0.6)) brightness(1);
+  }
+}
+
+.mail-3d-banner-container {
+  background-size: 220% 220%;
+  animation: mail-3d-volumetric-aurora 14s ease infinite;
+  transform: perspective(1200px) translateZ(0);
+  transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.5s ease;
+  will-change: transform, filter, box-shadow;
+}
+
+.mail-3d-banner-container:hover {
+  transform: perspective(1200px) rotateX(0.8deg) translateZ(8px);
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.8), 0 0 35px -5px rgba(99, 102, 241, 0.35);
+}
+
+/* Volumetric Light Specular Reflection Sweep */
+@keyframes mail-3d-specular-sweep {
+  0% {
+    transform: translate3d(-180%, -40%, 0) rotate(28deg);
+  }
+  40%, 100% {
+    transform: translate3d(240%, 40%, 0) rotate(28deg);
+  }
+}
+
+.mail-3d-specular-track {
+  position: relative;
+  overflow: hidden;
+}
+
+.mail-3d-specular-track::before {
+  content: '';
+  position: absolute;
+  top: -60%;
+  left: -40%;
+  width: 70%;
+  height: 220%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.03) 25%,
+    rgba(255, 255, 255, 0.12) 50%,
+    rgba(255, 255, 255, 0.03) 75%,
+    transparent 100%
+  );
+  transform: translate3d(-180%, -40%, 0) rotate(28deg);
+  animation: mail-3d-specular-sweep 6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* 3D Dark KPI Cards with Depth Layer Shadows & Subtle 3D Tilt */
+@keyframes mail-3d-kpi-idle {
+  0%, 100% {
+    transform: perspective(800px) translate3d(0, 0, 0) rotateX(0deg) rotateY(0deg);
+    box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+  50% {
+    transform: perspective(800px) translate3d(0, -3px, 6px) rotateX(1.8deg) rotateY(-1.2deg);
+    box-shadow: 0 14px 28px -6px rgba(0, 0, 0, 0.65), 0 0 12px rgba(99, 102, 241, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  }
+}
+
+.mail-3d-dark-kpi {
+  transform-style: preserve-3d;
+  animation: mail-3d-kpi-idle 4.5s ease-in-out infinite;
+  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.35s ease, border-color 0.35s ease;
+  will-change: transform, box-shadow;
+}
+
+.mail-3d-dark-kpi:hover {
+  transform: perspective(800px) translate3d(0, -5px, 14px) rotateX(3.5deg) rotateY(-2.5deg) scale3d(1.02, 1.02, 1.02) !important;
+  box-shadow: 0 20px 35px -8px rgba(0, 0, 0, 0.75), 0 0 22px rgba(99, 102, 241, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.22) !important;
+  border-color: rgba(99, 102, 241, 0.55) !important;
+}
+
+.mail-3d-dark-kpi-delay-1 {
+  animation: mail-3d-kpi-idle 4.5s ease-in-out 0.4s infinite;
+}
+
+.mail-3d-dark-kpi-delay-2 {
+  animation: mail-3d-kpi-idle 4.5s ease-in-out 0.8s infinite;
+}
+
+.mail-3d-dark-kpi-delay-3 {
+  animation: mail-3d-kpi-idle 4.5s ease-in-out 1.2s infinite;
+}
+
+/* 3D Light Metric Cards with Volumetric Glow & Depth Layer Shadows */
+@keyframes mail-3d-card-idle-float {
+  0%, 100% {
+    transform: perspective(900px) translate3d(0, 0, 0) rotateX(0deg) rotateY(0deg);
+    box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  }
+  50% {
+    transform: perspective(900px) translate3d(0, -3.5px, 8px) rotateX(1.6deg) rotateY(-1.2deg);
+    box-shadow: 0 12px 24px -4px rgba(0, 0, 0, 0.09), 0 0 16px -2px rgba(99, 102, 241, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  }
+}
+
+.mail-3d-metric-card {
+  transform-style: preserve-3d;
+  animation: mail-3d-card-idle-float 4.8s ease-in-out infinite;
+  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.35s ease, border-color 0.35s ease;
+  will-change: transform, box-shadow;
+}
+
+.mail-3d-metric-card:hover {
+  transform: perspective(900px) translate3d(0, -6px, 16px) rotateX(3deg) rotateY(-2.5deg) scale3d(1.025, 1.025, 1.025) !important;
+  box-shadow: 0 20px 35px -8px rgba(0, 0, 0, 0.14), 0 0 24px -2px rgba(99, 102, 241, 0.22), inset 0 1px 0 rgba(255, 255, 255, 1) !important;
+}
+
+.mail-3d-metric-card-delay-1 {
+  animation: mail-3d-card-idle-float 4.8s ease-in-out 0.4s infinite;
+}
+
+.mail-3d-metric-card-delay-2 {
+  animation: mail-3d-card-idle-float 4.8s ease-in-out 0.8s infinite;
+}
+
+.mail-3d-metric-card-delay-3 {
+  animation: mail-3d-card-idle-float 4.8s ease-in-out 1.2s infinite;
+}
+
+.mail-3d-metric-card-delay-4 {
+  animation: mail-3d-card-idle-float 4.8s ease-in-out 1.6s infinite;
+}
+
+/* 3D Depth Card for Main Analytics and Donut Containers */
+.mail-3d-surface {
+  transform: perspective(1200px) translateZ(0);
+  transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.4s ease;
+  will-change: transform, box-shadow;
+}
+
+.mail-3d-surface:hover {
+  transform: perspective(1200px) translate3d(0, -3px, 8px);
+  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.1), 0 0 25px -4px rgba(99, 102, 241, 0.15);
+}
+
+/* 3D Glowing Gradient Border Sweeping Effect */
+@keyframes mail-3d-border-beam {
+  0% {
+    border-color: rgba(99, 102, 241, 0.3);
+  }
+  33% {
+    border-color: rgba(16, 185, 129, 0.4);
+  }
+  66% {
+    border-color: rgba(236, 72, 153, 0.35);
+  }
+  100% {
+    border-color: rgba(99, 102, 241, 0.3);
+  }
+}
+
+.mail-3d-border-beam {
+  animation: mail-3d-border-beam 8s ease infinite;
+}
+
+/* ==========================================================================
+   Cosmic Solar System Live Background & Enhanced Tree Cinematic Life
+   ========================================================================== */
+
+/* 1. Cosmic Starfield Twinkling Keyframes */
+@keyframes cosmic-star-twinkle-0 {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.3);
+  }
+}
+
+@keyframes cosmic-star-twinkle-1 {
+  0%, 100% {
+    opacity: 0.8;
+    transform: scale(1.2);
+  }
+  50% {
+    opacity: 0.2;
+    transform: scale(0.8);
+  }
+}
+
+@keyframes cosmic-star-twinkle-2 {
+  0%, 100% {
+    opacity: 0.4;
+    transform: scale(0.9);
+  }
+  35% {
+    opacity: 1;
+    transform: scale(1.4);
+  }
+  70% {
+    opacity: 0.25;
+    transform: scale(0.75);
+  }
+}
+
+@keyframes cosmic-star-twinkle-3 {
+  0%, 100% {
+    opacity: 0.2;
+    transform: scale(0.8);
+  }
+  60% {
+    opacity: 0.95;
+    transform: scale(1.35);
+  }
+}
+
+.cosmic-twinkle-0 {
+  animation: cosmic-star-twinkle-0 3.2s ease-in-out infinite;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+.cosmic-twinkle-1 {
+  animation: cosmic-star-twinkle-1 4.5s ease-in-out infinite;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+.cosmic-twinkle-2 {
+  animation: cosmic-star-twinkle-2 5.2s ease-in-out infinite;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+.cosmic-twinkle-3 {
+  animation: cosmic-star-twinkle-3 3.8s ease-in-out infinite;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+/* 2. Distant Spiral Galaxy Swirl */
+@keyframes cosmic-galaxy-rotate {
+  0% {
+    transform: translate(860px, 110px) rotate(-22deg) scale(1);
+  }
+  50% {
+    transform: translate(860px, 110px) rotate(158deg) scale(1.05);
+  }
+  100% {
+    transform: translate(860px, 110px) rotate(338deg) scale(1);
+  }
+}
+
+.cosmic-galaxy-swirl {
+  animation: cosmic-galaxy-rotate 180s linear infinite;
+  transform-origin: 860px 110px;
+  will-change: transform;
+}
+
+/* 3. Shooting Comets in Transit */
+@keyframes cosmic-comet-streak-1 {
+  0% {
+    opacity: 0;
+    transform: translate3d(-150px, -90px, 0);
+  }
+  5% {
+    opacity: 1;
+  }
+  14% {
+    opacity: 0;
+    transform: translate3d(600px, 360px, 0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(600px, 360px, 0);
+  }
+}
+
+.cosmic-shooting-comet-1 {
+  animation: cosmic-comet-streak-1 14s cubic-bezier(0.2, 0.8, 0.4, 1) infinite;
+  animation-delay: 2s;
+  will-change: transform, opacity;
+}
+
+@keyframes cosmic-comet-streak-2 {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0);
+  }
+  4% {
+    opacity: 0.9;
+  }
+  12% {
+    opacity: 0;
+    transform: translate3d(550px, 320px, 0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(550px, 320px, 0);
+  }
+}
+
+.cosmic-shooting-comet-2 {
+  animation: cosmic-comet-streak-2 19s cubic-bezier(0.2, 0.8, 0.4, 1) infinite;
+  animation-delay: 9s;
+  will-change: transform, opacity;
+}
+
+/* 4. Solar Core & Coronal Flare Dynamics */
+@keyframes cosmic-sun-breathe-glow {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.75;
+  }
+  50% {
+    transform: scale(1.18);
+    opacity: 0.95;
+    filter: drop-shadow(0 0 45px rgba(245, 158, 11, 0.8));
+  }
+}
+
+.cosmic-sun-aura-pulse {
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: cosmic-sun-breathe-glow 6s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+@keyframes cosmic-sun-inner-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scale(1.12);
+    opacity: 1;
+  }
+}
+
+.cosmic-sun-aura-inner {
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: cosmic-sun-inner-pulse 4.2s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+@keyframes cosmic-sun-rays-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.cosmic-solar-rays {
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: cosmic-sun-rays-spin 55s linear infinite;
+  will-change: transform;
+}
+
+@keyframes cosmic-sun-core-heat {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.04);
+  }
+}
+
+.cosmic-sun-core {
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: cosmic-sun-core-heat 3.6s ease-in-out infinite;
+}
+
+/* 5. Moon Orbit around Earth */
+@keyframes cosmic-moon-revolution {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.cosmic-moon-orbit-system {
+  transform-origin: 0px 0px;
+  animation: cosmic-moon-revolution 6s linear infinite;
+  will-change: transform;
+}
+
+/* 6. Elevated Tree Bio-Luminescence & ECG Oscilloscope Vibrancy */
+.tree-ecg-oscilloscope-trace {
+  stroke-dasharray: 60 160;
+  animation: tree-ecg-oscilloscope-run 2.4s linear infinite;
+  filter: drop-shadow(0 0 8px rgba(52, 211, 153, 0.95)) drop-shadow(0 0 16px rgba(16, 185, 129, 0.6));
+  will-change: stroke-dashoffset;
+}
+
+@keyframes tree-ecg-oscilloscope-run {
+  0% {
+    stroke-dashoffset: 300;
+  }
+  100% {
+    stroke-dashoffset: -300;
+  }
+}
+
+
+
+

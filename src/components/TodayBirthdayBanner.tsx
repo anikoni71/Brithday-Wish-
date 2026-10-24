@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { TeamMember } from '../types';
 import { Sparkles, Send, MessageSquare, Copy, Check, User, Briefcase, Phone } from 'lucide-react';
+import { MemberCardTooltip } from './CustomTooltip';
 
 interface TodayBirthdayBannerProps {
   todayBirthdays: TeamMember[];
@@ -77,101 +78,105 @@ export const TodayBirthdayBanner: React.FC<TodayBirthdayBannerProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {todayBirthdays.map((member, idx) => {
               return (
-                <div
+                <MemberCardTooltip
                   key={`${member.id || member.sl || member.name}-${idx}`}
-                  className="bg-slate-800/90 border border-slate-700/80 rounded-xl p-4 flex flex-col justify-between hover:border-emerald-500/50 transition"
+                  member={member}
                 >
-                  <div>
-                    {/* Person Details */}
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h3 className="text-base font-bold text-white flex items-center gap-1.5">
-                            <User className="w-4 h-4 text-emerald-400" />
-                            {member.name}
-                          </h3>
-                          {member.id && (
-                            <span className="text-[10px] font-mono bg-slate-700 px-1.5 py-0.5 rounded text-slate-300">
-                              ID: {member.id}
-                            </span>
+                  <div
+                    className="bg-slate-800/90 border border-slate-700/80 rounded-xl p-4 flex flex-col justify-between hover:border-emerald-500/50 transition"
+                  >
+                    <div>
+                      {/* Person Details */}
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h3 className="text-base font-bold text-white flex items-center gap-1.5">
+                              <User className="w-4 h-4 text-emerald-400" />
+                              {member.name}
+                            </h3>
+                            {member.id && (
+                              <span className="text-[10px] font-mono bg-slate-700 px-1.5 py-0.5 rounded text-slate-300">
+                                ID: {member.id}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
+                            <Briefcase className="w-3 h-3 text-slate-400" />
+                            {member.designation || 'IE Central Team Member'}
+                          </p>
+                          {member.nameMeaning && (
+                            <p className="text-xs text-amber-300/90 flex items-center gap-1 mt-1 font-medium" title={`Name Meaning: ${member.nameMeaning}`}>
+                              <span className="text-amber-400">✦</span>
+                              <span className="italic">{member.nameMeaning}</span>
+                            </p>
+                          )}
+                          {member.specialDayMatch && (
+                            <p className="text-xs text-emerald-300 flex items-center gap-1 mt-0.5 font-medium" title={`Birthday Special Day: ${member.specialDayMatch}`}>
+                              <span>🌟</span>
+                              <span>{member.specialDayMatch}</span>
+                            </p>
                           )}
                         </div>
-                        <p className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
-                          <Briefcase className="w-3 h-3 text-slate-400" />
-                          {member.designation || 'IE Central Team Member'}
-                        </p>
-                        {member.nameMeaning && (
-                          <p className="text-xs text-amber-300/90 flex items-center gap-1 mt-1 font-medium" title={`Name Meaning: ${member.nameMeaning}`}>
-                            <span className="text-amber-400">✦</span>
-                            <span className="italic">{member.nameMeaning}</span>
-                          </p>
-                        )}
-                        {member.specialDayMatch && (
-                          <p className="text-xs text-emerald-300 flex items-center gap-1 mt-0.5 font-medium" title={`Birthday Special Day: ${member.specialDayMatch}`}>
-                            <span>🌟</span>
-                            <span>{member.specialDayMatch}</span>
-                          </p>
-                        )}
+
+                        <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                          🎂 Birthday Today
+                        </span>
                       </div>
 
-                      <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                        🎂 Birthday Today
-                      </span>
-                    </div>
+                      {/* WhatsApp Details */}
+                      <div className="mb-3 text-xs text-slate-300 flex items-center gap-2 bg-slate-900/60 p-2 rounded-lg border border-slate-800">
+                        <Phone className="w-3.5 h-3.5 text-emerald-400" />
+                        <span className="font-mono">{member.whatsapp || 'No WhatsApp Number in Col J'}</span>
+                      </div>
 
-                    {/* WhatsApp Details */}
-                    <div className="mb-3 text-xs text-slate-300 flex items-center gap-2 bg-slate-900/60 p-2 rounded-lg border border-slate-800">
-                      <Phone className="w-3.5 h-3.5 text-emerald-400" />
-                      <span className="font-mono">{member.whatsapp || 'No WhatsApp Number in Col J'}</span>
-                    </div>
-
-                    {/* Wishing Message Box */}
-                    <div className="bg-slate-900/90 border border-slate-700/60 rounded-lg p-3 text-xs text-slate-200 relative group mb-4">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex gap-2">
-                          <MessageSquare className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                          <p className="italic leading-relaxed font-medium">
-                            "{member.wishingMessage}"
-                          </p>
+                      {/* Wishing Message Box */}
+                      <div className="bg-slate-900/90 border border-slate-700/60 rounded-lg p-3 text-xs text-slate-200 relative group mb-4">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex gap-2">
+                            <MessageSquare className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                            <p className="italic leading-relaxed font-medium">
+                              "{member.wishingMessage}"
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => handleCopyMessage(member.wishingMessage, member.id || member.name)}
+                            className="text-slate-400 hover:text-white p-1 rounded transition shrink-0"
+                            title="Copy Wish"
+                          >
+                            {copiedId === (member.id || member.name) ? (
+                              <Check className="w-3.5 h-3.5 text-emerald-400" />
+                            ) : (
+                              <Copy className="w-3.5 h-3.5" />
+                            )}
+                          </button>
                         </div>
-                        <button
-                          onClick={() => handleCopyMessage(member.wishingMessage, member.id || member.name)}
-                          className="text-slate-400 hover:text-white p-1 rounded transition shrink-0"
-                          title="Copy Wish"
-                        >
-                          {copiedId === (member.id || member.name) ? (
-                            <Check className="w-3.5 h-3.5 text-emerald-400" />
-                          ) : (
-                            <Copy className="w-3.5 h-3.5" />
-                          )}
-                        </button>
+                        <span className="text-[10px] text-slate-400 block mt-2 text-right">
+                          Source: Column K (Wishing Message)
+                        </span>
                       </div>
-                      <span className="text-[10px] text-slate-400 block mt-2 text-right">
-                        Source: Column K (Wishing Message)
-                      </span>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center gap-2 pt-2 border-t border-slate-700/60 flex-wrap">
+                      <button
+                        onClick={() => onSendWhatsApp(member)}
+                        disabled={isSending || !member.whatsapp}
+                        className="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition cursor-pointer disabled:opacity-50 shadow-md shadow-emerald-950/30"
+                      >
+                        <Send className="w-4 h-4" />
+                        {isSending ? 'Sending Direct WhatsApp...' : 'Send WhatsApp Wish (Direct)'}
+                      </button>
+
+                      <button
+                        onClick={() => onOpenGenerator(member)}
+                        className="inline-flex items-center gap-1 px-3 py-2.5 rounded-lg text-xs font-semibold bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 transition cursor-pointer"
+                      >
+                        <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                        Customize Wish
+                      </button>
                     </div>
                   </div>
-
-                  {/* Actions */}
-                  <div className="flex items-center gap-2 pt-2 border-t border-slate-700/60 flex-wrap">
-                    <button
-                      onClick={() => onSendWhatsApp(member)}
-                      disabled={isSending || !member.whatsapp}
-                      className="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition cursor-pointer disabled:opacity-50 shadow-md shadow-emerald-950/30"
-                    >
-                      <Send className="w-4 h-4" />
-                      {isSending ? 'Sending Direct WhatsApp...' : 'Send WhatsApp Wish (Direct)'}
-                    </button>
-
-                    <button
-                      onClick={() => onOpenGenerator(member)}
-                      className="inline-flex items-center gap-1 px-3 py-2.5 rounded-lg text-xs font-semibold bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 transition cursor-pointer"
-                    >
-                      <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                      Customize Wish
-                    </button>
-                  </div>
-                </div>
+                </MemberCardTooltip>
               );
             })}
           </div>

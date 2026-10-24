@@ -332,7 +332,7 @@ export const MailAnalyticsGraph: React.FC<MailAnalyticsGraphProps> = ({
 
     monthGroupsEnter
       .append('rect')
-      .attr('class', 'email-bar')
+      .attr('class', 'email-bar mail-chart-live-bar')
       .attr('rx', 4)
       .style('cursor', 'pointer');
 
@@ -394,6 +394,7 @@ export const MailAnalyticsGraph: React.FC<MailAnalyticsGraphProps> = ({
 
       groupEl
         .select('.email-bar')
+        .attr('class', 'email-bar mail-chart-live-bar')
         .attr('x', x)
         .attr('width', barWidth)
         .attr('fill', isCurrent ? 'url(#currentMonthGrad)' : isSelected ? '#4f46e5' : '#10b981')
@@ -509,12 +510,12 @@ export const MailAnalyticsGraph: React.FC<MailAnalyticsGraphProps> = ({
   }, [domainStats, activeGraphTab, overallCoverage]);
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs p-5 space-y-4">
+    <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs p-5 space-y-4 mail-shimmer-track mail-3d-surface mail-3d-specular-track">
       {/* Graph Header and Sub-Tab Switcher */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
+            <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold mail-icon-glow">
               <TrendingUp className="w-4 h-4" />
             </div>
             <div>
@@ -568,10 +569,10 @@ export const MailAnalyticsGraph: React.FC<MailAnalyticsGraphProps> = ({
 
       {/* Main KPI Badges */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="p-3 bg-indigo-50/60 border border-indigo-100 rounded-xl">
+        <div className="p-3 bg-indigo-50/60 border border-indigo-100 rounded-xl mail-card-breathe mail-3d-metric-card cursor-pointer">
           <div className="flex items-center justify-between text-indigo-700 text-xs font-medium mb-1">
             <span>Overall Coverage</span>
-            <ShieldCheck className="w-3.5 h-3.5 text-indigo-600" />
+            <ShieldCheck className="w-3.5 h-3.5 text-indigo-600 mail-icon-glow" />
           </div>
           <div className="text-xl font-extrabold text-indigo-950">{overallCoverage}%</div>
           <div className="text-[11px] text-indigo-600 font-medium mt-0.5">
@@ -579,10 +580,10 @@ export const MailAnalyticsGraph: React.FC<MailAnalyticsGraphProps> = ({
           </div>
         </div>
 
-        <div className="p-3 bg-emerald-50/60 border border-emerald-100 rounded-xl">
+        <div className="p-3 bg-emerald-50/60 border border-emerald-100 rounded-xl mail-card-breathe-delay-1 mail-3d-metric-card mail-3d-metric-card-delay-1 cursor-pointer">
           <div className="flex items-center justify-between text-emerald-700 text-xs font-medium mb-1">
             <span>Ready for Auto-Wish</span>
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 mail-icon-glow" />
           </div>
           <div className="text-xl font-extrabold text-emerald-950">{totalWithEmail}</div>
           <div className="text-[11px] text-emerald-600 font-medium mt-0.5">
@@ -590,10 +591,10 @@ export const MailAnalyticsGraph: React.FC<MailAnalyticsGraphProps> = ({
           </div>
         </div>
 
-        <div className="p-3 bg-amber-50/60 border border-amber-100 rounded-xl">
+        <div className="p-3 bg-amber-50/60 border border-amber-100 rounded-xl mail-card-breathe-delay-2 mail-3d-metric-card mail-3d-metric-card-delay-2 cursor-pointer">
           <div className="flex items-center justify-between text-amber-700 text-xs font-medium mb-1">
             <span>Missing Email</span>
-            <AlertCircle className="w-3.5 h-3.5 text-amber-600" />
+            <AlertCircle className="w-3.5 h-3.5 text-amber-600 mail-icon-glow" />
           </div>
           <div className="text-xl font-extrabold text-amber-950">{totalMissingEmail}</div>
           <div className="text-[11px] text-amber-600 font-medium mt-0.5">
@@ -601,10 +602,10 @@ export const MailAnalyticsGraph: React.FC<MailAnalyticsGraphProps> = ({
           </div>
         </div>
 
-        <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl">
+        <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl mail-card-breathe-delay-3 mail-3d-metric-card mail-3d-metric-card-delay-3 cursor-pointer">
           <div className="flex items-center justify-between text-slate-700 text-xs font-medium mb-1">
             <span>Dispatched Wishes</span>
-            <Send className="w-3.5 h-3.5 text-slate-600" />
+            <Send className="w-3.5 h-3.5 text-slate-600 mail-icon-glow" />
           </div>
           <div className="text-xl font-extrabold text-slate-900">{sentCount}</div>
           <div className="text-[11px] text-slate-500 font-medium mt-0.5">
@@ -621,7 +622,7 @@ export const MailAnalyticsGraph: React.FC<MailAnalyticsGraphProps> = ({
             <div className="flex items-center justify-between text-xs text-slate-500 mb-2 px-1">
               <div className="flex items-center gap-3">
                 <span className="flex items-center gap-1.5">
-                  <span className="w-3 h-3 rounded-xs bg-emerald-500 inline-block"></span>
+                  <span className="w-3 h-3 rounded-xs bg-emerald-500 inline-block animate-pulse"></span>
                   <span>Email Present</span>
                 </span>
                 <span className="flex items-center gap-1.5">
@@ -629,7 +630,7 @@ export const MailAnalyticsGraph: React.FC<MailAnalyticsGraphProps> = ({
                   <span>Missing Email</span>
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="w-3 h-3 rounded-xs bg-gradient-to-r from-pink-500 to-purple-500 inline-block"></span>
+                  <span className="w-3 h-3 rounded-xs bg-gradient-to-r from-pink-500 to-purple-500 inline-block animate-pulse"></span>
                   <span>Current Month ({MONTH_NAMES[currentMonthIndex]?.short})</span>
                 </span>
               </div>

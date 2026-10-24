@@ -37,6 +37,8 @@ import {
 } from '../utils/dateUtils';
 import { formatProfileImageUrl } from '../utils/imageUtils';
 import { getMemberNameMeaningDetails, getMemberSpecialDayMatch } from '../data/fallbackData';
+import { MemberCardTooltip } from './CustomTooltip';
+import { CosmicSolarSystem } from './CosmicSolarSystem';
 
 interface BirthdayTreeProps {
   members: TeamMember[];
@@ -459,6 +461,9 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
       {/* 3. MAIN BIRTHDAY TREE CANVAS (REFERENCE PHOTO RECREATION) */}
       {viewMode === 'tree' ? (
         <div className={`relative ${isFullscreen ? 'flex-1 min-h-[720px] sm:min-h-[820px] lg:min-h-[920px]' : 'min-h-[640px] sm:min-h-[720px] lg:min-h-[820px]'} p-4 sm:p-6 flex flex-col items-center justify-center overflow-hidden select-none bg-gradient-to-b from-zinc-950/40 via-zinc-900/20 to-zinc-950/60`}>
+          {/* Live Cosmic Solar System Background with Orbiting Planets & Radiant Sun */}
+          <CosmicSolarSystem />
+
           {/* Stylized Physical Bulletin Wall Framing */}
           {/* Top Decorative Star Garland */}
           <div className="absolute top-3 left-0 right-0 flex items-center justify-between px-6 pointer-events-none opacity-80 z-0">
@@ -992,135 +997,143 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
                     group.map((mem, memIdx) => {
                       if (cardDetailLevel === 'compact') {
                         return (
-                          <div
+                          <MemberCardTooltip
                             key={`month-${m.short}-compact-${mem.id || mem.sl || 'mem'}-${memIdx}`}
-                            onClick={() => setActiveMember(mem)}
-                            className={`p-2 rounded-xl border flex items-center justify-between gap-2 cursor-pointer transition ${
-                              mem.isToday
-                                ? 'bg-emerald-950/60 border-emerald-500/60 text-emerald-200'
-                                : 'bg-zinc-900/60 border-zinc-800/80 hover:bg-zinc-800 text-zinc-300'
-                            }`}
+                            member={mem}
                           >
-                            <div className="flex items-center gap-2 min-w-0">
-                              <div
-                                className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white font-mono shrink-0 overflow-hidden border border-white/30 shadow-sm bg-zinc-900"
-                                style={{ backgroundColor: theme.innerBg }}
-                              >
-                                {mem.imageUrl ? (
-                                  <img
-                                    src={formatProfileImageUrl(mem.imageUrl)}
-                                    alt={mem.name}
-                                    className="w-full h-full object-cover object-center aspect-square rounded-full block select-none [image-rendering:-webkit-optimize-contrast] [image-rendering:high-quality] [transform:translateZ(0)]"
-                                    loading="eager"
-                                    decoding="sync"
-                                    referrerPolicy="no-referrer"
-                                    onError={(e) => {
-                                      (e.currentTarget as HTMLElement).style.display = 'none';
-                                    }}
-                                  />
-                                ) : (
-                                  mem.name[0]
-                                )}
+                            <div
+                              onClick={() => setActiveMember(mem)}
+                              className={`p-2 rounded-xl border flex items-center justify-between gap-2 cursor-pointer transition ${
+                                mem.isToday
+                                  ? 'bg-emerald-950/60 border-emerald-500/60 text-emerald-200'
+                                  : 'bg-zinc-900/60 border-zinc-800/80 hover:bg-zinc-800 text-zinc-300'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2 min-w-0">
+                                <div
+                                  className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white font-mono shrink-0 overflow-hidden border border-white/30 shadow-sm bg-zinc-900"
+                                  style={{ backgroundColor: theme.innerBg }}
+                                >
+                                  {mem.imageUrl ? (
+                                    <img
+                                      src={formatProfileImageUrl(mem.imageUrl)}
+                                      alt={mem.name}
+                                      className="w-full h-full object-cover object-center aspect-square rounded-full block select-none [image-rendering:-webkit-optimize-contrast] [image-rendering:high-quality] [transform:translateZ(0)]"
+                                      loading="eager"
+                                      decoding="sync"
+                                      referrerPolicy="no-referrer"
+                                      onError={(e) => {
+                                        (e.currentTarget as HTMLElement).style.display = 'none';
+                                      }}
+                                    />
+                                  ) : (
+                                    mem.name[0]
+                                  )}
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="text-xs font-semibold truncate text-white">{mem.name}</p>
+                                  <p className="text-[10px] text-zinc-400 font-mono">{mem.formattedBirthday}</p>
+                                </div>
                               </div>
-                              <div className="min-w-0">
-                                <p className="text-xs font-semibold truncate text-white">{mem.name}</p>
-                                <p className="text-[10px] text-zinc-400 font-mono">{mem.formattedBirthday}</p>
-                              </div>
+                              {mem.isToday && (
+                                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-400 text-zinc-950 font-mono shrink-0 animate-pulse">
+                                  TODAY
+                                </span>
+                              )}
                             </div>
-                            {mem.isToday && (
-                              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-400 text-zinc-950 font-mono shrink-0 animate-pulse">
-                                TODAY
-                              </span>
-                            )}
-                          </div>
+                          </MemberCardTooltip>
                         );
                       }
 
                       // Full details card view
                       return (
-                        <div
+                        <MemberCardTooltip
                           key={`month-${m.short}-full-${mem.id || mem.sl || 'mem'}-${memIdx}`}
-                          onClick={() => setActiveMember(mem)}
-                          className={`p-3 rounded-2xl border transition-all duration-200 cursor-pointer ${
-                            mem.isToday
-                              ? 'bg-emerald-950/70 border-emerald-500/70 text-emerald-100 shadow-md shadow-emerald-500/10'
-                              : 'bg-zinc-900/80 border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900 text-zinc-300'
-                          }`}
+                          member={mem}
                         >
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <div
-                                className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold text-white font-mono shrink-0 shadow-md overflow-hidden border border-white/30 bg-zinc-900"
-                                style={{ backgroundColor: theme.innerBg }}
-                              >
-                                {mem.imageUrl ? (
-                                  <img
-                                    src={formatProfileImageUrl(mem.imageUrl)}
-                                    alt={mem.name}
-                                    className="w-full h-full object-cover object-center aspect-square rounded-lg block select-none [image-rendering:-webkit-optimize-contrast] [image-rendering:high-quality] [transform:translateZ(0)]"
-                                    loading="eager"
-                                    decoding="sync"
-                                    referrerPolicy="no-referrer"
-                                    onError={(e) => {
-                                      (e.currentTarget as HTMLElement).style.display = 'none';
-                                    }}
-                                  />
-                                ) : (
-                                  mem.name
-                                    .split(' ')
-                                    .map((n) => n[0])
-                                    .slice(0, 2)
-                                    .join('')
-                                )}
+                          <div
+                            onClick={() => setActiveMember(mem)}
+                            className={`p-3 rounded-2xl border transition-all duration-200 cursor-pointer ${
+                              mem.isToday
+                                ? 'bg-emerald-950/70 border-emerald-500/70 text-emerald-100 shadow-md shadow-emerald-500/10'
+                                : 'bg-zinc-900/80 border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900 text-zinc-300'
+                            }`}
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <div
+                                  className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold text-white font-mono shrink-0 shadow-md overflow-hidden border border-white/30 bg-zinc-900"
+                                  style={{ backgroundColor: theme.innerBg }}
+                                >
+                                  {mem.imageUrl ? (
+                                    <img
+                                      src={formatProfileImageUrl(mem.imageUrl)}
+                                      alt={mem.name}
+                                      className="w-full h-full object-cover object-center aspect-square rounded-lg block select-none [image-rendering:-webkit-optimize-contrast] [image-rendering:high-quality] [transform:translateZ(0)]"
+                                      loading="eager"
+                                      decoding="sync"
+                                      referrerPolicy="no-referrer"
+                                      onError={(e) => {
+                                        (e.currentTarget as HTMLElement).style.display = 'none';
+                                      }}
+                                    />
+                                  ) : (
+                                    mem.name
+                                      .split(' ')
+                                      .map((n) => n[0])
+                                      .slice(0, 2)
+                                      .join('')
+                                  )}
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="text-xs font-bold truncate text-white">{mem.name}</p>
+                                  <p className="text-[10px] text-zinc-400 font-mono truncate">{mem.designation || 'Team Member'}</p>
+                                </div>
                               </div>
-                              <div className="min-w-0">
-                                <p className="text-xs font-bold truncate text-white">{mem.name}</p>
-                                <p className="text-[10px] text-zinc-400 font-mono truncate">{mem.designation || 'Team Member'}</p>
-                              </div>
+                              {mem.isToday ? (
+                                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-400 text-zinc-950 font-mono shrink-0 animate-pulse">
+                                  TODAY!
+                                </span>
+                              ) : mem.daysRemaining !== null && mem.daysRemaining >= 0 && mem.daysRemaining <= 30 ? (
+                                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 font-mono shrink-0">
+                                  in {mem.daysRemaining}d
+                                </span>
+                              ) : null}
                             </div>
-                            {mem.isToday ? (
-                              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-400 text-zinc-950 font-mono shrink-0 animate-pulse">
-                                TODAY!
-                              </span>
-                            ) : mem.daysRemaining !== null && mem.daysRemaining >= 0 && mem.daysRemaining <= 30 ? (
-                              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 font-mono shrink-0">
-                                in {mem.daysRemaining}d
-                              </span>
-                            ) : null}
-                          </div>
 
-                          <div className="mt-2 pt-1.5 border-t border-zinc-800/80 flex items-center justify-between text-[10px] font-mono text-zinc-400">
-                            <span className="flex items-center gap-1 text-amber-300 font-semibold">
-                              <Cake className="w-3 h-3 text-amber-400 cinematic-tree-micro-icon" />
-                              {mem.formattedBirthday}
-                            </span>
-                            {mem.department && (
-                              <span className="truncate max-w-[90px] text-zinc-500 text-[9px]">
-                                {mem.department}
+                            <div className="mt-2 pt-1.5 border-t border-zinc-800/80 flex items-center justify-between text-[10px] font-mono text-zinc-400">
+                              <span className="flex items-center gap-1 text-amber-300 font-semibold">
+                                <Cake className="w-3 h-3 text-amber-400 cinematic-tree-micro-icon" />
+                                {mem.formattedBirthday}
                               </span>
-                            )}
-                          </div>
+                              {mem.department && (
+                                <span className="truncate max-w-[90px] text-zinc-500 text-[9px]">
+                                  {mem.department}
+                                </span>
+                              )}
+                            </div>
 
-                          <div className="mt-2 flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-                            <button
-                              type="button"
-                              onClick={() => onOpenGenerator(mem)}
-                              className="flex-1 py-1 px-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white text-[10px] font-mono font-medium flex items-center justify-center gap-1 transition cursor-pointer border border-zinc-700/60"
-                            >
-                              <Sparkles className="w-2.5 h-2.5 text-amber-400 cinematic-action-sparkle" />
-                              <span>AI Wish</span>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => onSendWhatsApp(mem)}
-                              disabled={isSendingWhatsApp}
-                              className="flex-1 py-1 px-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-bold text-[10px] font-mono flex items-center justify-center gap-1 transition cursor-pointer shadow-sm disabled:opacity-50"
-                            >
-                              <Send className="w-2.5 h-2.5 cinematic-action-send" />
-                              <span>WhatsApp</span>
-                            </button>
+                            <div className="mt-2 flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                              <button
+                                type="button"
+                                onClick={() => onOpenGenerator(mem)}
+                                className="flex-1 py-1 px-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white text-[10px] font-mono font-medium flex items-center justify-center gap-1 transition cursor-pointer border border-zinc-700/60"
+                              >
+                                <Sparkles className="w-2.5 h-2.5 text-amber-400 cinematic-action-sparkle" />
+                                <span>AI Wish</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => onSendWhatsApp(mem)}
+                                disabled={isSendingWhatsApp}
+                                className="flex-1 py-1 px-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-bold text-[10px] font-mono flex items-center justify-center gap-1 transition cursor-pointer shadow-sm disabled:opacity-50"
+                              >
+                                <Send className="w-2.5 h-2.5 cinematic-action-send" />
+                                <span>WhatsApp</span>
+                              </button>
+                            </div>
                           </div>
-                        </div>
+                        </MemberCardTooltip>
                       );
                     })
                   ) : (

@@ -350,11 +350,11 @@ export const MailSuccessRateDonut: React.FC<MailSuccessRateDonutProps> = ({
   }, [dataSignature, activeStatusFilter, onSelectStatusFilter]);
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs p-5 space-y-4">
+    <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs p-5 space-y-4 mail-shimmer-track mail-3d-surface mail-3d-specular-track">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-slate-100 pb-3">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+          <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold mail-icon-heartbeat">
             <HeartPulse className="w-4 h-4" />
           </div>
           <div>
@@ -365,7 +365,7 @@ export const MailSuccessRateDonut: React.FC<MailSuccessRateDonutProps> = ({
 
         {/* Scope Indicator */}
         <div className="flex items-center gap-1.5">
-          <span className={`px-2 py-0.5 rounded-full text-xs font-semibold border ${healthStatus.color}`}>
+          <span className={`px-2 py-0.5 rounded-full text-xs font-semibold border mail-badge-pulse-emerald ${healthStatus.color}`}>
             {healthStatus.label}
           </span>
         </div>
@@ -374,7 +374,7 @@ export const MailSuccessRateDonut: React.FC<MailSuccessRateDonutProps> = ({
       {/* Donut Canvas and Metrics */}
       <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
         {/* SVG Container */}
-        <div ref={containerRef} className="w-[180px] h-[180px] shrink-0 relative flex items-center justify-center">
+        <div ref={containerRef} className="w-[180px] h-[180px] shrink-0 relative flex items-center justify-center mail-donut-live-ring">
           <svg ref={svgRef} className="w-full h-full overflow-visible" />
         </div>
 
@@ -382,14 +382,14 @@ export const MailSuccessRateDonut: React.FC<MailSuccessRateDonutProps> = ({
         <div className="flex-1 w-full space-y-2">
           <div
             onClick={() => onSelectStatusFilter && onSelectStatusFilter(activeStatusFilter === 'SUCCESS' ? 'ALL' : 'SUCCESS')}
-            className={`flex items-center justify-between p-2 rounded-xl border transition-all cursor-pointer ${
+            className={`flex items-center justify-between p-2 rounded-xl border transition-all cursor-pointer hover:scale-[1.02] hover:shadow-sm ${
               activeStatusFilter === 'SUCCESS'
                 ? 'bg-emerald-50 border-emerald-300 shadow-2xs'
                 : 'bg-slate-50/70 border-slate-100 hover:bg-slate-50'
             }`}
           >
             <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
               <span className="text-xs font-semibold text-slate-700">Delivered</span>
             </div>
             <span className="text-xs font-extrabold text-slate-900 font-mono">{successCount}</span>
@@ -397,7 +397,7 @@ export const MailSuccessRateDonut: React.FC<MailSuccessRateDonutProps> = ({
 
           <div
             onClick={() => onSelectStatusFilter && onSelectStatusFilter(activeStatusFilter === 'FAILED' ? 'ALL' : 'FAILED')}
-            className={`flex items-center justify-between p-2 rounded-xl border transition-all cursor-pointer ${
+            className={`flex items-center justify-between p-2 rounded-xl border transition-all cursor-pointer hover:scale-[1.02] hover:shadow-sm ${
               activeStatusFilter === 'FAILED'
                 ? 'bg-rose-50 border-rose-300 shadow-2xs'
                 : 'bg-slate-50/70 border-slate-100 hover:bg-slate-50'
@@ -412,7 +412,7 @@ export const MailSuccessRateDonut: React.FC<MailSuccessRateDonutProps> = ({
 
           <div
             onClick={() => onSelectStatusFilter && onSelectStatusFilter(activeStatusFilter === 'SKIPPED' ? 'ALL' : 'SKIPPED')}
-            className={`flex items-center justify-between p-2 rounded-xl border transition-all cursor-pointer ${
+            className={`flex items-center justify-between p-2 rounded-xl border transition-all cursor-pointer hover:scale-[1.02] hover:shadow-sm ${
               activeStatusFilter === 'SKIPPED'
                 ? 'bg-amber-50 border-amber-300 shadow-2xs'
                 : 'bg-slate-50/70 border-slate-100 hover:bg-slate-50'

@@ -32,6 +32,7 @@ import {
 } from './utils/browserNotifications';
 import { playBirthdayAlertChime, playSuccessChime } from './utils/notificationSound';
 import { Sparkles, Calendar, Users, PhoneCall, Code2, CheckCircle2, X, Bot, Mail, RefreshCw, Bell, AlertCircle } from 'lucide-react';
+import { CustomTooltip } from './components/CustomTooltip';
 
 interface ToastNotification {
   type: 'success' | 'info' | 'error';
@@ -40,6 +41,113 @@ interface ToastNotification {
   recipientName?: string;
   errorDetails?: string;
 }
+
+/**
+ * Mini Real-Time Sparkline Graph representing the birthday distribution for the current week (7 days)
+ */
+interface WeekDayDistributionItem {
+  dayName: string;
+  shortDay: string;
+  dayOfMonth: number;
+  month: number;
+  count: number;
+  isToday: boolean;
+  celebrants: string[];
+}
+
+const WeeklyBirthdaySparkline: React.FC<{
+  distribution: WeekDayDistributionItem[];
+}> = ({ distribution }) => {
+  const counts = distribution.map((d) => d.count);
+  const max = Math.max(...counts, 1);
+  const width = 64;
+  const height = 24;
+
+  const points = distribution.map((d, i) => {
+    const x = Math.round((i / 6) * (width - 8) + 4);
+    const y = Math.round(height - (d.count / max) * (height - 8) - 4);
+    return { x, y, ...d };
+  });
+
+  const polylinePoints = points.map((p) => `${p.x},${p.y}`).join(' ');
+  const polygonPoints = `4,${height} ${polylinePoints} ${width - 4},${height}`;
+
+  const tooltipSummary = `Current Week Distribution (${distribution.reduce((acc, d) => acc + d.count, 0)} birthdays):\n` +
+    distribution.map((d) => `${d.dayName} (${d.dayOfMonth}): ${d.count} ${d.celebrants.length > 0 ? `[${d.celebrants.join(', ')}]` : ''}${d.isToday ? ' ★ TODAY' : ''}`).join('\n');
+
+  return (
+    <div
+      className="flex flex-col items-end gap-0.5 select-none shrink-0"
+      title={tooltipSummary}
+    >
+      <div className="flex items-center gap-1">
+        <span className="text-[8px] font-mono font-bold text-amber-500/80 uppercase tracking-tighter">7D WK</span>
+        <svg width={width} height={height} className="overflow-visible block">
+          <defs>
+            <linearGradient id="wk-bday-spark-grad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.45" />
+              <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.0" />
+            </linearGradient>
+          </defs>
+
+          {/* Area fill */}
+          <polygon points={polygonPoints} fill="url(#wk-bday-spark-grad)" />
+
+          {/* Sparkline curve */}
+          <polyline
+            fill="none"
+            stroke="#f59e0b"
+            strokeWidth="1.75"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            points={polylinePoints}
+          />
+
+          {/* Day data nodes */}
+          {points.map((pt, idx) => (
+            <g key={idx}>
+              {pt.isToday && (
+                <circle
+                  cx={pt.x}
+                  cy={pt.y}
+                  r={4.5}
+                  fill="#f59e0b"
+                  className="animate-ping opacity-60 pointer-events-none"
+                />
+              )}
+              <circle
+                cx={pt.x}
+                cy={pt.y}
+                r={pt.isToday ? 2.8 : pt.count > 0 ? 2.2 : 1.4}
+                fill={pt.isToday ? '#d97706' : pt.count > 0 ? '#f59e0b' : '#cbd5e1'}
+                stroke={pt.isToday ? '#ffffff' : 'none'}
+                strokeWidth={pt.isToday ? 1 : 0}
+              />
+            </g>
+          ))}
+        </svg>
+      </div>
+
+      {/* Micro 7-day indicators */}
+      <div className="flex items-center justify-between w-[64px] px-1 text-[8px] font-mono leading-none">
+        {distribution.map((d, i) => (
+          <span
+            key={i}
+            className={`transition-colors ${
+              d.isToday
+                ? 'font-extrabold text-amber-600 underline decoration-amber-500 decoration-1'
+                : d.count > 0
+                ? 'font-bold text-amber-500'
+                : 'text-slate-300'
+            }`}
+          >
+            {d.shortDay}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+};
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'insights' | 'roster' | 'meanings' | 'festive' | 'email' | 'generator' | 'script' | 'automation' | 'tester' | 'gallery' | 'fortune'>('dashboard');
@@ -214,6 +322,49 @@ export default function App() {
       const days = getDaysUntilBirthday(m.birthday);
       return days !== null && days >= 0 && days <= 6;
     }).length;
+  }, [teamMembers]);
+
+  // Real-time birthday distribution across the 7 days of the current week (Sunday through Saturday)
+  const currentWeekDistribution = useMemo(() => {
+    const today = new Date();
+    const dayOfWeek = today.getDay(); // 0 = Sunday, 6 = Saturday
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - dayOfWeek);
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const shortLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
+    const days: WeekDayDistributionItem[] = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(startOfWeek);
+      d.setDate(startOfWeek.getDate() + i);
+      const isToday =
+        d.getDate() === today.getDate() &&
+        d.getMonth() === today.getMonth() &&
+        d.getFullYear() === today.getFullYear();
+      return {
+        dayName: dayLabels[i],
+        shortDay: shortLabels[i],
+        dayOfMonth: d.getDate(),
+        month: d.getMonth(),
+        isToday,
+        count: 0,
+        celebrants: [],
+      };
+    });
+
+    teamMembers.forEach((member) => {
+      const parsed = parseBirthdayDate(member.birthday);
+      if (!parsed) return;
+      days.forEach((dayItem) => {
+        if (parsed.month === dayItem.month && parsed.day === dayItem.dayOfMonth) {
+          dayItem.count += 1;
+          dayItem.celebrants.push(member.name);
+        }
+      });
+    });
+
+    return days;
   }, [teamMembers]);
 
   // Sync browser tab title with dynamic reminder badge
@@ -698,234 +849,376 @@ export default function App() {
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 mb-8">
           
           {/* 1. Total Team Card */}
-          <div className="metric-card-cinematic card-float-1 group relative bg-white rounded-2xl p-3.5 border border-slate-200 shadow-2xs flex items-center gap-3 overflow-hidden transition-all duration-300 hover:border-emerald-300">
-            {/* Top Laser Shimmer Sweep */}
-            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-500/80 to-transparent -translate-x-full animate-metric-beam pointer-events-none z-20" />
-            
-            {/* Ambient Corner Telemetry Glow */}
-            <div className="absolute -top-6 -right-6 w-16 h-16 rounded-full bg-emerald-400/10 blur-xl pointer-events-none group-hover:bg-emerald-400/20 group-hover:scale-125 transition-all duration-500" />
-            <div className="absolute bottom-2 right-2 w-1 h-1 rounded-full bg-emerald-400/40 animate-ping [animation-duration:3s] pointer-events-none" />
+          <CustomTooltip
+            title="Total Team Roster"
+            subtitle="Central Industrial Engineering"
+            category="ORGANIZATIONAL DIRECTORY"
+            badge="100% SYNCED"
+            badgeColor="emerald"
+            icon={<Users className="w-4 h-4 text-emerald-400" />}
+            summary={`Master active team directory containing ${teamMembers.length} verified members synchronized in real-time from the master Google Sheet.`}
+            metrics={[
+              { label: 'Active Roster', value: `${teamMembers.length} Members`, highlight: true },
+              { label: "Today's Birthdays", value: `${todayBirthdays.length} Active` },
+              { label: 'Upcoming (7D)', value: `${dueSoonBirthdays.length} Due Soon` },
+              { label: 'Sync Source', value: 'Google Sheet Master' },
+            ]}
+            footer="Single Source of Truth • Real-Time SSE"
+          >
+            <div className="metric-card-cinematic card-float-1 group relative bg-white rounded-2xl p-3.5 border border-slate-200 shadow-2xs flex items-center gap-3 overflow-hidden transition-all duration-300 hover:border-emerald-300">
+              {/* Top Laser Shimmer Sweep */}
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-500/80 to-transparent -translate-x-full animate-metric-beam pointer-events-none z-20" />
+              
+              {/* Ambient Corner Telemetry Glow */}
+              <div className="absolute -top-6 -right-6 w-16 h-16 rounded-full bg-emerald-400/10 blur-xl pointer-events-none group-hover:bg-emerald-400/20 group-hover:scale-125 transition-all duration-500" />
+              <div className="absolute bottom-2 right-2 w-1 h-1 rounded-full bg-emerald-400/40 animate-ping [animation-duration:3s] pointer-events-none" />
 
-            {/* Subtle Diagonal Glass Shimmer Sweep on Hover */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none z-10" />
+              {/* Subtle Diagonal Glass Shimmer Sweep on Hover */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none z-10" />
 
-            <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold shrink-0 relative z-10 group-hover:scale-110 group-hover:bg-emerald-100/80 group-hover:shadow-[0_0_12px_rgba(16,185,129,0.3)] transition-all duration-300 cinematic-squircle-live cinematic-squircle-live-emerald">
-              <Users className="w-4.5 h-4.5 transition-transform duration-300 group-hover:rotate-3 cinematic-users-icon" />
+              <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold shrink-0 relative z-10 group-hover:scale-110 group-hover:bg-emerald-100/80 group-hover:shadow-[0_0_12px_rgba(16,185,129,0.3)] transition-all duration-300 cinematic-squircle-live cinematic-squircle-live-emerald">
+                <Users className="w-4.5 h-4.5 transition-transform duration-300 group-hover:rotate-3 cinematic-users-icon" />
+              </div>
+              <div className="relative z-10 min-w-0">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                  Total Team
+                  <span className="inline-block w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
+                </p>
+                <p className="text-lg font-bold text-slate-900 tracking-tight">{teamMembers.length}</p>
+              </div>
             </div>
-            <div className="relative z-10 min-w-0">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                Total Team
-                <span className="inline-block w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
-              </p>
-              <p className="text-lg font-bold text-slate-900 tracking-tight">{teamMembers.length}</p>
-            </div>
-          </div>
+          </CustomTooltip>
 
           {/* 2. Today's Birthdays Card */}
-          <div className={`metric-card-cinematic card-float-2 group relative bg-white rounded-2xl p-3.5 border shadow-2xs flex items-center gap-3 overflow-hidden transition-all duration-300 ${
-            todayBirthdays.length > 0 
-              ? 'border-amber-300/90 shadow-[0_0_15px_rgba(245,158,11,0.18)] ring-1 ring-amber-400/30 hover:border-amber-400' 
-              : 'border-amber-200 hover:border-amber-400'
-          }`}>
-            {/* Top Laser Shimmer Sweep */}
-            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-amber-400/90 to-transparent -translate-x-full animate-metric-beam [animation-delay:0.5s] pointer-events-none z-20" />
-
-            {/* Ambient Corner Telemetry Glow */}
-            <div className="absolute -top-6 -right-6 w-16 h-16 rounded-full bg-amber-400/15 blur-xl pointer-events-none group-hover:bg-amber-400/25 group-hover:scale-125 transition-all duration-500" />
-            <div className="absolute top-2 right-4 w-1 h-1 rounded-full bg-amber-400/50 animate-pulse pointer-events-none" />
-
-            {/* Subtle Diagonal Glass Shimmer Sweep on Hover */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none z-10" />
-
-            <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold shrink-0 relative z-10 group-hover:scale-110 transition-all duration-300 cinematic-squircle-live cinematic-squircle-live-amber ${
-              todayBirthdays.length > 0
-                ? 'bg-amber-100 text-amber-600 shadow-[0_0_12px_rgba(245,158,11,0.4)] animate-pulse'
-                : 'bg-amber-50 text-amber-600 group-hover:bg-amber-100/80'
+          <CustomTooltip
+            title="Today's Birthday Celebrations"
+            subtitle={todayBirthdays.length > 0 ? `${todayBirthdays.length} Active Celebrant(s)` : 'Zero birthdays today'}
+            category="ANNUAL MILESTONES"
+            badge={todayBirthdays.length > 0 ? 'CELEBRATION ACTIVE 🎉' : 'STANDBY'}
+            badgeColor={todayBirthdays.length > 0 ? 'amber' : 'zinc'}
+            icon={<Calendar className="w-4 h-4 text-amber-400" />}
+            summary={todayBirthdays.length > 0
+              ? `Today's celebrants: ${todayBirthdays.map(m => m.name).join(', ')}. Automated WhatsApp & email dispatch triggers at 8:00 AM.`
+              : 'No team members have birthdays recorded for today. Next scheduled check runs tomorrow morning at 8:00 AM.'}
+            metrics={[
+              { label: 'Active Today', value: todayBirthdays.length, highlight: todayBirthdays.length > 0 },
+              { label: 'This Week Dist.', value: `${currentWeekBirthdaysCount} this week` },
+              { label: 'Auto Trigger', value: '8:00 AM Cron' },
+              { label: 'Dispatch Gateway', value: 'WhatsApp & Email' },
+            ]}
+            footer="Direct HTTP API • Zero Manual Touch"
+          >
+            <div className={`metric-card-cinematic card-float-2 group relative bg-white rounded-2xl p-3.5 border shadow-2xs flex items-center gap-3 overflow-hidden transition-all duration-300 ${
+              todayBirthdays.length > 0 
+                ? 'border-amber-300/90 shadow-[0_0_15px_rgba(245,158,11,0.18)] ring-1 ring-amber-400/30 hover:border-amber-400' 
+                : 'border-amber-200 hover:border-amber-400'
             }`}>
-              <Calendar className="w-4.5 h-4.5 transition-transform duration-300 group-hover:rotate-6 cinematic-calendar-icon" />
+              {/* Top Laser Shimmer Sweep */}
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-amber-400/90 to-transparent -translate-x-full animate-metric-beam [animation-delay:0.5s] pointer-events-none z-20" />
+
+              {/* Ambient Corner Telemetry Glow */}
+              <div className="absolute -top-6 -right-6 w-16 h-16 rounded-full bg-amber-400/15 blur-xl pointer-events-none group-hover:bg-amber-400/25 group-hover:scale-125 transition-all duration-500" />
+              <div className="absolute top-2 right-4 w-1 h-1 rounded-full bg-amber-400/50 animate-pulse pointer-events-none" />
+
+              {/* Subtle Diagonal Glass Shimmer Sweep on Hover */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none z-10" />
+
+              <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold shrink-0 relative z-10 group-hover:scale-110 transition-all duration-300 cinematic-squircle-live cinematic-squircle-live-amber ${
+                todayBirthdays.length > 0
+                  ? 'bg-amber-100 text-amber-600 shadow-[0_0_12px_rgba(245,158,11,0.4)] animate-pulse'
+                  : 'bg-amber-50 text-amber-600 group-hover:bg-amber-100/80'
+              }`}>
+                <Calendar className="w-4.5 h-4.5 transition-transform duration-300 group-hover:rotate-6 cinematic-calendar-icon" />
+              </div>
+              <div className="relative z-10 min-w-0 flex-1 flex items-center justify-between gap-1.5">
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                    Today's Birthdays
+                    {todayBirthdays.length > 0 && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
+                    )}
+                  </p>
+                  <p className="text-lg font-bold text-amber-600 tracking-tight leading-none mt-0.5">{todayBirthdays.length}</p>
+                </div>
+                {/* Mini Real-Time Sparkline Graph representing the birthday distribution for the current week */}
+                <WeeklyBirthdaySparkline distribution={currentWeekDistribution} />
+              </div>
             </div>
-            <div className="relative z-10 min-w-0">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                Today's Birthdays
-                {todayBirthdays.length > 0 && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
-                )}
-              </p>
-              <p className="text-lg font-bold text-amber-600 tracking-tight">{todayBirthdays.length}</p>
-            </div>
-          </div>
+          </CustomTooltip>
 
           {/* 3. Name Meanings Card */}
-          <div
-            className="metric-card-cinematic card-float-3 group relative bg-white rounded-2xl p-3.5 border border-amber-200 shadow-2xs flex items-center gap-3 cursor-pointer overflow-hidden transition-all duration-300 hover:border-amber-400"
-            onClick={() => setActiveTab('meanings')}
+          <CustomTooltip
+            title="Name Meanings Workstation"
+            subtitle="Central IE Team Etymology"
+            category="CULTURAL INSIGHTS"
+            badge="16 PROFILES"
+            badgeColor="amber"
+            icon={<Sparkles className="w-4 h-4 text-amber-400" />}
+            summary="Explore spiritual meanings, etymological origins, and leadership archetypes of all 16 IE team members."
+            metrics={[
+              { label: 'Documented Traits', value: '16 Profiles' },
+              { label: 'Cultural Roots', value: 'Bangla & Arabic' },
+              { label: 'Archetypes', value: 'Leadership & Energy' },
+              { label: 'Mapping Status', value: 'Complete', highlight: true },
+            ]}
+            footer="Click card to open Name Meaning workstation"
           >
-            {/* Top Laser Shimmer Sweep */}
-            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-amber-400/90 to-transparent -translate-x-full animate-metric-beam [animation-delay:1s] pointer-events-none z-20" />
+            <div
+              className="metric-card-cinematic card-float-3 group relative bg-white rounded-2xl p-3.5 border border-amber-200 shadow-2xs flex items-center gap-3 cursor-pointer overflow-hidden transition-all duration-300 hover:border-amber-400"
+              onClick={() => setActiveTab('meanings')}
+            >
+              {/* Top Laser Shimmer Sweep */}
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-amber-400/90 to-transparent -translate-x-full animate-metric-beam [animation-delay:1s] pointer-events-none z-20" />
 
-            {/* Ambient Corner Telemetry Glow */}
-            <div className="absolute -top-6 -right-6 w-16 h-16 rounded-full bg-amber-400/10 blur-xl pointer-events-none group-hover:bg-amber-400/20 group-hover:scale-125 transition-all duration-500" />
-            <div className="absolute bottom-2 right-2 w-1 h-1 rounded-full bg-amber-400/40 animate-ping [animation-duration:3.2s] pointer-events-none" />
+              {/* Ambient Corner Telemetry Glow */}
+              <div className="absolute -top-6 -right-6 w-16 h-16 rounded-full bg-amber-400/10 blur-xl pointer-events-none group-hover:bg-amber-400/20 group-hover:scale-125 transition-all duration-500" />
+              <div className="absolute bottom-2 right-2 w-1 h-1 rounded-full bg-amber-400/40 animate-ping [animation-duration:3.2s] pointer-events-none" />
 
-            {/* Subtle Diagonal Glass Shimmer Sweep on Hover */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none z-10" />
+              {/* Subtle Diagonal Glass Shimmer Sweep on Hover */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none z-10" />
 
-            <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold shrink-0 relative z-10 group-hover:scale-110 group-hover:bg-amber-100/80 group-hover:shadow-[0_0_12px_rgba(245,158,11,0.35)] transition-all duration-300 cinematic-squircle-live cinematic-squircle-live-amber">
-              <Sparkles className="w-4.5 h-4.5 transition-transform duration-300 group-hover:rotate-12 cinematic-sparkles-icon" />
+              <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold shrink-0 relative z-10 group-hover:scale-110 group-hover:bg-amber-100/80 group-hover:shadow-[0_0_12px_rgba(245,158,11,0.35)] transition-all duration-300 cinematic-squircle-live cinematic-squircle-live-amber">
+                <Sparkles className="w-4.5 h-4.5 transition-transform duration-300 group-hover:rotate-12 cinematic-sparkles-icon" />
+              </div>
+              <div className="relative z-10 min-w-0">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Name Meanings</p>
+                <p className="text-xs font-bold text-amber-800 mt-0.5 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                  16 Team Traits
+                </p>
+              </div>
             </div>
-            <div className="relative z-10 min-w-0">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Name Meanings</p>
-              <p className="text-xs font-bold text-amber-800 mt-0.5 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-                16 Team Traits
-              </p>
-            </div>
-          </div>
+          </CustomTooltip>
 
           {/* 4. Festive Hub Card */}
-          <div
-            className="metric-card-cinematic card-float-4 group relative bg-white rounded-2xl p-3.5 border border-amber-200 shadow-2xs flex items-center gap-3 cursor-pointer overflow-hidden transition-all duration-300 hover:border-amber-400"
-            onClick={() => setActiveTab('festive')}
+          <CustomTooltip
+            title="Global Festive Hub"
+            subtitle="Worldwide Special Days Calendar"
+            category="INTERNATIONAL CALENDAR"
+            badge="365D RADAR"
+            badgeColor="amber"
+            icon={<Sparkles className="w-4 h-4 text-amber-400" />}
+            summary="Comprehensive festive calendar tracking global, national, and cultural observances aligned with team member celebrations."
+            metrics={[
+              { label: 'Tracked Holidays', value: '120+ Global Days' },
+              { label: 'Proximity Matching', value: '±3 Days Window' },
+              { label: 'Current Horizon', value: '60-90 Days' },
+              { label: 'Festive Radar', value: 'Active', highlight: true },
+            ]}
+            footer="Click card to open Festive Calendar workstation"
           >
-            {/* Top Laser Shimmer Sweep */}
-            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-amber-400/90 to-transparent -translate-x-full animate-metric-beam [animation-delay:1.5s] pointer-events-none z-20" />
+            <div
+              className="metric-card-cinematic card-float-4 group relative bg-white rounded-2xl p-3.5 border border-amber-200 shadow-2xs flex items-center gap-3 cursor-pointer overflow-hidden transition-all duration-300 hover:border-amber-400"
+              onClick={() => setActiveTab('festive')}
+            >
+              {/* Top Laser Shimmer Sweep */}
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-amber-400/90 to-transparent -translate-x-full animate-metric-beam [animation-delay:1.5s] pointer-events-none z-20" />
 
-            {/* Ambient Corner Telemetry Glow */}
-            <div className="absolute -top-6 -right-6 w-16 h-16 rounded-full bg-amber-400/10 blur-xl pointer-events-none group-hover:bg-amber-400/20 group-hover:scale-125 transition-all duration-500" />
-            <div className="absolute top-2 right-6 w-1 h-1 rounded-full bg-amber-400/40 animate-pulse pointer-events-none" />
+              {/* Ambient Corner Telemetry Glow */}
+              <div className="absolute -top-6 -right-6 w-16 h-16 rounded-full bg-amber-400/10 blur-xl pointer-events-none group-hover:bg-amber-400/20 group-hover:scale-125 transition-all duration-500" />
+              <div className="absolute top-2 right-6 w-1 h-1 rounded-full bg-amber-400/40 animate-pulse pointer-events-none" />
 
-            {/* Subtle Diagonal Glass Shimmer Sweep on Hover */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none z-10" />
+              {/* Subtle Diagonal Glass Shimmer Sweep on Hover */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none z-10" />
 
-            <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold shrink-0 relative z-10 group-hover:scale-110 group-hover:bg-amber-100/80 group-hover:shadow-[0_0_12px_rgba(245,158,11,0.35)] transition-all duration-300 cinematic-squircle-live cinematic-squircle-live-amber">
-              <Sparkles className="w-4.5 h-4.5 transition-transform duration-300 group-hover:rotate-12 cinematic-sparkles-icon" />
+              <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold shrink-0 relative z-10 group-hover:scale-110 group-hover:bg-amber-100/80 group-hover:shadow-[0_0_12px_rgba(245,158,11,0.35)] transition-all duration-300 cinematic-squircle-live cinematic-squircle-live-amber">
+                <Sparkles className="w-4.5 h-4.5 transition-transform duration-300 group-hover:rotate-12 cinematic-sparkles-icon" />
+              </div>
+              <div className="relative z-10 min-w-0">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Festive Hub</p>
+                <p className="text-xs font-bold text-amber-800 mt-0.5 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                  Special Days
+                </p>
+              </div>
             </div>
-            <div className="relative z-10 min-w-0">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Festive Hub</p>
-              <p className="text-xs font-bold text-amber-800 mt-0.5 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-                Special Days
-              </p>
-            </div>
-          </div>
+          </CustomTooltip>
 
           {/* 5. Sender WA Card */}
-          <div className="metric-card-cinematic card-float-5 group relative bg-white rounded-2xl p-3.5 border border-slate-200 shadow-2xs flex items-center gap-3 overflow-hidden transition-all duration-300 hover:border-blue-300">
-            {/* Top Laser Shimmer Sweep */}
-            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-blue-400/80 to-transparent -translate-x-full animate-metric-beam [animation-delay:2s] pointer-events-none z-20" />
+          <CustomTooltip
+            title="Connected WhatsApp Gateway"
+            subtitle={adminConfig?.senderWhatsApp || twilioConfig.whatsappNumber}
+            category="TELECOMMUNICATION GATEWAY"
+            badge="DISPATCH READY"
+            badgeColor="blue"
+            icon={<PhoneCall className="w-4 h-4 text-blue-400" />}
+            summary="Primary Twilio Cloud API sender number configured for direct background birthday message dispatching to team WhatsApp accounts."
+            metrics={[
+              { label: 'Sender Line', value: (adminConfig?.senderWhatsApp || twilioConfig.whatsappNumber).replace('whatsapp:', '') },
+              { label: 'API Gateway', value: 'Twilio Cloud' },
+              { label: 'Auto Retries', value: 'Exponential Backoff' },
+              { label: 'Status', value: 'Connected', highlight: true },
+            ]}
+            footer="Real-Time HTTP POST Dispatches"
+          >
+            <div className="metric-card-cinematic card-float-5 group relative bg-white rounded-2xl p-3.5 border border-slate-200 shadow-2xs flex items-center gap-3 overflow-hidden transition-all duration-300 hover:border-blue-300">
+              {/* Top Laser Shimmer Sweep */}
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-blue-400/80 to-transparent -translate-x-full animate-metric-beam [animation-delay:2s] pointer-events-none z-20" />
 
-            {/* Ambient Corner Telemetry Glow */}
-            <div className="absolute -top-6 -right-6 w-16 h-16 rounded-full bg-blue-400/10 blur-xl pointer-events-none group-hover:bg-blue-400/20 group-hover:scale-125 transition-all duration-500" />
-            <div className="absolute bottom-2 right-2 w-1 h-1 rounded-full bg-blue-400/40 animate-ping [animation-duration:2.8s] pointer-events-none" />
+              {/* Ambient Corner Telemetry Glow */}
+              <div className="absolute -top-6 -right-6 w-16 h-16 rounded-full bg-blue-400/10 blur-xl pointer-events-none group-hover:bg-blue-400/20 group-hover:scale-125 transition-all duration-500" />
+              <div className="absolute bottom-2 right-2 w-1 h-1 rounded-full bg-blue-400/40 animate-ping [animation-duration:2.8s] pointer-events-none" />
 
-            {/* Subtle Diagonal Glass Shimmer Sweep on Hover */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none z-10" />
+              {/* Subtle Diagonal Glass Shimmer Sweep on Hover */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none z-10" />
 
-            <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold shrink-0 relative z-10 group-hover:scale-110 group-hover:bg-blue-100/80 group-hover:shadow-[0_0_12px_rgba(59,130,246,0.35)] transition-all duration-300 cinematic-squircle-live cinematic-squircle-live-blue">
-              <PhoneCall className="w-4.5 h-4.5 transition-transform duration-300 group-hover:-rotate-6 cinematic-phone-icon" />
+              <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold shrink-0 relative z-10 group-hover:scale-110 group-hover:bg-blue-100/80 group-hover:shadow-[0_0_12px_rgba(59,130,246,0.35)] transition-all duration-300 cinematic-squircle-live cinematic-squircle-live-blue">
+                <PhoneCall className="w-4.5 h-4.5 transition-transform duration-300 group-hover:-rotate-6 cinematic-phone-icon" />
+              </div>
+              <div className="relative z-10 min-w-0">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                  Sender WA
+                  <span className="w-1 h-1 rounded-full bg-blue-500 animate-pulse" />
+                </p>
+                <p className="text-xs font-mono font-bold text-slate-900 mt-0.5 truncate max-w-[95px]" title={adminConfig?.senderWhatsApp || twilioConfig.whatsappNumber}>
+                  {(adminConfig?.senderWhatsApp || twilioConfig.whatsappNumber).replace('whatsapp:', '')}
+                </p>
+              </div>
             </div>
-            <div className="relative z-10 min-w-0">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                Sender WA
-                <span className="w-1 h-1 rounded-full bg-blue-500 animate-pulse" />
-              </p>
-              <p className="text-xs font-mono font-bold text-slate-900 mt-0.5 truncate max-w-[95px]" title={adminConfig?.senderWhatsApp || twilioConfig.whatsappNumber}>
-                {(adminConfig?.senderWhatsApp || twilioConfig.whatsappNumber).replace('whatsapp:', '')}
-              </p>
-            </div>
-          </div>
+          </CustomTooltip>
 
           {/* 6. Admin Email Card */}
-          <div className="metric-card-cinematic card-float-6 group relative bg-white rounded-2xl p-3.5 border border-indigo-200 shadow-2xs flex items-center gap-3 cursor-pointer overflow-hidden transition-all duration-300 hover:border-indigo-400" onClick={() => setActiveTab('email')}>
-            {/* Top Laser Shimmer Sweep */}
-            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-indigo-400/80 to-transparent -translate-x-full animate-metric-beam [animation-delay:2.5s] pointer-events-none z-20" />
+          <CustomTooltip
+            title="Administrative Email Gateway"
+            subtitle={adminConfig?.adminEmail || 'anik.barua@kdsgroup.net'}
+            category="EXECUTIVE AUDITING"
+            badge="ADMINISTRATIVE"
+            badgeColor="indigo"
+            icon={<Mail className="w-4 h-4 text-indigo-400" />}
+            summary="Designated administrator recipient for morning birthday dispatch confirmations, weekly celebrant rosters, and audit logs."
+            metrics={[
+              { label: 'Admin Inbox', value: adminConfig?.adminEmail || 'anik.barua@kdsgroup.net' },
+              { label: 'Morning Digest', value: 'Daily 8:00 AM' },
+              { label: 'Audit Reports', value: 'Weekly Summary' },
+              { label: 'SMTP Service', value: 'Google Workspace', highlight: true },
+            ]}
+            footer="Click card to open Email Workstation"
+          >
+            <div className="metric-card-cinematic card-float-6 group relative bg-white rounded-2xl p-3.5 border border-indigo-200 shadow-2xs flex items-center gap-3 cursor-pointer overflow-hidden transition-all duration-300 hover:border-indigo-400" onClick={() => setActiveTab('email')}>
+              {/* Top Laser Shimmer Sweep */}
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-indigo-400/80 to-transparent -translate-x-full animate-metric-beam [animation-delay:2.5s] pointer-events-none z-20" />
 
-            {/* Ambient Corner Telemetry Glow */}
-            <div className="absolute -top-6 -right-6 w-16 h-16 rounded-full bg-indigo-400/10 blur-xl pointer-events-none group-hover:bg-indigo-400/20 group-hover:scale-125 transition-all duration-500" />
-            <div className="absolute top-2 right-5 w-1 h-1 rounded-full bg-indigo-400/40 animate-pulse pointer-events-none" />
+              {/* Ambient Corner Telemetry Glow */}
+              <div className="absolute -top-6 -right-6 w-16 h-16 rounded-full bg-indigo-400/10 blur-xl pointer-events-none group-hover:bg-indigo-400/20 group-hover:scale-125 transition-all duration-500" />
+              <div className="absolute top-2 right-5 w-1 h-1 rounded-full bg-indigo-400/40 animate-pulse pointer-events-none" />
 
-            {/* Subtle Diagonal Glass Shimmer Sweep on Hover */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none z-10" />
+              {/* Subtle Diagonal Glass Shimmer Sweep on Hover */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none z-10" />
 
-            <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold shrink-0 relative z-10 group-hover:scale-110 group-hover:bg-indigo-100/80 group-hover:shadow-[0_0_12px_rgba(99,102,241,0.35)] transition-all duration-300 cinematic-squircle-live cinematic-squircle-live-indigo">
-              <Mail className="w-4.5 h-4.5 transition-transform duration-300 group-hover:scale-105 cinematic-mail-icon" />
+              <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold shrink-0 relative z-10 group-hover:scale-110 group-hover:bg-indigo-100/80 group-hover:shadow-[0_0_12px_rgba(99,102,241,0.35)] transition-all duration-300 cinematic-squircle-live cinematic-squircle-live-indigo">
+                <Mail className="w-4.5 h-4.5 transition-transform duration-300 group-hover:scale-105 cinematic-mail-icon" />
+              </div>
+              <div className="relative z-10 min-w-0">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Admin Email</p>
+                <p className="text-xs font-bold text-indigo-700 mt-0.5 flex items-center gap-1 truncate max-w-[95px]" title={adminConfig?.adminEmail || 'anik.barua@kdsgroup.net'}>
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+                  {adminConfig?.adminEmail || 'anik.barua@kdsgroup.net'}
+                </p>
+              </div>
             </div>
-            <div className="relative z-10 min-w-0">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Admin Email</p>
-              <p className="text-xs font-bold text-indigo-700 mt-0.5 flex items-center gap-1 truncate max-w-[95px]" title={adminConfig?.adminEmail || 'anik.barua@kdsgroup.net'}>
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
-                {adminConfig?.adminEmail || 'anik.barua@kdsgroup.net'}
-              </p>
-            </div>
-          </div>
+          </CustomTooltip>
 
           {/* 7. Visual Map Card */}
-          <div 
-            id="visual-map-button"
-            className="metric-card-cinematic card-float-7 group relative bg-white rounded-2xl p-3.5 border border-slate-200 shadow-2xs flex items-center gap-3 cursor-pointer overflow-hidden transition-all duration-300 hover:border-indigo-300" 
-            onClick={() => setIsCalendarOpen(true)}
-            title={`Visual Map Calendar View${currentWeekBirthdaysCount > 0 ? ` — ${currentWeekBirthdaysCount} birthday${currentWeekBirthdaysCount > 1 ? 's' : ''} this week` : ''}`}
+          <CustomTooltip
+            title="Visual Birthday Map"
+            subtitle="Interactive Calendar Horizon"
+            category="SPATIAL CALENDAR"
+            badge={currentWeekBirthdaysCount > 0 ? `${currentWeekBirthdaysCount} THIS WEEK` : 'ANNUAL MATRIX'}
+            badgeColor={currentWeekBirthdaysCount > 0 ? 'rose' : 'indigo'}
+            icon={<Calendar className="w-4 h-4 text-rose-400" />}
+            summary={`Full-year calendar visualizer showing annual birthday distributions with ${currentWeekBirthdaysCount} birthday${currentWeekBirthdaysCount === 1 ? '' : 's'} this current week.`}
+            metrics={[
+              { label: 'This Week', value: `${currentWeekBirthdaysCount} Birthdays`, highlight: currentWeekBirthdaysCount > 0 },
+              { label: 'View Format', value: '12-Month Matrix' },
+              { label: 'Filter Mode', value: 'Interactive Zoom' },
+              { label: 'Status', value: 'Live Synced', highlight: true },
+            ]}
+            footer="Click card to open full-screen Visual Calendar"
           >
-            {/* Top Laser Shimmer Sweep */}
-            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-rose-400/80 to-transparent -translate-x-full animate-metric-beam [animation-delay:3s] pointer-events-none z-20" />
+            <div 
+              id="visual-map-button"
+              className="metric-card-cinematic card-float-7 group relative bg-white rounded-2xl p-3.5 border border-slate-200 shadow-2xs flex items-center gap-3 cursor-pointer overflow-hidden transition-all duration-300 hover:border-indigo-300" 
+              onClick={() => setIsCalendarOpen(true)}
+              title={`Visual Map Calendar View${currentWeekBirthdaysCount > 0 ? ` — ${currentWeekBirthdaysCount} birthday${currentWeekBirthdaysCount > 1 ? 's' : ''} this week` : ''}`}
+            >
+              {/* Top Laser Shimmer Sweep */}
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-rose-400/80 to-transparent -translate-x-full animate-metric-beam [animation-delay:3s] pointer-events-none z-20" />
 
-            {/* Ambient Corner Telemetry Glow */}
-            <div className="absolute -top-6 -right-6 w-16 h-16 rounded-full bg-rose-400/10 blur-xl pointer-events-none group-hover:bg-rose-400/20 group-hover:scale-125 transition-all duration-500" />
-            <div className="absolute bottom-2 right-2 w-1 h-1 rounded-full bg-rose-400/40 animate-ping [animation-duration:3.5s] pointer-events-none" />
+              {/* Ambient Corner Telemetry Glow */}
+              <div className="absolute -top-6 -right-6 w-16 h-16 rounded-full bg-rose-400/10 blur-xl pointer-events-none group-hover:bg-rose-400/20 group-hover:scale-125 transition-all duration-500" />
+              <div className="absolute bottom-2 right-2 w-1 h-1 rounded-full bg-rose-400/40 animate-ping [animation-duration:3.5s] pointer-events-none" />
 
-            {/* Subtle Diagonal Glass Shimmer Sweep on Hover */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none z-10" />
+              {/* Subtle Diagonal Glass Shimmer Sweep on Hover */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none z-10" />
 
-            <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold shrink-0 relative z-10 group-hover:scale-110 group-hover:bg-indigo-100/80 group-hover:shadow-[0_0_12px_rgba(99,102,241,0.35)] transition-all duration-300 cinematic-squircle-live cinematic-squircle-live-rose">
-              <Calendar className="w-4.5 h-4.5 transition-transform duration-300 group-hover:rotate-6 cinematic-calendar-icon" />
-              {currentWeekBirthdaysCount > 0 && (
-                <span 
-                  id="visual-map-badge"
-                  className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 bg-rose-500 text-white text-[10px] font-extrabold rounded-full flex items-center justify-center border-2 border-white shadow-xs animate-pulse"
-                >
-                  {currentWeekBirthdaysCount}
-                </span>
-              )}
-            </div>
-            <div className="min-w-0 flex-1 relative z-10">
-              <div className="flex items-center justify-between gap-1">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Visual Map</p>
+              <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold shrink-0 relative z-10 group-hover:scale-110 group-hover:bg-indigo-100/80 group-hover:shadow-[0_0_12px_rgba(99,102,241,0.35)] transition-all duration-300 cinematic-squircle-live cinematic-squircle-live-rose">
+                <Calendar className="w-4.5 h-4.5 transition-transform duration-300 group-hover:rotate-6 cinematic-calendar-icon" />
                 {currentWeekBirthdaysCount > 0 && (
                   <span 
-                    id="visual-map-week-count-tag"
-                    className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-rose-50 text-rose-600 border border-rose-200 shrink-0 shadow-2xs animate-pulse"
+                    id="visual-map-badge"
+                    className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 bg-rose-500 text-white text-[10px] font-extrabold rounded-full flex items-center justify-center border-2 border-white shadow-xs animate-pulse"
                   >
-                    {currentWeekBirthdaysCount} this wk
+                    {currentWeekBirthdaysCount}
                   </span>
                 )}
               </div>
-              <p className="text-xs font-bold text-indigo-700 mt-0.5">Calendar View</p>
+              <div className="min-w-0 flex-1 relative z-10">
+                <div className="flex items-center justify-between gap-1">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Visual Map</p>
+                  {currentWeekBirthdaysCount > 0 && (
+                    <span 
+                      id="visual-map-week-count-tag"
+                      className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-rose-50 text-rose-600 border border-rose-200 shrink-0 shadow-2xs animate-pulse"
+                    >
+                      {currentWeekBirthdaysCount} this wk
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs font-bold text-indigo-700 mt-0.5">Calendar View</p>
+              </div>
             </div>
-          </div>
+          </CustomTooltip>
 
           {/* 8. Admin Planning Card */}
-          <div className="metric-card-cinematic card-float-8 group relative bg-white rounded-2xl p-3.5 border border-slate-200 shadow-2xs flex items-center gap-3 cursor-pointer overflow-hidden transition-all duration-300 hover:border-amber-300" onClick={() => setIsAdminPlanningOpen(true)}>
-            {/* Top Laser Shimmer Sweep */}
-            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-amber-400/90 to-transparent -translate-x-full animate-metric-beam [animation-delay:3.5s] pointer-events-none z-20" />
+          <CustomTooltip
+            title="5:00 PM Advance Planning Daemon"
+            subtitle={adminConfig?.adminWhatsApp || '+8801625299521'}
+            category="PROACTIVE SCHEDULER"
+            badge="DAEMON ARMED"
+            badgeColor="amber"
+            icon={<Bell className="w-4 h-4 text-amber-400" />}
+            summary="Automated evening notification daemon that prepares administration 24 hours in advance for upcoming birthdays."
+            metrics={[
+              { label: 'Dispatch Time', value: '5:00 PM Daily' },
+              { label: 'Lead Horizon', value: 'Tomorrow & Next 7D' },
+              { label: 'Admin WhatsApp', value: (adminConfig?.adminWhatsApp || '+8801625299521').replace('whatsapp:', '') },
+              { label: 'Daemon Status', value: 'Armed & Active', highlight: true },
+            ]}
+            footer="Click card to open Advance Planning briefing modal"
+          >
+            <div className="metric-card-cinematic card-float-8 group relative bg-white rounded-2xl p-3.5 border border-slate-200 shadow-2xs flex items-center gap-3 cursor-pointer overflow-hidden transition-all duration-300 hover:border-amber-300" onClick={() => setIsAdminPlanningOpen(true)}>
+              {/* Top Laser Shimmer Sweep */}
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-amber-400/90 to-transparent -translate-x-full animate-metric-beam [animation-delay:3.5s] pointer-events-none z-20" />
 
-            {/* Ambient Corner Telemetry Glow */}
-            <div className="absolute -top-6 -right-6 w-16 h-16 rounded-full bg-amber-400/10 blur-xl pointer-events-none group-hover:bg-amber-400/20 group-hover:scale-125 transition-all duration-500" />
-            <div className="absolute bottom-2 right-2 w-1 h-1 rounded-full bg-amber-400/40 animate-ping [animation-duration:3s] pointer-events-none" />
+              {/* Ambient Corner Telemetry Glow */}
+              <div className="absolute -top-6 -right-6 w-16 h-16 rounded-full bg-amber-400/10 blur-xl pointer-events-none group-hover:bg-amber-400/20 group-hover:scale-125 transition-all duration-500" />
+              <div className="absolute bottom-2 right-2 w-1 h-1 rounded-full bg-amber-400/40 animate-ping [animation-duration:3s] pointer-events-none" />
 
-            {/* Subtle Diagonal Glass Shimmer Sweep on Hover */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none z-10" />
+              {/* Subtle Diagonal Glass Shimmer Sweep on Hover */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none z-10" />
 
-            <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold shrink-0 relative z-10 group-hover:scale-110 group-hover:bg-amber-100/80 group-hover:shadow-[0_0_12px_rgba(245,158,11,0.35)] transition-all duration-300 cinematic-squircle-live cinematic-squircle-live-amber">
-              <Bell className="w-4.5 h-4.5 transition-transform duration-300 group-hover:rotate-12 cinematic-bell-icon" />
+              <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold shrink-0 relative z-10 group-hover:scale-110 group-hover:bg-amber-100/80 group-hover:shadow-[0_0_12px_rgba(245,158,11,0.35)] transition-all duration-300 cinematic-squircle-live cinematic-squircle-live-amber">
+                <Bell className="w-4.5 h-4.5 transition-transform duration-300 group-hover:rotate-12 cinematic-bell-icon" />
+              </div>
+              <div className="relative z-10 min-w-0">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Admin Planning</p>
+                <p className="text-xs font-bold text-amber-700 flex items-center gap-1 mt-0.5 truncate max-w-[95px]" title={adminConfig?.adminWhatsApp || '+8801625299521'}>
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse inline-block shrink-0"></span>
+                  {(adminConfig?.adminWhatsApp || '+8801625299521').replace('whatsapp:', '')}
+                </p>
+              </div>
             </div>
-            <div className="relative z-10 min-w-0">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Admin Planning</p>
-              <p className="text-xs font-bold text-amber-700 flex items-center gap-1 mt-0.5 truncate max-w-[95px]" title={adminConfig?.adminWhatsApp || '+8801625299521'}>
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse inline-block shrink-0"></span>
-                {(adminConfig?.adminWhatsApp || '+8801625299521').replace('whatsapp:', '')}
-              </p>
-            </div>
-          </div>
+          </CustomTooltip>
         </div>
 
         {/* Interactive 3D Animated Birthday Cake Hero & Celebration Experience */}
