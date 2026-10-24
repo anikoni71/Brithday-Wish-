@@ -476,6 +476,55 @@ html.dark table thead tr {
 }
 
 /* ==========================================================================
+   Cosmic Ephemeris Almanac Profile Picture & Solar System Animations
+   ========================================================================== */
+@keyframes cosmic-profile-float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes cosmic-profile-breathe {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 35px var(--glow-color, rgba(168, 85, 247, 0.6)), 0 0 65px rgba(245, 158, 11, 0.35), inset 0 0 15px var(--glow-color, rgba(168, 85, 247, 0.4));
+  }
+  50% {
+    transform: scale(1.035);
+    box-shadow: 0 0 50px var(--glow-color, rgba(168, 85, 247, 0.85)), 0 0 95px rgba(245, 158, 11, 0.6), inset 0 0 24px var(--glow-color, rgba(168, 85, 247, 0.6));
+  }
+}
+
+@keyframes cosmic-aura-pulse-glow {
+  0%, 100% {
+    transform: scale(0.96);
+    opacity: 0.65;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 0.95;
+  }
+}
+
+.animate-cosmic-profile-float {
+  animation: cosmic-profile-float 5s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-cosmic-profile-breathe {
+  animation: cosmic-profile-breathe 4s ease-in-out infinite;
+  will-change: transform, box-shadow;
+}
+
+.animate-cosmic-aura-pulse {
+  animation: cosmic-aura-pulse-glow 3.6s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+/* ==========================================================================
    Magical Shimmer Hover Animation for MonthOfFortune Cards
    ========================================================================== */
 @keyframes magical-shimmer-sweep {

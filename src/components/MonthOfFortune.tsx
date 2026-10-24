@@ -45,6 +45,7 @@ import {
   TeamEnergyVibeCheck,
   MemberDashaEnergy 
 } from '../services/AstrologyDataService';
+import { AlmanacSolarSystem } from './AlmanacSolarSystem';
 
 export interface MemberAstrologyDestiny {
   memberId: string;
@@ -2700,142 +2701,109 @@ export const MonthOfFortune: React.FC<MonthOfFortuneProps> = ({
           {/* Top Profile Header Section */}
           <div className="relative z-10 flex flex-col items-center text-center space-y-4 mb-8">
             <div className="relative flex items-center justify-center">
-              {/* Cinematic Animated Cosmic Background from Reference Image */}
-              <div className="absolute -inset-16 sm:-inset-20 flex items-center justify-center pointer-events-none z-0 select-none">
-                {/* 1. Nebula Cosmic Glow & Depth Halo */}
-                <div 
-                  className="absolute w-72 h-72 sm:w-88 sm:h-88 rounded-full blur-2xl opacity-60 animate-pulse pointer-events-none"
-                  style={{
-                    background: `radial-gradient(circle, ${zodiac.elementGlow.color} 0%, rgba(59,130,246,0.3) 40%, rgba(147,51,234,0.2) 65%, transparent 75%)`
-                  }}
-                />
+              {/* Live Orbiting Solar System Background Directly Behind & Around the Profile Picture */}
+              <AlmanacSolarSystem glowColor={zodiac.elementGlow.color} />
 
-                {/* 2. Mystical Cosmic Artwork from Reference Image with Soft Radial Vignette & Cosmic Breathing Pulse */}
-                <div className="absolute w-64 h-64 sm:w-76 sm:h-76 rounded-full overflow-hidden flex items-center justify-center opacity-85 shadow-[0_0_50px_rgba(59,130,246,0.5)]">
-                  <img
-                    src="/assets/aistudio/image_faceb040.png"
-                    alt="Cosmic Fortune Astral Background"
-                    className="w-full h-full object-cover object-center animate-spin-celestial"
-                    style={{
-                      animationDuration: '90s',
-                      maskImage: 'radial-gradient(circle, rgba(0,0,0,1) 40%, rgba(0,0,0,0.85) 60%, rgba(0,0,0,0.2) 75%, transparent 85%)',
-                      WebkitMaskImage: 'radial-gradient(circle, rgba(0,0,0,1) 40%, rgba(0,0,0,0.85) 60%, rgba(0,0,0,0.2) 75%, transparent 85%)',
-                      filter: 'contrast(1.2) brightness(1.1) saturate(1.25)'
-                    }}
-                  />
-                  {/* Shimmering Cosmic Nebula Light Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-indigo-950/40 via-transparent to-amber-500/20 mix-blend-screen pointer-events-none" />
-                </div>
-
-                {/* 3. Outer Rotating Concentric Celestial Orbits & Astrological Ring */}
-                <div className="absolute w-68 h-68 sm:w-80 sm:h-80 rounded-full border border-dashed border-amber-300/40 animate-spin-celestial pointer-events-none flex items-center justify-center">
-                  {/* Glowing Planetary Orbs on the Outer Orbit (inspired by reference image planets) */}
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full bg-gradient-to-br from-amber-200 to-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.9)] border border-white/60" />
-                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-3 h-3 rounded-full bg-gradient-to-br from-cyan-200 to-cyan-500 shadow-[0_0_10px_rgba(6,182,212,0.9)] border border-white/60" />
-                  <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-gradient-to-br from-purple-300 to-purple-600 shadow-[0_0_10px_rgba(168,85,247,0.9)] border border-white/60" />
-                  <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-3.5 h-3.5 rounded-full bg-gradient-to-br from-rose-300 to-orange-500 shadow-[0_0_12px_rgba(244,63,94,0.9)] border border-white/60" />
-                </div>
-
-                {/* 4. Counter-Rotating Middle Astral Orbit Ring */}
-                <div className="absolute w-56 h-56 sm:w-64 sm:h-64 rounded-full border border-cyan-400/35 animate-spin-celestial-reverse pointer-events-none">
-                  {/* Secondary Orbit Nodes */}
-                  <div className="absolute top-4 right-6 w-2.5 h-2.5 rounded-full bg-cyan-300 shadow-[0_0_8px_rgba(6,182,212,0.85)] animate-pulse" />
-                  <div className="absolute bottom-4 left-6 w-2.5 h-2.5 rounded-full bg-amber-300 shadow-[0_0_8px_rgba(245,158,11,0.85)] animate-pulse" />
-                </div>
-
-                {/* 5. Shimmering Astral Star Dust & Particles */}
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="absolute -top-10 left-12 w-1.5 h-1.5 rounded-full bg-amber-200 shadow-[0_0_6px_#fde68a] animate-ping [animation-duration:3s]" />
-                  <div className="absolute -bottom-8 right-10 w-1.5 h-1.5 rounded-full bg-cyan-200 shadow-[0_0_6px_#a5f3fc] animate-ping [animation-duration:2.5s] [animation-delay:1s]" />
-                  <div className="absolute top-1/3 -left-8 w-1 h-1 rounded-full bg-purple-200 shadow-[0_0_5px_#e9d5ff] animate-pulse [animation-duration:2s]" />
-                  <div className="absolute bottom-1/3 -right-8 w-1 h-1 rounded-full bg-amber-100 shadow-[0_0_5px_#fef3c7] animate-pulse [animation-duration:2.2s]" />
-                </div>
-
-                {/* 6. Dynamic Zodiac Constellation Pattern */}
+              {/* Dynamic Zodiac Constellation Pattern softly overlaid */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-1">
                 <ZodiacConstellationSVG
                   sign={zodiac.name}
                   glowColor={zodiac.elementGlow.color}
-                  className="w-56 h-56 sm:w-68 sm:h-68 opacity-75 relative z-10"
+                  className="w-56 h-56 sm:w-68 sm:h-68 opacity-45 relative z-1"
                 />
               </div>
 
-              {/* 3D Celestial Ring with Element Glow */}
-              <div
-                className="w-32 h-32 sm:w-36 sm:h-36 rounded-full p-2 relative flex items-center justify-center transition-transform duration-500 hover:scale-105 z-10"
-                style={{
-                  boxShadow: `0 0 35px ${zodiac.elementGlow.color}, inset 0 0 15px ${zodiac.elementGlow.color}`
-                }}
-              >
-                {/* Subtle Slowly Rotating Circular Orbit Ring Animation */}
-                <div className="absolute -inset-3.5 sm:-inset-4.5 pointer-events-none flex items-center justify-center animate-spin-celestial [animation-duration:40s]">
-                  <svg
-                    viewBox="0 0 200 200"
-                    className="w-full h-full overflow-visible animate-pulse [animation-duration:3.5s]"
-                  >
-                    <defs>
-                      <linearGradient id="orbit-ring-glow" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor={zodiac.elementGlow.color} stopOpacity="0.85" />
-                        <stop offset="50%" stopColor="#38bdf8" stopOpacity="0.45" />
-                        <stop offset="100%" stopColor={zodiac.elementGlow.color} stopOpacity="0.15" />
-                      </linearGradient>
-                      <filter id="subtle-orbit-blur" x="-30%" y="-30%" width="160%" height="160%">
-                        <feGaussianBlur stdDeviation="2" result="blur" />
-                        <feMerge>
-                          <feMergeNode in="blur" />
-                          <feMergeNode in="SourceGraphic" />
-                        </feMerge>
-                      </filter>
-                    </defs>
-                    <circle
-                      cx="100"
-                      cy="100"
-                      r="95"
-                      fill="none"
-                      stroke="url(#orbit-ring-glow)"
-                      strokeWidth="1.5"
-                      strokeDasharray="6 10 18 10"
-                      filter="url(#subtle-orbit-blur)"
-                      className="opacity-70"
-                    />
-                    <circle
-                      cx="100"
-                      cy="5"
-                      r="2.5"
-                      fill="#ffffff"
-                      filter="url(#subtle-orbit-blur)"
-                      className="opacity-90"
-                    />
-                    <circle
-                      cx="195"
-                      cy="100"
-                      r="1.8"
-                      fill={zodiac.elementGlow.color}
-                      className="opacity-75"
-                    />
-                  </svg>
-                </div>
+              {/* Cinematic Profile Picture Animation Container (Breathing Pulse, Glowing Aura, Floating Effect) */}
+              <div className="relative z-10 animate-cosmic-profile-float">
+                {/* Multi-layered Glowing Solar Aura & Coronal Photosphere Halo */}
+                <div
+                  className="absolute -inset-4 sm:-inset-6 rounded-full blur-xl opacity-80 animate-cosmic-aura-pulse pointer-events-none"
+                  style={{
+                    background: `radial-gradient(circle, rgba(255,255,255,0.85) 0%, rgba(254,240,138,0.75) 25%, rgba(245,158,11,0.55) 55%, ${zodiac.elementGlow.color} 80%, transparent 100%)`,
+                  }}
+                />
 
-                <div className="absolute inset-0 rounded-full border-2 border-white/60 animate-spin-celestial pointer-events-none" />
-                
-                {/* Photo Container */}
-                <div className="w-full h-full rounded-full overflow-hidden bg-slate-900 border-2 border-white relative shadow-2xl">
-                  {celebrantPhotoUrl ? (
-                    <img
-                      src={celebrantPhotoUrl}
-                      alt={activeCelebrant.name}
-                      className="w-full h-full object-cover object-center birthday-avatar-cinematic"
-                      referrerPolicy="no-referrer"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-3xl font-black text-purple-200 bg-gradient-to-br from-indigo-900 to-purple-950">
-                      {activeCelebrant.name.charAt(0)}
-                    </div>
-                  )}
-                </div>
+                {/* 3D Celestial Ring with Element Glow & Breathing Pulse */}
+                <div
+                  className="w-32 h-32 sm:w-36 sm:h-36 rounded-full p-2 relative flex items-center justify-center transition-all duration-500 hover:scale-105 animate-cosmic-profile-breathe cursor-pointer group"
+                  style={{
+                    boxShadow: `0 0 35px ${zodiac.elementGlow.color}, 0 0 75px rgba(245, 158, 11, 0.45), inset 0 0 20px ${zodiac.elementGlow.color}`,
+                    borderColor: 'rgba(255, 255, 255, 0.85)',
+                  }}
+                >
+                  {/* Subtle Slowly Rotating Circular Orbit Ring Animation */}
+                  <div className="absolute -inset-3.5 sm:-inset-4.5 pointer-events-none flex items-center justify-center animate-spin-celestial [animation-duration:35s]">
+                    <svg
+                      viewBox="0 0 200 200"
+                      className="w-full h-full overflow-visible animate-pulse [animation-duration:3.5s]"
+                    >
+                      <defs>
+                        <linearGradient id="orbit-ring-glow" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor={zodiac.elementGlow.color} stopOpacity="0.85" />
+                          <stop offset="50%" stopColor="#38bdf8" stopOpacity="0.55" />
+                          <stop offset="100%" stopColor={zodiac.elementGlow.color} stopOpacity="0.25" />
+                        </linearGradient>
+                        <filter id="subtle-orbit-blur" x="-30%" y="-30%" width="160%" height="160%">
+                          <feGaussianBlur stdDeviation="2" result="blur" />
+                          <feMerge>
+                            <feMergeNode in="blur" />
+                            <feMergeNode in="SourceGraphic" />
+                          </feMerge>
+                        </filter>
+                      </defs>
+                      <circle
+                        cx="100"
+                        cy="100"
+                        r="95"
+                        fill="none"
+                        stroke="url(#orbit-ring-glow)"
+                        strokeWidth="1.75"
+                        strokeDasharray="6 10 18 10"
+                        filter="url(#subtle-orbit-blur)"
+                        className="opacity-75"
+                      />
+                      <circle
+                        cx="100"
+                        cy="5"
+                        r="2.8"
+                        fill="#ffffff"
+                        filter="url(#subtle-orbit-blur)"
+                        className="opacity-95"
+                      />
+                      <circle
+                        cx="195"
+                        cy="100"
+                        r="2.2"
+                        fill={zodiac.elementGlow.color}
+                        className="opacity-85"
+                      />
+                    </svg>
+                  </div>
 
-                {/* 3D Floating Life Symbol Icon */}
-                <div className="absolute -bottom-2 -right-1 w-11 h-11 rounded-2xl bg-slate-900/95 border-2 border-white/90 flex items-center justify-center shadow-xl animate-float-3d">
-                  <LifeSymbol3D symbol={monthAura.lifeSymbolName} className="w-7 h-7" />
+                  <div className="absolute inset-0 rounded-full border-2 border-white/70 animate-spin-celestial pointer-events-none" />
+                  
+                  {/* Photo Container */}
+                  <div className="w-full h-full rounded-full overflow-hidden bg-slate-900 border-2 border-white relative shadow-2xl">
+                    {celebrantPhotoUrl ? (
+                      <img
+                        src={celebrantPhotoUrl}
+                        alt={activeCelebrant.name}
+                        className="w-full h-full object-cover object-center birthday-avatar-cinematic"
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-3xl font-black text-purple-200 bg-gradient-to-br from-indigo-900 to-purple-950">
+                        {activeCelebrant.name.charAt(0)}
+                      </div>
+                    )}
+                    {/* Subtle Glass Glare Sweep on Hover */}
+                    <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none" />
+                  </div>
+
+                  {/* 3D Floating Life Symbol Icon */}
+                  <div className="absolute -bottom-2 -right-1 w-11 h-11 rounded-2xl bg-slate-900/95 border-2 border-white/90 flex items-center justify-center shadow-xl animate-float-3d">
+                    <LifeSymbol3D symbol={monthAura.lifeSymbolName} className="w-7 h-7" />
+                  </div>
                 </div>
               </div>
             </div>
