@@ -40,6 +40,7 @@ import { getMemberNameMeaningDetails, getMemberSpecialDayMatch } from '../data/f
 import { MemberCardTooltip } from './CustomTooltip';
 import { CosmicSolarSystem } from './CosmicSolarSystem';
 import { HumanJourneyLifecycle } from './HumanJourneyLifecycle';
+import { BirthdayTreeIconGraphic } from './BirthdayTreeIconGraphic';
 
 interface BirthdayTreeProps {
   members: TeamMember[];
@@ -122,6 +123,7 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isForegroundHovered, setIsForegroundHovered] = useState(false);
   const [isPlanetInspected, setIsPlanetInspected] = useState(false);
+  const [isTreeIconModalOpen, setIsTreeIconModalOpen] = useState(false);
 
   // Overall pause condition when interacting with foreground UI or inspecting planets
   const isTreePaused = isForegroundHovered || isPlanetInspected;
@@ -131,14 +133,18 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
     setIsFullscreen((prev) => !prev);
   };
 
-  // Handle ESC key to exit fullscreen and lock body scroll
+  // Handle ESC key to exit fullscreen or close modal and lock body scroll
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isTreeIconModalOpen) {
+        setIsTreeIconModalOpen(false);
+        return;
+      }
       if (e.key === 'Escape' && isFullscreen) {
         setIsFullscreen(false);
       }
     };
-    if (isFullscreen) {
+    if (isFullscreen || isTreeIconModalOpen) {
       document.body.style.overflow = 'hidden';
       window.addEventListener('keydown', handleKeyDown);
     } else {
@@ -148,7 +154,7 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
       document.body.style.overflow = '';
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isFullscreen]);
+  }, [isFullscreen, isTreeIconModalOpen]);
 
   // Process members with parsed dates and explicitly position Ranjith Sir, Rohan Sir, and Danushka Wanniarachchi at the top of the tree canopy
   const processedMembers = useMemo(() => {
@@ -271,9 +277,16 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
       <div className={`relative z-10 p-5 sm:p-7 border-b border-zinc-800/80 bg-zinc-950/60 backdrop-blur-md ${isFullscreen ? 'rounded-2xl border border-zinc-800/90' : ''}`}>
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-500/20 via-emerald-500/20 to-teal-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shadow-lg shadow-amber-500/10">
-              <TreePine className="w-6 h-6 text-emerald-400 cinematic-tree-pine-icon" />
-            </div>
+            <button
+              type="button"
+              onClick={() => setIsTreeIconModalOpen(true)}
+              className="w-[2.5cm] h-[2.5cm] min-w-[2.5cm] min-h-[2.5cm] flex-shrink-0 rounded-2xl bg-gradient-to-tr from-emerald-600 via-teal-600 to-amber-500 flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.35)] shadow-[inset_0_1px_2px_rgba(255,255,255,0.4)] border border-emerald-400/40 relative group overflow-hidden transition-all duration-300 hover:scale-[1.03] active:scale-95 hover:shadow-[0_0_30px_rgba(16,185,129,0.65)] cursor-pointer p-0"
+              style={{ width: '2.5cm', height: '2.5cm' }}
+              title="Click to expand animated birthday tree card"
+              aria-label="Open Interactive Birthday Tree Card"
+            >
+              <BirthdayTreeIconGraphic className="w-full h-full" />
+            </button>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-2">
@@ -1342,6 +1355,61 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
           </div>
         )}
       </AnimatePresence>
+
+      {/* Interactive Birthday Tree Card Popup Modal */}
+      {isTreeIconModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/80 backdrop-blur-md animate-in fade-in duration-200"
+          onClick={() => setIsTreeIconModalOpen(false)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className="bg-zinc-900/95 rounded-3xl p-6 sm:p-8 max-w-lg w-full border border-zinc-700/80 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.7),0_0_50px_rgba(16,185,129,0.3)] animate-in zoom-in-95 duration-200 relative overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Ambient celebratory cosmic glows */}
+            <div className="absolute -top-24 -right-24 w-60 h-60 rounded-full bg-gradient-to-br from-emerald-500/20 via-amber-400/15 to-transparent blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-24 -left-24 w-60 h-60 rounded-full bg-gradient-to-tr from-teal-500/20 via-purple-500/15 to-transparent blur-3xl pointer-events-none" />
+
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-zinc-800 relative z-10">
+              <div className="flex items-center gap-2.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping inline-block" />
+                <h3 className="text-lg font-extrabold text-white tracking-tight flex items-center gap-2">
+                  Interactive Birthday Tree
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsTreeIconModalOpen(false)}
+                className="p-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white transition cursor-pointer border border-zinc-700"
+                aria-label="Close popup"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Large Showcase Card with Full Ultra-Alive Cinematic Animation */}
+            <div className="my-6 flex flex-col items-center justify-center relative z-10">
+              <div className="w-64 h-64 sm:w-72 sm:h-72 md:w-80 md:h-80 rounded-2xl bg-gradient-to-tr from-emerald-600 via-teal-600 to-amber-500 p-1 shadow-[0_15px_40px_rgba(16,185,129,0.4),0_0_30px_rgba(245,158,11,0.3)] border border-emerald-400/50 relative group overflow-hidden">
+                <BirthdayTreeIconGraphic className="w-full h-full" isExpanded={true} />
+              </div>
+            </div>
+
+            {/* Tagline & Celebratory Details */}
+            <div className="text-center space-y-1.5 relative z-10">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 text-xs font-bold">
+                <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-spin" />
+                Enchanted Celebration Canopy & Life Journey Hub
+              </div>
+              <p className="text-xs text-zinc-400 max-w-sm mx-auto">
+                Visual bulletin tree mapping all team members across the year with living blossom ornaments, cosmic planetary alignment, and the eternal Human Journey lifecycle.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
