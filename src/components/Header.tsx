@@ -1,6 +1,7 @@
-import React from 'react';
-import { Car, RefreshCw, ExternalLink, Cake, Sparkles, Code2, Send, PhoneCall, Radio, CheckCircle2, Bot, Mail, Bell, Volume2, VolumeX, Globe, ShieldCheck, LayoutDashboard, TrendingUp, AlertCircle, Sun, Moon, Images } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Car, RefreshCw, ExternalLink, Cake, Sparkles, Code2, Send, PhoneCall, Radio, CheckCircle2, Bot, Mail, Bell, Volume2, VolumeX, Globe, ShieldCheck, LayoutDashboard, TrendingUp, AlertCircle, Sun, Moon, Images, X } from 'lucide-react';
 import { MemoryGalleryIcon } from './MemoryGalleryIcon';
+import { BirthdayWisherHeaderGraphic } from './BirthdayWisherHeaderGraphic';
 import { AdminSheetConfig } from '../types';
 
 interface HeaderProps {
@@ -56,6 +57,17 @@ export const Header: React.FC<HeaderProps> = ({
   const displayPhone = effectiveSender.replace('whatsapp:', '');
   const totalUpcomingAlerts = todayCount + dueSoonCount;
 
+  const [isGraphicModalOpen, setIsGraphicModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isGraphicModalOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsGraphicModalOpen(false);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isGraphicModalOpen]);
+
   return (
     <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -77,9 +89,15 @@ export const Header: React.FC<HeaderProps> = ({
           
           {/* Brand Identity */}
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white shadow-[0_0_20px_rgba(16,185,129,0.3)] shadow-[inset_0_1px_2px_rgba(255,255,255,0.5)] border border-emerald-400/30 relative group overflow-hidden transition-all duration-500 hover:shadow-[0_0_25px_rgba(16,185,129,0.5)]">
-              <Cake className="w-6 h-6 text-white drop-shadow-sm" />
-            </div>
+            <button 
+              onClick={() => setIsGraphicModalOpen(true)}
+              className="w-[2.5cm] h-[2.5cm] min-w-[2.5cm] min-h-[2.5cm] flex-shrink-0 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white shadow-[0_0_20px_rgba(16,185,129,0.3)] shadow-[inset_0_1px_2px_rgba(255,255,255,0.5)] border border-emerald-400/30 relative group overflow-hidden transition-all duration-300 hover:scale-[1.03] active:scale-95 hover:shadow-[0_0_30px_rgba(16,185,129,0.6)] cursor-pointer p-0"
+              style={{ width: '2.5cm', height: '2.5cm' }}
+              title="Click to expand animated celebration card"
+              aria-label="Open IE Central Team Celebration Card"
+            >
+              <BirthdayWisherHeaderGraphic className="w-full h-full" />
+            </button>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="text-xl font-bold text-slate-900 tracking-tight">
@@ -442,6 +460,60 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Interactive Celebration Card Popup Modal */}
+      {isGraphicModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md animate-in fade-in duration-200"
+          onClick={() => setIsGraphicModalOpen(false)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full border border-slate-200 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3),0_0_40px_rgba(16,185,129,0.2)] animate-in zoom-in-95 duration-200 relative overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Ambient celebratory glows */}
+            <div className="absolute -top-24 -right-24 w-60 h-60 rounded-full bg-gradient-to-br from-emerald-400/20 via-amber-300/15 to-transparent blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-24 -left-24 w-60 h-60 rounded-full bg-gradient-to-tr from-rose-400/20 via-blue-400/15 to-transparent blur-3xl pointer-events-none" />
+
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100 relative z-10">
+              <div className="flex items-center gap-2.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping inline-block" />
+                <h3 className="text-lg font-extrabold text-slate-900 tracking-tight">
+                  IE Central Team <span className="text-emerald-600">Birthday Wisher</span>
+                </h3>
+              </div>
+              <button
+                onClick={() => setIsGraphicModalOpen(false)}
+                className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 transition cursor-pointer"
+                aria-label="Close popup"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Large Showcase Card with Full Ultra-Alive Cinematic Animation */}
+            <div className="my-6 flex flex-col items-center justify-center relative z-10">
+              <div className="w-64 h-64 sm:w-72 sm:h-72 md:w-80 md:h-80 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 p-1 shadow-[0_15px_40px_rgba(16,185,129,0.35),0_0_30px_rgba(245,158,11,0.25)] border border-emerald-400/40 relative group overflow-hidden">
+                <BirthdayWisherHeaderGraphic className="w-full h-full" isExpanded={true} />
+              </div>
+            </div>
+
+            {/* Tagline & Celebratory Details */}
+            <div className="text-center space-y-1.5 relative z-10">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold">
+                <Sparkles className="w-3.5 h-3.5 text-emerald-600 animate-spin" />
+                Industrial Engineering Central Celebration Hub
+              </div>
+              <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                Celebrating milestones, camaraderie, and outstanding engineering breakthroughs with our team.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 };
