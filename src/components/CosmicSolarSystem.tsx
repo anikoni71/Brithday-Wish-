@@ -1,4 +1,9 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useEffect } from 'react';
+
+interface CosmicSolarSystemProps {
+  isPaused?: boolean;
+  onHoverPlanetChange?: (planet: string | null) => void;
+}
 
 /**
  * CosmicSolarSystem
@@ -13,8 +18,98 @@ import React, { useMemo } from 'react';
  * - Crystal-clear, upright, high-contrast readable name tags moving dynamically with every single planet.
  * - Deep space nebulae, galaxy spiral, twinkling starfield, and passing comets.
  * - Pure SVG & hardware-accelerated declarative animations with zero DOM layout shifts.
+ * - Transform-based hardware-accelerated subtle mouse-following parallax drift for cosmic stars & nebula clouds.
  */
-export const CosmicSolarSystem: React.FC = () => {
+export const CosmicSolarSystem: React.FC<CosmicSolarSystemProps> = ({
+  isPaused = false,
+  onHoverPlanetChange,
+}) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const starsLayerRef = useRef<SVGGElement>(null);
+  const nebulaeLayerRef = useRef<SVGGElement>(null);
+  const nebulaeGradRef = useRef<HTMLDivElement>(null);
+
+  // Subtle mouse-following parallax drift effect for cosmic stars & nebula clouds
+  useEffect(() => {
+    let animId: number;
+    let targetX = 0;
+    let targetY = 0;
+    let currentX = 0;
+    let currentY = 0;
+
+    const onMouseMove = (e: MouseEvent) => {
+      const container = containerRef.current;
+      if (!container) return;
+      const rect = container.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+
+      // Calculate normalized cursor position relative to the tree canvas center (-1 to 1)
+      const normX = (e.clientX - centerX) / (rect.width / 2 || 1);
+      const normY = (e.clientY - centerY) / (rect.height / 2 || 1);
+
+      // Clamped gentle range to preserve elegance
+      targetX = Math.max(-1.25, Math.min(1.25, normX));
+      targetY = Math.max(-1.25, Math.min(1.25, normY));
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      if (e.touches && e.touches[0]) {
+        onMouseMove(e.touches[0] as unknown as MouseEvent);
+      }
+    };
+
+    const onMouseLeave = () => {
+      targetX = 0;
+      targetY = 0;
+    };
+
+    const updateParallax = () => {
+      // Fluid linear interpolation (lerp) for smooth gliding reaction
+      const dx = targetX - currentX;
+      const dy = targetY - currentY;
+
+      currentX += dx * 0.055;
+      currentY += dy * 0.055;
+
+      // Transform-based hardware acceleration via translate3d
+      // 1. Cosmic Stars Layer: subtle distant celestial drift
+      if (starsLayerRef.current) {
+        const sx = (currentX * 14).toFixed(2);
+        const sy = (currentY * 10).toFixed(2);
+        starsLayerRef.current.style.transform = `translate3d(${sx}px, ${sy}px, 0)`;
+      }
+
+      // 2. Cosmic Nebula Clouds Layer: fluid interstellar gas drift with distinct depth
+      if (nebulaeLayerRef.current) {
+        const nx = (currentX * 22).toFixed(2);
+        const ny = (currentY * 15).toFixed(2);
+        nebulaeLayerRef.current.style.transform = `translate3d(${nx}px, ${ny}px, 0)`;
+      }
+
+      // 3. Deep Galactic Nebula Gradients Layer
+      if (nebulaeGradRef.current) {
+        const gx = (currentX * 8).toFixed(2);
+        const gy = (currentY * 6).toFixed(2);
+        nebulaeGradRef.current.style.transform = `translate3d(${gx}px, ${gy}px, 0)`;
+      }
+
+      animId = requestAnimationFrame(updateParallax);
+    };
+
+    window.addEventListener('mousemove', onMouseMove, { passive: true });
+    window.addEventListener('touchmove', onTouchMove, { passive: true });
+    window.addEventListener('mouseleave', onMouseLeave);
+    animId = requestAnimationFrame(updateParallax);
+
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('mouseleave', onMouseLeave);
+      cancelAnimationFrame(animId);
+    };
+  }, []);
+
   // Generate random twinkling starfield with fixed deterministic seeds for stability
   const stars = useMemo(() => {
     const starList = [];
@@ -46,13 +141,15 @@ export const CosmicSolarSystem: React.FC = () => {
   }, []);
 
   return (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden z-0 select-none">
-      {/* Deep Galactic Nebula Gradients */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_25%,rgba(99,102,241,0.22)_0%,rgba(15,23,42,0.0)_70%)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_35%,rgba(6,182,212,0.16)_0%,rgba(15,23,42,0.0)_65%)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_30%,rgba(236,72,153,0.14)_0%,rgba(15,23,42,0.0)_60%)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_75%,rgba(16,185,129,0.10)_0%,rgba(15,23,42,0.0)_70%)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_58%_28%,rgba(168,85,247,0.18)_0%,rgba(15,23,42,0.0)_55%)]" />
+    <div ref={containerRef} className="absolute inset-0 pointer-events-none overflow-hidden z-0 select-none">
+      {/* Deep Galactic Nebula Gradients with Hardware-Accelerated Parallax */}
+      <div ref={nebulaeGradRef} className="absolute inset-0 pointer-events-none will-change-transform">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_25%,rgba(99,102,241,0.22)_0%,rgba(15,23,42,0.0)_70%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_35%,rgba(6,182,212,0.16)_0%,rgba(15,23,42,0.0)_65%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_30%,rgba(236,72,153,0.14)_0%,rgba(15,23,42,0.0)_60%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_75%,rgba(16,185,129,0.10)_0%,rgba(15,23,42,0.0)_70%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_58%_28%,rgba(168,85,247,0.18)_0%,rgba(15,23,42,0.0)_55%)]" />
+      </div>
 
       {/* SVG Cosmic Solar System Canvas */}
       <svg
@@ -329,8 +426,8 @@ export const CosmicSolarSystem: React.FC = () => {
           </filter>
         </defs>
 
-        {/* 1. DISTANT COSMIC STARFIELD */}
-        <g className="cosmic-stars-layer">
+        {/* 1. DISTANT COSMIC STARFIELD with Mouse-Following Parallax Drift */}
+        <g ref={starsLayerRef} className="cosmic-stars-layer will-change-transform">
           {stars.map((star) => (
             <circle
               key={star.id}
@@ -407,8 +504,8 @@ export const CosmicSolarSystem: React.FC = () => {
           <line x1="-12" y1="7" x2="1" y2="7" stroke="#38bdf8" strokeWidth="1.6" strokeLinecap="round" className="warp-nacelle-glow" />
         </g>
 
-        {/* 3.8 SLOWLY DRIFTING TRANSLUCENT NEBULA CLOUDS (Layered behind planets for deep interstellar atmosphere) */}
-        <g className="cosmic-nebulae-container pointer-events-none" opacity="0.8">
+        {/* 3.8 SLOWLY DRIFTING TRANSLUCENT NEBULA CLOUDS with Mouse-Following Parallax Drift */}
+        <g ref={nebulaeLayerRef} className="cosmic-nebulae-container pointer-events-none will-change-transform" opacity="0.8">
           {/* Cloud 1: Cosmic Violet-Indigo Veil (Drifting in upper-left quadrant) */}
           <g className="cosmic-nebula-drift-1" filter="url(#nebulaBlurFilter)">
             <path

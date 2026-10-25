@@ -4182,4 +4182,15 @@ html.dark table thead tr {
   }
 }
 
+/* ==========================================================================
+   13. Interactive Birthday Tree Cosmic Parallax Drift Hardware Acceleration
+   ========================================================================== */
+.cosmic-stars-layer,
+.cosmic-nebulae-container {
+  transform-origin: 50% 50%;
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+
 

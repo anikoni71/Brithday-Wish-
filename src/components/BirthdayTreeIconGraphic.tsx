@@ -25,22 +25,39 @@ export const BirthdayTreeIconGraphic: React.FC<BirthdayTreeIconGraphicProps> = (
     <div
       className={`relative flex items-center justify-center select-none overflow-hidden rounded-2xl ${className}`}
       style={{
-        transformStyle: 'preserve-3d',
+        transform: 'translate3d(0, 0, 0)',
+        backfaceVisibility: 'hidden',
+        willChange: 'transform',
       }}
       aria-label="Interactive Birthday Tree Cinematic Graphic"
     >
       {/* 1. Ambient Glowing Pulse Background Aura */}
       <div
         className="absolute inset-0 pointer-events-none rounded-2xl bg-gradient-to-tr from-emerald-500/40 via-teal-400/30 to-amber-400/35 tree-icon-glow"
+        style={{
+          transform: 'translate3d(0, 0, 0)',
+          backfaceVisibility: 'hidden',
+        }}
         aria-hidden="true"
       />
 
       {/* 2. Main Tree Illustration Asset with Subtle Branch Sway Physics */}
-      <div className="absolute inset-0 w-full h-full overflow-hidden rounded-2xl pointer-events-none">
+      <div
+        className="absolute inset-0 w-full h-full overflow-hidden rounded-2xl pointer-events-none"
+        style={{
+          transform: 'translate3d(0, 0, 0)',
+          backfaceVisibility: 'hidden',
+        }}
+      >
         <img
           src="/assets/aistudio/birthday_tree_icon.jpg"
           alt="Enchanted Interactive Birthday Tree"
           className="w-full h-full object-cover rounded-2xl pointer-events-none tree-branches-sway transition-transform duration-500 group-hover:scale-105"
+          style={{
+            transform: 'translate3d(0, 0, 0)',
+            backfaceVisibility: 'hidden',
+            willChange: 'transform',
+          }}
           loading="eager"
           decoding="async"
         />
@@ -52,14 +69,20 @@ export const BirthdayTreeIconGraphic: React.FC<BirthdayTreeIconGraphicProps> = (
         style={{
           background:
             'linear-gradient(115deg, transparent 20%, rgba(255,255,255,0.18) 42%, rgba(255,255,255,0.65) 50%, rgba(255,255,255,0.18) 58%, transparent 80%)',
+          transform: 'translate3d(0, 0, 0)',
+          backfaceVisibility: 'hidden',
         }}
         aria-hidden="true"
       />
 
       {/* 4. Warm Softly Flickering Lantern Halos on Hanging Lanterns */}
-      {/* Lantern 1: Mid-Left Branch (~22% X, 43% Y) */}
+      {/* Lantern 1: Mid-Left Branch (~22.5% X, 43.5% Y) */}
       <span
-        className="absolute left-[22.5%] top-[43.5%] -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10 tree-lantern-halo"
+        className="absolute left-[22.5%] top-[43.5%] pointer-events-none z-10 tree-lantern-halo"
+        style={{
+          transform: 'translate3d(-50%, -50%, 0)',
+          backfaceVisibility: 'hidden',
+        }}
         aria-hidden="true"
       >
         <span
@@ -69,10 +92,14 @@ export const BirthdayTreeIconGraphic: React.FC<BirthdayTreeIconGraphicProps> = (
         />
       </span>
 
-      {/* Lantern 2: Upper Center Branch (~46% X, 21% Y) */}
+      {/* Lantern 2: Upper Center Branch (~45.8% X, 21.5% Y) */}
       <span
-        className="absolute left-[45.8%] top-[21.5%] -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10 tree-lantern-halo"
-        style={{ animationDelay: '0.8s' }}
+        className="absolute left-[45.8%] top-[21.5%] pointer-events-none z-10 tree-lantern-halo"
+        style={{
+          transform: 'translate3d(-50%, -50%, 0)',
+          backfaceVisibility: 'hidden',
+          animationDelay: '0.8s',
+        }}
         aria-hidden="true"
       >
         <span
@@ -82,10 +109,14 @@ export const BirthdayTreeIconGraphic: React.FC<BirthdayTreeIconGraphicProps> = (
         />
       </span>
 
-      {/* Lantern 3: Right Branch (~76% X, 36% Y) */}
+      {/* Lantern 3: Right Branch (~76.2% X, 36.2% Y) */}
       <span
-        className="absolute left-[76.2%] top-[36.2%] -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10 tree-lantern-halo"
-        style={{ animationDelay: '1.4s' }}
+        className="absolute left-[76.2%] top-[36.2%] pointer-events-none z-10 tree-lantern-halo"
+        style={{
+          transform: 'translate3d(-50%, -50%, 0)',
+          backfaceVisibility: 'hidden',
+          animationDelay: '1.4s',
+        }}
         aria-hidden="true"
       >
         <span
@@ -95,10 +126,14 @@ export const BirthdayTreeIconGraphic: React.FC<BirthdayTreeIconGraphicProps> = (
         />
       </span>
 
-      {/* Lantern 4: Lower Center-Left (~33% X, 63% Y) */}
+      {/* Lantern 4: Lower Center-Left (~33.5% X, 63% Y) */}
       <span
-        className="absolute left-[33.5%] top-[63%] -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10 tree-lantern-halo"
-        style={{ animationDelay: '1.9s' }}
+        className="absolute left-[33.5%] top-[63%] pointer-events-none z-10 tree-lantern-halo"
+        style={{
+          transform: 'translate3d(-50%, -50%, 0)',
+          backfaceVisibility: 'hidden',
+          animationDelay: '1.9s',
+        }}
         aria-hidden="true"
       >
         <span
@@ -108,10 +143,14 @@ export const BirthdayTreeIconGraphic: React.FC<BirthdayTreeIconGraphicProps> = (
         />
       </span>
 
-      {/* Lantern 5: Lower Right (~81% X, 60% Y) */}
+      {/* Lantern 5: Lower Right (~81.5% X, 59.8% Y) */}
       <span
-        className="absolute left-[81.5%] top-[59.8%] -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10 tree-lantern-halo"
-        style={{ animationDelay: '0.5s' }}
+        className="absolute left-[81.5%] top-[59.8%] pointer-events-none z-10 tree-lantern-halo"
+        style={{
+          transform: 'translate3d(-50%, -50%, 0)',
+          backfaceVisibility: 'hidden',
+          animationDelay: '0.5s',
+        }}
         aria-hidden="true"
       >
         <span
@@ -125,6 +164,10 @@ export const BirthdayTreeIconGraphic: React.FC<BirthdayTreeIconGraphicProps> = (
       {/* Star 1: Celestial Moon Area (Top-Left ~15% X, 12% Y) */}
       <span
         className="absolute left-[15%] top-[12%] pointer-events-none z-20 tree-star-twinkle"
+        style={{
+          transform: 'translate3d(0, 0, 0)',
+          backfaceVisibility: 'hidden',
+        }}
         aria-hidden="true"
       >
         <svg
@@ -140,7 +183,11 @@ export const BirthdayTreeIconGraphic: React.FC<BirthdayTreeIconGraphicProps> = (
       {/* Star 2: Celestial Galaxy Area (Top-Right ~88% X, 14% Y) */}
       <span
         className="absolute right-[12%] top-[14%] pointer-events-none z-20 tree-star-twinkle"
-        style={{ animationDelay: '1.1s' }}
+        style={{
+          transform: 'translate3d(0, 0, 0)',
+          backfaceVisibility: 'hidden',
+          animationDelay: '1.1s',
+        }}
         aria-hidden="true"
       >
         <svg
@@ -156,7 +203,11 @@ export const BirthdayTreeIconGraphic: React.FC<BirthdayTreeIconGraphicProps> = (
       {/* Star 3: Upper Crown of Tree (~54% X, 10% Y) */}
       <span
         className="absolute left-[54%] top-[10%] pointer-events-none z-20 tree-star-twinkle"
-        style={{ animationDelay: '2.1s' }}
+        style={{
+          transform: 'translate3d(0, 0, 0)',
+          backfaceVisibility: 'hidden',
+          animationDelay: '2.1s',
+        }}
         aria-hidden="true"
       >
         <svg
@@ -172,7 +223,11 @@ export const BirthdayTreeIconGraphic: React.FC<BirthdayTreeIconGraphicProps> = (
       {/* Star 4: Mid Canopy Sparkle (~36% X, 32% Y) */}
       <span
         className="absolute left-[36%] top-[32%] pointer-events-none z-20 tree-star-twinkle"
-        style={{ animationDelay: '1.6s' }}
+        style={{
+          transform: 'translate3d(0, 0, 0)',
+          backfaceVisibility: 'hidden',
+          animationDelay: '1.6s',
+        }}
         aria-hidden="true"
       >
         <svg
@@ -189,6 +244,10 @@ export const BirthdayTreeIconGraphic: React.FC<BirthdayTreeIconGraphicProps> = (
       {/* Confetti 1: Golden Amber Ribbon */}
       <span
         className="absolute left-[26%] top-0 pointer-events-none z-15 tree-confetti-float-1"
+        style={{
+          transform: 'translate3d(0, 0, 0)',
+          backfaceVisibility: 'hidden',
+        }}
         aria-hidden="true"
       >
         <span
@@ -201,6 +260,10 @@ export const BirthdayTreeIconGraphic: React.FC<BirthdayTreeIconGraphicProps> = (
       {/* Confetti 2: Emerald Green Spark */}
       <span
         className="absolute left-[48%] top-0 pointer-events-none z-15 tree-confetti-float-2"
+        style={{
+          transform: 'translate3d(0, 0, 0)',
+          backfaceVisibility: 'hidden',
+        }}
         aria-hidden="true"
       >
         <span
@@ -213,6 +276,10 @@ export const BirthdayTreeIconGraphic: React.FC<BirthdayTreeIconGraphicProps> = (
       {/* Confetti 3: Rose Pink Petal Fleck */}
       <span
         className="absolute left-[70%] top-0 pointer-events-none z-15 tree-confetti-float-3"
+        style={{
+          transform: 'translate3d(0, 0, 0)',
+          backfaceVisibility: 'hidden',
+        }}
         aria-hidden="true"
       >
         <span
@@ -225,6 +292,10 @@ export const BirthdayTreeIconGraphic: React.FC<BirthdayTreeIconGraphicProps> = (
       {/* Confetti 4: Cyan Blue Shimmer */}
       <span
         className="absolute left-[38%] top-0 pointer-events-none z-15 tree-confetti-float-4"
+        style={{
+          transform: 'translate3d(0, 0, 0)',
+          backfaceVisibility: 'hidden',
+        }}
         aria-hidden="true"
       >
         <span
@@ -239,21 +310,33 @@ export const BirthdayTreeIconGraphic: React.FC<BirthdayTreeIconGraphicProps> = (
         <>
           <span
             className="absolute left-[18%] top-0 pointer-events-none z-15 tree-confetti-float-2"
-            style={{ animationDelay: '1.3s' }}
+            style={{
+              transform: 'translate3d(0, 0, 0)',
+              backfaceVisibility: 'hidden',
+              animationDelay: '1.3s',
+            }}
             aria-hidden="true"
           >
             <span className="block w-2.5 h-3 rounded-[1px] bg-teal-300 shadow-[0_0_4px_rgba(94,234,212,0.9)]" />
           </span>
           <span
             className="absolute left-[62%] top-0 pointer-events-none z-15 tree-confetti-float-4"
-            style={{ animationDelay: '1.7s' }}
+            style={{
+              transform: 'translate3d(0, 0, 0)',
+              backfaceVisibility: 'hidden',
+              animationDelay: '1.7s',
+            }}
             aria-hidden="true"
           >
             <span className="block w-3 h-2 rounded-[1px] bg-purple-400 shadow-[0_0_4px_rgba(192,132,252,0.9)]" />
           </span>
           <span
             className="absolute left-[82%] top-0 pointer-events-none z-15 tree-confetti-float-1"
-            style={{ animationDelay: '0.6s' }}
+            style={{
+              transform: 'translate3d(0, 0, 0)',
+              backfaceVisibility: 'hidden',
+              animationDelay: '0.6s',
+            }}
             aria-hidden="true"
           >
             <span className="block w-2.5 h-2.5 rounded-[1px] bg-yellow-300 shadow-[0_0_4px_rgba(253,224,71,0.9)]" />
@@ -262,6 +345,10 @@ export const BirthdayTreeIconGraphic: React.FC<BirthdayTreeIconGraphicProps> = (
           {/* Golden gift boxes base glow */}
           <span
             className="absolute bottom-2 left-1/2 -translate-x-1/2 w-48 h-10 rounded-full bg-amber-400/20 blur-md pointer-events-none z-10 animate-pulse"
+            style={{
+              transform: 'translate3d(-50%, 0, 0)',
+              backfaceVisibility: 'hidden',
+            }}
             aria-hidden="true"
           />
         </>
