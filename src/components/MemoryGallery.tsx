@@ -13,6 +13,7 @@ import {
   X,
   Camera
 } from 'lucide-react';
+import { MemoryGalleryIcon } from './MemoryGalleryIcon';
 import { parseCSV } from '../services/sheetService';
 
 export interface MemoryItem {
@@ -267,7 +268,7 @@ export const MemoryGallery: React.FC = () => {
           <div>
             <div className="flex items-center gap-2.5 flex-wrap">
               <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-600">
-                <Images className="w-5 h-5" />
+                <MemoryGalleryIcon className="w-7 h-7" active={true} />
               </div>
               <div>
                 <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
@@ -442,7 +443,7 @@ export const MemoryGallery: React.FC = () => {
             <div className="p-4 border-b border-slate-100 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-600">
-                  <Images className="w-4 h-4" />
+                  <MemoryGalleryIcon className="w-5 h-5" active={true} />
                 </div>
                 <div>
                   <h4 className="text-sm font-bold text-slate-900">Memory Preview</h4>

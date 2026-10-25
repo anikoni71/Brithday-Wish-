@@ -1,5 +1,6 @@
 import React from 'react';
 import { Car, RefreshCw, ExternalLink, Cake, Sparkles, Code2, Send, PhoneCall, Radio, CheckCircle2, Bot, Mail, Bell, Volume2, VolumeX, Globe, ShieldCheck, LayoutDashboard, TrendingUp, AlertCircle, Sun, Moon, Images } from 'lucide-react';
+import { MemoryGalleryIcon } from './MemoryGalleryIcon';
 import { AdminSheetConfig } from '../types';
 
 interface HeaderProps {
@@ -286,7 +287,7 @@ export const Header: React.FC<HeaderProps> = ({
                 : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
             }`}
           >
-            <Images className={`w-4 h-4 ${activeTab === 'gallery' ? 'text-amber-600' : 'text-slate-500'}`} />
+            <MemoryGalleryIcon className="w-5 h-5 flex-shrink-0" active={activeTab === 'gallery'} />
             Memory Gallery
             <span className="ml-1 px-1.5 py-0.2 rounded-full text-[9px] bg-amber-100 text-amber-900 border border-amber-300 font-bold flex items-center gap-1">
               <Sparkles className="w-2.5 h-2.5 text-amber-600" />
