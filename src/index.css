@@ -3417,6 +3417,158 @@ html.dark table thead tr {
   will-change: stroke-dashoffset, opacity;
 }
 
+/* Realistic Lifelike Micro-Animations for The Human Journey */
+@keyframes human-baby-breathing {
+  0%, 100% {
+    transform: translateY(0px) scale(1);
+  }
+  50% {
+    transform: translateY(-0.8px) scale(1.02, 1.04);
+  }
+}
+
+.human-baby-breathe {
+  transform-origin: center bottom;
+  animation: human-baby-breathing 3.2s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes human-child-running {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-1.5px) rotate(1.2deg);
+  }
+}
+
+.human-child-stride {
+  transform-origin: center bottom;
+  animation: human-child-running 1.8s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes human-butterfly-fluttering {
+  0%, 100% {
+    transform: translate(0px, 0px) rotate(0deg);
+  }
+  25% {
+    transform: translate(2px, -3px) rotate(8deg);
+  }
+  50% {
+    transform: translate(4px, -1px) rotate(-4deg);
+  }
+  75% {
+    transform: translate(1px, -4px) rotate(6deg);
+  }
+}
+
+.human-butterfly-flutter {
+  animation: human-butterfly-fluttering 3s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes human-holo-rotation {
+  0% {
+    transform: rotate(0deg) scale(0.95);
+  }
+  50% {
+    transform: rotate(180deg) scale(1.05);
+  }
+  100% {
+    transform: rotate(360deg) scale(0.95);
+  }
+}
+
+.human-holo-swirl {
+  transform-origin: center center;
+  transform-box: fill-box;
+  animation: human-holo-rotation 12s linear infinite;
+  will-change: transform;
+}
+
+@keyframes human-coat-fluttering {
+  0%, 100% {
+    transform: skewX(0deg) rotate(0deg);
+  }
+  50% {
+    transform: skewX(-4deg) rotate(-2deg);
+  }
+}
+
+.human-coat-flutter {
+  transform-origin: right center;
+  animation: human-coat-fluttering 2.6s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes human-songbird-chirping {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  40% {
+    transform: translateY(-1px) rotate(-6deg);
+  }
+  50% {
+    transform: translateY(-1px) rotate(4deg);
+  }
+  60% {
+    transform: translateY(0px) rotate(0deg);
+  }
+}
+
+.human-songbird-chirp {
+  transform-origin: center bottom;
+  animation: human-songbird-chirping 4.2s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* 11. Legacy-to-Roots Aesthetic Energy Trail & Confluence Pulse */
+@keyframes legacy-to-roots-laser-flow {
+  0% {
+    stroke-dashoffset: 480;
+    opacity: 0.35;
+  }
+  20% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: -480;
+    opacity: 0.35;
+  }
+}
+
+.legacy-root-energy-flow {
+  stroke-dasharray: 60 180;
+  animation: legacy-to-roots-laser-flow 3.2s linear infinite;
+  will-change: stroke-dashoffset, opacity;
+}
+
+@keyframes legacy-nexus-ping {
+  0% {
+    r: 6px;
+    opacity: 0.9;
+    stroke-width: 1.8px;
+  }
+  100% {
+    r: 26px;
+    opacity: 0;
+    stroke-width: 0.4px;
+  }
+}
+
+.legacy-root-nexus-ping {
+  transform-origin: center center;
+  transform-box: fill-box;
+  animation: legacy-nexus-ping 2.6s cubic-bezier(0.1, 0.8, 0.3, 1) infinite;
+  will-change: r, opacity, stroke-width;
+}
+
+
+
 
 
 
