@@ -1538,41 +1538,42 @@ html.dark table thead tr {
   position: absolute;
   top: 10px;
   bottom: 24px;
-  width: 44px;
+  width: 52px;
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(16, 185, 129, 0.02) 20%,
-    rgba(16, 185, 129, 0.2) 75%,
-    rgba(52, 211, 153, 0.75) 96%,
-    rgba(255, 255, 255, 0.95) 100%
+    rgba(16, 185, 129, 0.04) 20%,
+    rgba(16, 185, 129, 0.3) 65%,
+    rgba(52, 211, 153, 0.85) 90%,
+    rgba(254, 240, 138, 0.95) 97%,
+    #ffffff 100%
   );
-  box-shadow: 2px 0 12px rgba(16, 185, 129, 0.55), 4px 0 20px rgba(16, 185, 129, 0.25);
-  animation: ecg-monitor-sweep 4.6s linear infinite;
+  box-shadow: 2px 0 16px rgba(16, 185, 129, 0.75), 4px 0 24px rgba(52, 211, 153, 0.45);
+  animation: ecg-monitor-sweep 4.2s linear infinite;
   pointer-events: none;
   z-index: 10;
 }
 
 @keyframes ecg-area-cardiac-pulse {
   0%, 100% {
-    filter: drop-shadow(0 0 2px rgba(16, 185, 129, 0.45));
-  }
-  12% {
-    filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.95)) drop-shadow(0 0 16px rgba(52, 211, 153, 0.7));
-  }
-  20% {
     filter: drop-shadow(0 0 3px rgba(16, 185, 129, 0.5));
   }
+  12% {
+    filter: drop-shadow(0 0 10px rgba(16, 185, 129, 1)) drop-shadow(0 0 20px rgba(52, 211, 153, 0.85)) drop-shadow(0 0 28px rgba(254, 240, 138, 0.5));
+  }
+  20% {
+    filter: drop-shadow(0 0 4px rgba(16, 185, 129, 0.6));
+  }
   28% {
-    filter: drop-shadow(0 0 7px rgba(16, 185, 129, 0.85)) drop-shadow(0 0 12px rgba(52, 211, 153, 0.45));
+    filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.9)) drop-shadow(0 0 14px rgba(52, 211, 153, 0.6));
   }
   38% {
-    filter: drop-shadow(0 0 2px rgba(16, 185, 129, 0.45));
+    filter: drop-shadow(0 0 3px rgba(16, 185, 129, 0.5));
   }
 }
 
 .birthday-area-curve path:not([fill]) {
-  animation: ecg-area-cardiac-pulse 3.2s ease-in-out infinite;
+  animation: ecg-area-cardiac-pulse 2.8s ease-in-out infinite;
 }
 
 @keyframes dot-cardiac-ping {
@@ -1803,32 +1804,34 @@ html.dark table thead tr {
 /* 4. High-Tech Bio-Luminescent Sap Energy Flow (Telemetry Ascending Streams) */
 @keyframes tree-ecg-sap-flow {
   0% {
-    stroke-dashoffset: 160;
-    opacity: 0.25;
+    stroke-dashoffset: 220;
+    opacity: 0.35;
   }
-  20% {
+  15% {
     opacity: 1;
   }
-  80% {
+  85% {
     opacity: 1;
   }
   100% {
-    stroke-dashoffset: -160;
-    opacity: 0.25;
+    stroke-dashoffset: -220;
+    opacity: 0.35;
   }
 }
 
 .tree-ecg-pulse-line {
-  stroke-dasharray: 28 110;
-  animation: tree-ecg-sap-flow 2.2s linear infinite;
-  will-change: stroke-dashoffset, opacity;
+  stroke-dasharray: 36 120;
+  animation: tree-ecg-sap-flow 1.8s linear infinite;
+  filter: drop-shadow(0 0 8px rgba(52, 211, 153, 0.95)) drop-shadow(0 0 16px rgba(16, 185, 129, 0.75));
+  will-change: stroke-dashoffset, opacity, filter;
 }
 
 .tree-ecg-pulse-line-delayed {
-  stroke-dasharray: 24 100;
-  animation: tree-ecg-sap-flow 2.6s linear infinite;
-  animation-delay: 1.0s;
-  will-change: stroke-dashoffset, opacity;
+  stroke-dasharray: 32 110;
+  animation: tree-ecg-sap-flow 2.1s linear infinite;
+  animation-delay: 0.65s;
+  filter: drop-shadow(0 0 10px rgba(253, 224, 71, 0.95)) drop-shadow(0 0 18px rgba(245, 158, 11, 0.75));
+  will-change: stroke-dashoffset, opacity, filter;
 }
 
 /* Heartbeat ECG Cardiac Rhythm for Bio-Nodes (Authentic Cardiac Lub-Dub rhythm) */
@@ -1902,8 +1905,8 @@ html.dark table thead tr {
 /* High-Precision ECG Oscilloscope Laser Signal Trace Wave across Roots */
 @keyframes tree-ecg-oscilloscope-sweep {
   0% {
-    stroke-dashoffset: 680;
-    opacity: 0.15;
+    stroke-dashoffset: 720;
+    opacity: 0.2;
   }
   12% {
     opacity: 1;
@@ -1912,15 +1915,16 @@ html.dark table thead tr {
     opacity: 1;
   }
   100% {
-    stroke-dashoffset: -680;
-    opacity: 0.15;
+    stroke-dashoffset: -720;
+    opacity: 0.2;
   }
 }
 
 .tree-ecg-oscilloscope-trace {
-  stroke-dasharray: 90 590;
-  animation: tree-ecg-oscilloscope-sweep 2.8s linear infinite;
-  will-change: stroke-dashoffset, opacity;
+  stroke-dasharray: 120 600;
+  animation: tree-ecg-oscilloscope-sweep 2.2s cubic-bezier(0.25, 0.1, 0.25, 1) infinite;
+  filter: drop-shadow(0 0 8px rgba(16, 185, 129, 1)) drop-shadow(0 0 18px rgba(52, 211, 153, 0.85)) drop-shadow(0 0 26px rgba(254, 240, 138, 0.6));
+  will-change: stroke-dashoffset, opacity, filter;
 }
 
 /* 5. Magical Floating Particles & Starlight Fireflies Shimmering Through Canopy */
@@ -2906,26 +2910,516 @@ html.dark table thead tr {
 
 .cosmic-moon-orbit-system {
   transform-origin: 0px 0px;
-  animation: cosmic-moon-revolution 6s linear infinite;
+  animation: cosmic-moon-revolution 5.2s linear infinite;
   will-change: transform;
 }
 
-/* 6. Elevated Tree Bio-Luminescence & ECG Oscilloscope Vibrancy */
-.tree-ecg-oscilloscope-trace {
-  stroke-dasharray: 60 160;
-  animation: tree-ecg-oscilloscope-run 2.4s linear infinite;
-  filter: drop-shadow(0 0 8px rgba(52, 211, 153, 0.95)) drop-shadow(0 0 16px rgba(16, 185, 129, 0.6));
-  will-change: stroke-dashoffset;
-}
-
-@keyframes tree-ecg-oscilloscope-run {
+/* 6. Dynamic Black Hole: Relativistic Accretion Disk, Gravitational Lensing & Polar Jets */
+@keyframes cosmic-blackhole-accretion-spin {
   0% {
-    stroke-dashoffset: 300;
+    transform: rotate(0deg);
   }
   100% {
-    stroke-dashoffset: -300;
+    transform: rotate(360deg);
   }
 }
+
+.cosmic-accretion-disk-swirl {
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: cosmic-blackhole-accretion-spin 22s linear infinite;
+  will-change: transform;
+}
+
+@keyframes cosmic-blackhole-lensing-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 1;
+    filter: drop-shadow(0 0 24px rgba(168, 85, 247, 0.85)) drop-shadow(0 0 40px rgba(56, 189, 248, 0.5));
+  }
+}
+
+.cosmic-blackhole-lensing-pulse {
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: cosmic-blackhole-lensing-pulse 4.6s ease-in-out infinite;
+  will-change: transform, opacity, filter;
+}
+
+@keyframes cosmic-blackhole-polar-jets-flicker {
+  0%, 100% {
+    opacity: 0.75;
+    transform: scaleY(1);
+  }
+  25% {
+    opacity: 0.95;
+    transform: scaleY(1.14);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scaleY(0.94);
+  }
+  75% {
+    opacity: 1;
+    transform: scaleY(1.2);
+  }
+}
+
+.cosmic-blackhole-polar-jets {
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: cosmic-blackhole-polar-jets-flicker 2.0s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+@keyframes cosmic-photon-sphere-glow {
+  0%, 100% {
+    opacity: 0.9;
+    filter: drop-shadow(0 0 6px #ffffff) drop-shadow(0 0 14px #38bdf8);
+  }
+  50% {
+    opacity: 1;
+    filter: drop-shadow(0 0 10px #ffffff) drop-shadow(0 0 22px #c084fc);
+  }
+}
+
+.cosmic-photon-sphere {
+  animation: cosmic-photon-sphere-glow 3.0s ease-in-out infinite;
+  will-change: filter, opacity;
+}
+
+/* Gravitational Plasma Bridge between Sun & Black Hole */
+@keyframes cosmic-plasma-bridge-flow {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scaleY(1);
+  }
+  50% {
+    opacity: 0.95;
+    transform: scaleY(1.28);
+    filter: drop-shadow(0 0 16px rgba(245, 158, 11, 0.85));
+  }
+}
+
+.cosmic-plasma-bridge {
+  transform-origin: 500px 240px;
+  animation: cosmic-plasma-bridge-flow 3.8s ease-in-out infinite;
+  will-change: transform, opacity, filter;
+}
+
+/* 7. High-Intensity Bio-Luminescent Sap & ECG Oscilloscope Vibrancy */
+@keyframes tree-ecg-sap-flow-vibrant {
+  0% {
+    stroke-dashoffset: 240;
+    opacity: 0.35;
+  }
+  20% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: -240;
+    opacity: 0.35;
+  }
+}
+
+.tree-ecg-pulse-line {
+  stroke-dasharray: 40 120;
+  animation: tree-ecg-sap-flow-vibrant 1.6s linear infinite;
+  filter: drop-shadow(0 0 10px rgba(52, 211, 153, 1)) drop-shadow(0 0 20px rgba(16, 185, 129, 0.8)) drop-shadow(0 0 30px rgba(254, 240, 138, 0.6));
+  will-change: stroke-dashoffset, opacity, filter;
+}
+
+.tree-ecg-pulse-line-delayed {
+  stroke-dasharray: 36 110;
+  animation: tree-ecg-sap-flow-vibrant 1.9s linear infinite;
+  animation-delay: 0.5s;
+  filter: drop-shadow(0 0 12px rgba(253, 224, 71, 1)) drop-shadow(0 0 22px rgba(245, 158, 11, 0.8)) drop-shadow(0 0 32px rgba(52, 211, 153, 0.5));
+  will-change: stroke-dashoffset, opacity, filter;
+}
+
+@keyframes tree-ecg-oscilloscope-laser-sweep {
+  0% {
+    stroke-dashoffset: 800;
+    opacity: 0.3;
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: -800;
+    opacity: 0.3;
+  }
+}
+
+.tree-ecg-oscilloscope-trace {
+  stroke-dasharray: 140 660;
+  animation: tree-ecg-oscilloscope-laser-sweep 2.0s cubic-bezier(0.22, 0.1, 0.22, 1) infinite;
+  filter: drop-shadow(0 0 10px rgba(16, 185, 129, 1)) drop-shadow(0 0 22px rgba(52, 211, 153, 0.9)) drop-shadow(0 0 34px rgba(254, 240, 138, 0.75));
+  will-change: stroke-dashoffset, opacity, filter;
+}
+
+/* 8. High-Tech Starship Warp Expedition (Occasional Deep Space Warp Flight) */
+@keyframes cosmic-starship-warp {
+  0% {
+    transform: translate3d(-120px, 130px, 0) scale(0.7) rotate(12deg);
+    opacity: 0;
+  }
+  3% {
+    transform: translate3d(-50px, 142px, 0) scale(0.85) rotate(12deg);
+    opacity: 1;
+    filter: drop-shadow(0 0 16px rgba(56, 189, 248, 0.95)) brightness(1.5);
+  }
+  6% {
+    filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.75)) brightness(1.1);
+  }
+  16% {
+    transform: translate3d(430px, 235px, 0) scale(0.95) rotate(11deg);
+    opacity: 0.95;
+    filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.75)) brightness(1.1);
+  }
+  18% {
+    transform: translate3d(550px, 258px, 0) scale(1) rotate(11deg);
+    opacity: 1;
+    filter: drop-shadow(0 0 20px rgba(56, 189, 248, 1)) brightness(1.8);
+  }
+  22% {
+    /* Relativistic Warp Acceleration Flash into deep space */
+    transform: translate3d(1180px, 370px, 0) scaleX(2.8) scaleY(0.65) rotate(10deg);
+    opacity: 0;
+    filter: drop-shadow(0 0 25px rgba(56, 189, 248, 1)) brightness(2.2);
+  }
+  100% {
+    transform: translate3d(1180px, 370px, 0) scale(1) rotate(10deg);
+    opacity: 0;
+  }
+}
+
+.cosmic-starship-voyager {
+  animation: cosmic-starship-warp 24s cubic-bezier(0.2, 0.8, 0.25, 1) infinite;
+  animation-delay: 5s;
+  will-change: transform, opacity, filter;
+}
+
+@keyframes warp-nacelle-pulse {
+  0%, 100% {
+    opacity: 0.75;
+    filter: drop-shadow(0 0 4px #38bdf8);
+  }
+  50% {
+    opacity: 1;
+    filter: drop-shadow(0 0 8px #67e8f9) drop-shadow(0 0 14px #38bdf8);
+  }
+}
+
+.warp-nacelle-glow {
+  animation: warp-nacelle-pulse 1.4s ease-in-out infinite;
+  will-change: opacity, filter;
+}
+
+@keyframes warp-ion-stream {
+  0%, 100% {
+    opacity: 0.7;
+    transform: scaleX(1);
+  }
+  50% {
+    opacity: 0.95;
+    transform: scaleX(1.3);
+  }
+}
+
+.warp-ion-stream {
+  transform-origin: 0% 50%;
+  animation: warp-ion-stream 0.8s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+/* 9. Slowly Drifting Translucent Interstellar Nebula Clouds */
+@keyframes cosmic-nebula-slow-drift-1 {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(24px, -18px, 0) scale(1.06) rotate(1.5deg);
+  }
+  100% {
+    transform: translate3d(-18px, 14px, 0) scale(0.96) rotate(-1deg);
+  }
+}
+
+.cosmic-nebula-drift-1 {
+  transform-origin: 230px 220px;
+  animation: cosmic-nebula-slow-drift-1 68s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+@keyframes cosmic-nebula-slow-drift-2 {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(-28px, 16px, 0) scale(1.08) rotate(-2deg);
+  }
+  100% {
+    transform: translate3d(20px, -22px, 0) scale(0.95) rotate(1.2deg);
+  }
+}
+
+.cosmic-nebula-drift-2 {
+  transform-origin: 760px 280px;
+  animation: cosmic-nebula-slow-drift-2 82s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+@keyframes cosmic-nebula-slow-drift-3 {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(16px, 20px, 0) scale(1.05);
+  }
+  100% {
+    transform: translate3d(-22px, -12px, 0) scale(0.97);
+  }
+}
+
+.cosmic-nebula-drift-3 {
+  transform-origin: 550px 140px;
+  animation: cosmic-nebula-slow-drift-3 74s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+@keyframes cosmic-nebula-slow-drift-4 {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(-16px, -14px, 0) scale(1.04);
+  }
+  100% {
+    transform: translate3d(24px, 16px, 0) scale(0.98);
+  }
+}
+
+.cosmic-nebula-drift-4 {
+  transform-origin: 370px 340px;
+  animation: cosmic-nebula-slow-drift-4 90s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+/* 10. The Human Journey Lifecycle Animations (Flanking Zones of Interactive Birthday Tree) */
+@keyframes human-lifeline-pulse-flow-left {
+  0% {
+    stroke-dashoffset: 480;
+    opacity: 0.4;
+  }
+  20% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: -480;
+    opacity: 0.4;
+  }
+}
+
+.human-lifeline-stream-left {
+  stroke-dasharray: 60 160;
+  animation: human-lifeline-pulse-flow-left 3.4s linear infinite;
+  will-change: stroke-dashoffset, opacity;
+}
+
+@keyframes human-lifeline-pulse-flow-right {
+  0% {
+    stroke-dashoffset: 480;
+    opacity: 0.4;
+  }
+  20% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: -480;
+    opacity: 0.4;
+  }
+}
+
+.human-lifeline-stream-right {
+  stroke-dasharray: 60 160;
+  animation: human-lifeline-pulse-flow-right 3.6s linear infinite;
+  animation-delay: 0.8s;
+  will-change: stroke-dashoffset, opacity;
+}
+
+@keyframes human-halo-ping {
+  0% {
+    r: 16px;
+    opacity: 0.8;
+    stroke-width: 1.4px;
+  }
+  100% {
+    r: 28px;
+    opacity: 0;
+    stroke-width: 0.4px;
+  }
+}
+
+.human-halo-pulse {
+  transform-origin: center center;
+  transform-box: fill-box;
+  animation: human-halo-ping 3s cubic-bezier(0.1, 0.8, 0.3, 1) infinite;
+  will-change: r, opacity, stroke-width;
+}
+
+.human-halo-pulse-delayed {
+  transform-origin: center center;
+  transform-box: fill-box;
+  animation: human-halo-ping 3s cubic-bezier(0.1, 0.8, 0.3, 1) infinite;
+  animation-delay: 1.5s;
+  will-change: r, opacity, stroke-width;
+}
+
+@keyframes human-star-mobile-spin {
+  0% {
+    transform: rotate(0deg) translateY(0);
+  }
+  50% {
+    transform: rotate(180deg) translateY(-1px);
+  }
+  100% {
+    transform: rotate(360deg) translateY(0);
+  }
+}
+
+.human-star-mobile {
+  transform-origin: center center;
+  transform-box: fill-box;
+  animation: human-star-mobile-spin 6s linear infinite;
+  will-change: transform;
+}
+
+@keyframes human-balloon-bobbing {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-4px) rotate(3deg);
+  }
+}
+
+.human-balloon-bob {
+  transform-origin: 0% 100%;
+  animation: human-balloon-bobbing 3.8s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes human-photon-spark-ascent {
+  0% {
+    transform: translateY(0px) scale(0.8);
+    opacity: 0.2;
+  }
+  50% {
+    transform: translateY(-8px) scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-16px) scale(0.6);
+    opacity: 0.1;
+  }
+}
+
+.human-photon-spark-1 {
+  animation: human-photon-spark-ascent 2.4s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.human-photon-spark-2 {
+  animation: human-photon-spark-ascent 2.4s ease-in-out infinite;
+  animation-delay: 1.2s;
+  will-change: transform, opacity;
+}
+
+@keyframes human-heart-throbbing {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  25% {
+    transform: scale(1.22);
+    opacity: 1;
+    filter: drop-shadow(0 0 6px rgba(244, 63, 94, 0.9));
+  }
+  45% {
+    transform: scale(1.05);
+    opacity: 0.85;
+  }
+  60% {
+    transform: scale(1.18);
+    opacity: 1;
+    filter: drop-shadow(0 0 5px rgba(244, 63, 94, 0.8));
+  }
+}
+
+.human-heart-pulse {
+  transform-origin: center center;
+  transform-box: fill-box;
+  animation: human-heart-throbbing 2.8s ease-in-out infinite;
+  will-change: transform, opacity, filter;
+}
+
+@keyframes human-spirit-glow-pulse {
+  0%, 100% {
+    transform: scale(1) translateY(0);
+    filter: drop-shadow(0 0 4px #ffffff) drop-shadow(0 0 10px #60a5fa);
+  }
+  50% {
+    transform: scale(1.12) translateY(-2px);
+    filter: drop-shadow(0 0 8px #ffffff) drop-shadow(0 0 18px #93c5fd);
+  }
+}
+
+.human-spirit-glow {
+  transform-origin: center center;
+  transform-box: fill-box;
+  animation: human-spirit-glow-pulse 3.6s ease-in-out infinite;
+  will-change: transform, filter;
+}
+
+@keyframes human-spirit-trail-ascent {
+  0% {
+    stroke-dashoffset: 20;
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.9;
+  }
+  100% {
+    stroke-dashoffset: -20;
+    opacity: 0.4;
+  }
+}
+
+.human-spirit-stream {
+  animation: human-spirit-trail-ascent 2.2s linear infinite;
+  will-change: stroke-dashoffset, opacity;
+}
+
+
+
+
 
 
 

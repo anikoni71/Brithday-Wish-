@@ -244,10 +244,19 @@ const LiveAreaDot = (dotProps: any) => {
       <circle
         cx={cx}
         cy={cy}
-        r={6}
+        r={7}
         fill="#10b981"
         className="chart-dot-cardiac-ping pointer-events-none"
         style={{ animationDelay: `${((index || 0) % 6) * 0.45}s` }}
+      />
+      {/* Bio-luminescent amber sap outer halo */}
+      <circle
+        cx={cx}
+        cy={cy}
+        r={5}
+        fill="#fcd34d"
+        opacity={0.35}
+        className="chart-dot-cardiac-pulse pointer-events-none"
       />
       {/* Central systolic heartbeat dot */}
       <circle
@@ -258,7 +267,7 @@ const LiveAreaDot = (dotProps: any) => {
         className="chart-dot-cardiac-pulse"
         style={{
           animationDelay: `${((index || 0) % 6) * 0.45}s`,
-          filter: 'drop-shadow(0 0 6px rgba(16, 185, 129, 0.95)) drop-shadow(0 0 10px rgba(52, 211, 153, 0.6))'
+          filter: 'drop-shadow(0 0 8px rgba(16, 185, 129, 0.95)) drop-shadow(0 0 14px rgba(52, 211, 153, 0.8))'
         }}
       />
       <circle
@@ -636,6 +645,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
         festiveDays: monthFestive.length,
         total: totalEvents,
         isCurrent,
+        celebrants: monthBirthdays.map((mbr) => mbr.name),
       };
     });
   }, [members, currentYear]);
@@ -1299,42 +1309,52 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
           </div>
         </motion.div>
 
-        {/* Chart 2: Annual Birthday & Event Density (Area / Bar) - 7 cols */}
+        {/* Chart 2: Dynamic 'Birthday Trend' Area Chart (Bio-Luminescent Sap & ECG Pulses) - 7 cols */}
         <motion.div
           variants={itemVariants}
           className="lg:col-span-7 relative rounded-2xl bg-zinc-900/60 backdrop-blur-xl p-5 sm:p-6 border border-zinc-800/80 hover:border-zinc-700 shadow-xl shadow-black/60 flex flex-col justify-between executive-card-cinematic executive-chart-2 overflow-hidden"
         >
-          {/* Ambient Density Glow & Telemetry Grid shimmer */}
-          <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-emerald-500/8 blur-3xl pointer-events-none" />
-          <div className="absolute top-3 left-1/3 w-1.5 h-1.5 rounded-full bg-emerald-400/35 animate-pulse pointer-events-none" />
+          {/* Ambient Bio-Luminescent Sap & ECG Density Glow */}
+          <div className="absolute top-0 right-0 w-72 h-72 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none animate-pulse [animation-duration:6s]" />
+          <div className="absolute -bottom-10 -left-10 w-48 h-48 rounded-full bg-amber-500/5 blur-2xl pointer-events-none" />
+          <div className="absolute top-3 left-1/3 w-1.5 h-1.5 rounded-full bg-emerald-400/40 animate-pulse pointer-events-none" />
           <div className="absolute bottom-16 right-10 w-1 h-1 rounded-full bg-cyan-400/40 animate-ping [animation-duration:4s] pointer-events-none" />
 
           <div className="relative z-10">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
+            {/* Header: Dynamic Birthday Trend */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2.5">
               <div>
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider font-mono">
-                  Annual Distribution Density
-                </h3>
-                <p className="text-xs text-zinc-400">Monthly breakdown of team birthdays & special festive days ({currentYear})</p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-sm font-bold text-white uppercase tracking-wider font-mono flex items-center gap-2">
+                    <span>Dynamic 'Birthday Trend'</span>
+                  </h3>
+                  <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 flex items-center gap-1 shadow-[0_0_10px_rgba(16,185,129,0.25)]">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                    BIO-SAP & ECG TELEMETRY
+                  </span>
+                </div>
+                <p className="text-xs text-zinc-400 mt-0.5">
+                  Monthly birthday distribution across all 12 months • Broad analytical horizon beyond current week ({currentYear})
+                </p>
               </div>
 
               {/* View Toggle */}
-              <div className="flex items-center bg-zinc-950 p-1 rounded-lg border border-zinc-800 self-start sm:self-auto">
+              <div className="flex items-center bg-zinc-950 p-1 rounded-lg border border-zinc-800 self-start sm:self-auto font-mono">
                 <button
                   onClick={() => setChartViewMode('area')}
                   className={`px-3 py-1 text-xs font-mono font-medium rounded transition-all duration-150 cursor-pointer ${
                     chartViewMode === 'area'
-                      ? 'bg-zinc-800 text-white font-bold'
+                      ? 'bg-zinc-800 text-white font-bold text-emerald-400'
                       : 'text-zinc-400 hover:text-white'
                   }`}
                 >
-                  Area Curve
+                  Trend Area
                 </button>
                 <button
                   onClick={() => setChartViewMode('bar')}
                   className={`px-3 py-1 text-xs font-mono font-medium rounded transition-all duration-150 cursor-pointer ${
                     chartViewMode === 'bar'
-                      ? 'bg-zinc-800 text-white font-bold'
+                      ? 'bg-zinc-800 text-white font-bold text-emerald-400'
                       : 'text-zinc-400 hover:text-white'
                   }`}
                 >
@@ -1343,7 +1363,36 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
               </div>
             </div>
 
-            {/* High-Fidelity Minimal Area Chart */}
+            {/* Analytical KPI Telemetry Strip: Broader View Beyond Current Week */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3 pt-1 font-mono text-[10px]">
+              <div className="p-2 rounded-xl bg-zinc-950/70 border border-zinc-800/80 flex flex-col">
+                <span className="text-zinc-500 uppercase tracking-tight">Analytical Scope</span>
+                <span className="text-zinc-200 font-bold text-xs mt-0.5">12-Month Spread</span>
+              </div>
+              <div className="p-2 rounded-xl bg-zinc-950/70 border border-emerald-500/25 flex flex-col">
+                <span className="text-emerald-400/90 uppercase tracking-tight flex items-center gap-1">
+                  <span className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse" />
+                  Peak Month
+                </span>
+                <span className="text-emerald-300 font-bold text-xs mt-0.5 truncate">
+                  {peakMonth ? `${peakMonth.monthFull} (${peakMonth.birthdays})` : '—'}
+                </span>
+              </div>
+              <div className="p-2 rounded-xl bg-zinc-950/70 border border-cyan-500/25 flex flex-col">
+                <span className="text-cyan-400/90 uppercase tracking-tight">Active Month</span>
+                <span className="text-cyan-200 font-bold text-xs mt-0.5 truncate">
+                  {MONTH_NAMES[new Date().getMonth()].short} ({annualDensityData[new Date().getMonth()]?.birthdays || 0} Birthdays)
+                </span>
+              </div>
+              <div className="p-2 rounded-xl bg-zinc-950/70 border border-amber-500/25 flex flex-col">
+                <span className="text-amber-400/90 uppercase tracking-tight">Current Week Scope</span>
+                <span className="text-amber-300 font-bold text-xs mt-0.5 truncate">
+                  {currentWeekDistribution.reduce((a, b) => a + b, 0)} Active This Week
+                </span>
+              </div>
+            </div>
+
+            {/* High-Tech Bio-Luminescent Sap & ECG Pulses Recharts Area Chart */}
             <div className="h-60 w-full relative overflow-hidden">
               {/* Authentic ECG Heartbeat Machine Scanning Sweep Beam */}
               {chartViewMode === 'area' && <div className="ecg-chart-sweep-beam pointer-events-none" />}
@@ -1351,12 +1400,27 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
                 {chartViewMode === 'area' ? (
                   <AreaChart data={annualDensityData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <defs>
-                      <linearGradient id="glowBirthdaysZinc" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.45}>
-                          <animate attributeName="stop-opacity" values="0.45;0.2;0.45" dur="4s" repeatCount="indefinite" />
+                      {/* High-Tech Bio-Luminescent Sap Glow Gradient */}
+                      <linearGradient id="glowSapBirthdayTrend" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#10b981" stopOpacity={0.55}>
+                          <animate attributeName="stop-opacity" values="0.55;0.25;0.55" dur="3.6s" repeatCount="indefinite" />
                         </stop>
-                        <stop offset="95%" stopColor="#10b981" stopOpacity={0.0} />
+                        <stop offset="35%" stopColor="#34d399" stopOpacity={0.35} />
+                        <stop offset="65%" stopColor="#fcd34d" stopOpacity={0.16}>
+                          <animate attributeName="stop-opacity" values="0.16;0.05;0.16" dur="4.2s" repeatCount="indefinite" />
+                        </stop>
+                        <stop offset="100%" stopColor="#10b981" stopOpacity={0.0} />
                       </linearGradient>
+
+                      {/* Bio-Luminescent Sap & ECG Telemetry Waveform Stroke Gradient */}
+                      <linearGradient id="ecgStrokeGrad" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stopColor="#059669" />
+                        <stop offset="25%" stopColor="#10b981" />
+                        <stop offset="50%" stopColor="#ffffff" />
+                        <stop offset="75%" stopColor="#fcd34d" />
+                        <stop offset="100%" stopColor="#34d399" />
+                      </linearGradient>
+
                       <linearGradient id="glowFestiveZinc" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#71717a" stopOpacity={0.35}>
                           <animate attributeName="stop-opacity" values="0.35;0.16;0.35" dur="5s" repeatCount="indefinite" />
@@ -1381,28 +1445,59 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
                       content={({ active, payload }) => {
                         if (active && payload && payload.length) {
                           const data = payload[0].payload;
+                          const currentWeekTotal = currentWeekDistribution.reduce((a, b) => a + b, 0);
+                          const celebrantsList = data.celebrants && data.celebrants.length > 0 ? data.celebrants : [];
                           return (
-                            <div className="bg-zinc-950 text-white p-3 rounded-xl text-xs shadow-2xl border border-zinc-800 font-mono min-w-[180px]">
-                              <p className="font-bold text-white text-sm">{data.monthFull} {currentYear}</p>
-                              <div className="mt-2 space-y-1">
+                            <div className="bg-zinc-950/95 backdrop-blur-xl text-white p-3.5 rounded-2xl text-xs shadow-2xl border border-emerald-500/30 font-mono min-w-[210px] space-y-2">
+                              <div className="flex items-center justify-between pb-1.5 border-b border-zinc-800">
+                                <div>
+                                  <span className="text-[10px] text-emerald-400 uppercase tracking-widest font-bold">Birthday Trend Radar</span>
+                                  <p className="font-extrabold text-white text-sm">{data.monthFull} {currentYear}</p>
+                                </div>
+                                {data.isCurrent && (
+                                  <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[9px] font-bold border border-emerald-500/30 animate-pulse">
+                                    CURRENT
+                                  </span>
+                                )}
+                              </div>
+
+                              <div className="space-y-1.5">
                                 <div className="flex justify-between items-center text-zinc-300">
                                   <span className="flex items-center gap-1.5">
-                                    <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-                                    Birthdays:
+                                    <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#10b981]"></span>
+                                    <span>Team Birthdays:</span>
                                   </span>
-                                  <strong className="text-emerald-400 font-bold">{data.birthdays}</strong>
+                                  <strong className="text-emerald-400 font-bold text-sm">{data.birthdays}</strong>
                                 </div>
-                                <div className="flex justify-between items-center text-zinc-400">
+
+                                <div className="flex justify-between items-center text-zinc-400 text-[11px]">
+                                  <span>Annual Share:</span>
+                                  <span className="text-zinc-200 font-semibold">
+                                    {totalMembers > 0 ? Math.round((data.birthdays / totalMembers) * 100) : 0}% of team
+                                  </span>
+                                </div>
+
+                                {celebrantsList.length > 0 && (
+                                  <div className="pt-1.5 border-t border-zinc-800/80">
+                                    <span className="text-[10px] text-zinc-400 font-semibold block mb-1">Celebrants:</span>
+                                    <p className="text-[11px] text-zinc-200 leading-snug">
+                                      {celebrantsList.join(', ')}
+                                    </p>
+                                  </div>
+                                )}
+
+                                <div className="flex justify-between items-center text-zinc-400 text-[11px]">
                                   <span className="flex items-center gap-1.5">
-                                    <span className="w-2 h-2 rounded-full bg-zinc-400"></span>
-                                    Festive Days:
+                                    <span className="w-2 h-2 rounded-full bg-zinc-500"></span>
+                                    <span>Special Festive Days:</span>
                                   </span>
-                                  <strong className="text-zinc-200 font-bold">{data.festiveDays}</strong>
+                                  <strong className="text-zinc-300 font-semibold">{data.festiveDays}</strong>
                                 </div>
-                                <div className="border-t border-zinc-800 pt-1 mt-1 flex justify-between items-center font-bold text-white">
-                                  <span>Total Events:</span>
-                                  <span>{data.total}</span>
-                                </div>
+                              </div>
+
+                              <div className="pt-1.5 border-t border-zinc-800/80 flex items-center justify-between text-[9px] text-zinc-500">
+                                <span>vs Current Week ({currentWeekTotal})</span>
+                                <span className="text-emerald-400 font-semibold">Bio-Sap Pulse OK</span>
                               </div>
                             </div>
                           );
@@ -1418,15 +1513,15 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
                     />
                     <Area
                       type="monotone"
-                      name="Team Birthdays"
+                      name="Monthly Birthday Trend"
                       dataKey="birthdays"
-                      stroke="#10b981"
-                      strokeWidth={2}
+                      stroke="url(#ecgStrokeGrad)"
+                      strokeWidth={2.5}
                       fillOpacity={1}
-                      fill="url(#glowBirthdaysZinc)"
+                      fill="url(#glowSapBirthdayTrend)"
                       className="birthday-area-curve"
                       dot={<LiveAreaDot />}
-                      activeDot={{ r: 6, stroke: '#10b981', strokeWidth: 2, fill: '#ffffff' }}
+                      activeDot={{ r: 6.5, stroke: '#fcd34d', strokeWidth: 2.5, fill: '#10b981' }}
                     />
                     <Area
                       type="monotone"
@@ -1493,12 +1588,11 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
 
           {/* Peak Month Insight Footnote */}
           {peakMonth && (
-            <div className="mt-3 p-3 rounded-xl bg-zinc-950/80 border border-zinc-800 flex items-center justify-between text-xs font-mono">
+            <div className="mt-3 p-3 rounded-xl bg-zinc-950/80 border border-zinc-800/80 flex items-center justify-between text-xs font-mono">
               <div className="flex items-center gap-2 text-zinc-300">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#10b981] animate-pulse"></span>
                 <span>
-                  <strong className="text-white">Peak Month:</strong> {peakMonth.monthFull} ({peakMonth.total} events:{' '}
-                  {peakMonth.birthdays} birthdays + {peakMonth.festiveDays} festive)
+                  <strong className="text-white">Annual Peak Month:</strong> {peakMonth.monthFull} ({peakMonth.birthdays} birthdays • {peakMonth.total} total events)
                 </span>
               </div>
               <button

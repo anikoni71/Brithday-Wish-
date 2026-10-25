@@ -1,11 +1,11 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 
 interface AlmanacSolarSystemProps {
   glowColor?: string;
   className?: string;
 }
 
-interface PlanetConfig {
+export interface PlanetConfig {
   name: string;
   radius: number; // orbital radius in px
   duration: number; // orbital period in seconds
@@ -15,7 +15,14 @@ interface PlanetConfig {
   accentColor: string;
   hasRings?: boolean;
   hasMoon?: boolean;
-  description?: string;
+  category: string;
+  orbitalSpeedKmS: string;
+  orbitalSpeedMph: string;
+  distanceAU: string;
+  distanceKm: string;
+  distanceMiles: string;
+  orbitalPeriod: string;
+  solarFact: string;
 }
 
 /**
@@ -26,13 +33,23 @@ interface PlanetConfig {
  * - A radiant glowing Sun at the center with pulsing photosphere and rotating solar flares
  * - Realistic orbiting planets (Mercury, Venus, Earth with orbiting Moon, Mars, Jupiter, Saturn with 3D rings, Uranus, Neptune)
  * - Dynamic Planet Name Labels moving continuously alongside each planet along its orbit
+ * - Pause-on-hover effect across the entire solar system simulation for focused planet inspection
+ * - Instant resumption when mouse leaves the container
+ * - Interactive hover tooltips displaying authentic orbital speeds, distance facts (AU & km/mi), and celestial telemetry
  * - Pure hardware-accelerated CSS 3D transforms for silky smooth 60fps performance
  */
 export const AlmanacSolarSystem: React.FC<AlmanacSolarSystemProps> = ({
   glowColor = '#a855f7',
   className = '',
 }) => {
-  // Planetary specifications with realistic proportions and orbital speeds
+  // State to track hover pause and active inspected planet
+  const [isContainerHovered, setIsContainerHovered] = useState(false);
+  const [hoveredPlanet, setHoveredPlanet] = useState<string | null>(null);
+
+  // Overall pause condition
+  const isPaused = isContainerHovered || hoveredPlanet !== null;
+
+  // Planetary specifications with realistic astronomical data & telemetry facts
   const planets: PlanetConfig[] = useMemo(
     () => [
       {
@@ -43,7 +60,14 @@ export const AlmanacSolarSystem: React.FC<AlmanacSolarSystemProps> = ({
         size: 7,
         color: '#94a3b8',
         accentColor: '#cbd5e1',
-        description: '0.39 AU • Swift Orbit',
+        category: 'Terrestrial Planet',
+        orbitalSpeedKmS: '47.4 km/s',
+        orbitalSpeedMph: '106,000 mph',
+        distanceAU: '0.39 AU',
+        distanceKm: '57.9M km',
+        distanceMiles: '36.0M mi',
+        orbitalPeriod: '87.97 Earth Days',
+        solarFact: 'Fastest orbital speed in the Solar System, enduring intense solar radiation.',
       },
       {
         name: 'Venus',
@@ -53,7 +77,14 @@ export const AlmanacSolarSystem: React.FC<AlmanacSolarSystemProps> = ({
         size: 9.5,
         color: '#fde047',
         accentColor: '#d97706',
-        description: '0.72 AU • Golden Atmosphere',
+        category: 'Terrestrial Planet',
+        orbitalSpeedKmS: '35.0 km/s',
+        orbitalSpeedMph: '78,300 mph',
+        distanceAU: '0.72 AU',
+        distanceKm: '108.2M km',
+        distanceMiles: '67.2M mi',
+        orbitalPeriod: '224.7 Earth Days',
+        solarFact: 'Hottest planetary surface (465°C) with dense runaway greenhouse clouds.',
       },
       {
         name: 'Earth',
@@ -64,7 +95,14 @@ export const AlmanacSolarSystem: React.FC<AlmanacSolarSystemProps> = ({
         color: '#38bdf8',
         accentColor: '#10b981',
         hasMoon: true,
-        description: '1.00 AU • Oceanic Oasis',
+        category: 'Terrestrial (Home World)',
+        orbitalSpeedKmS: '29.8 km/s',
+        orbitalSpeedMph: '66,600 mph',
+        distanceAU: '1.00 AU',
+        distanceKm: '149.6M km',
+        distanceMiles: '93.0M mi',
+        orbitalPeriod: '365.25 Days (1 Year)',
+        solarFact: 'The Goldilocks sanctuary harboring liquid oceans, life, and an orbiting Moon.',
       },
       {
         name: 'Mars',
@@ -74,7 +112,14 @@ export const AlmanacSolarSystem: React.FC<AlmanacSolarSystemProps> = ({
         size: 8.5,
         color: '#f87171',
         accentColor: '#ef4444',
-        description: '1.52 AU • Crimson Wanderer',
+        category: 'Terrestrial Planet',
+        orbitalSpeedKmS: '24.1 km/s',
+        orbitalSpeedMph: '53,900 mph',
+        distanceAU: '1.52 AU',
+        distanceKm: '227.9M km',
+        distanceMiles: '141.6M mi',
+        orbitalPeriod: '687 Earth Days (1.88 yrs)',
+        solarFact: 'Home to Olympus Mons (tallest solar volcano) and dramatic polar ice caps.',
       },
       {
         name: 'Jupiter',
@@ -84,7 +129,14 @@ export const AlmanacSolarSystem: React.FC<AlmanacSolarSystemProps> = ({
         size: 16,
         color: '#fbbf24',
         accentColor: '#b45309',
-        description: '5.20 AU • Gas Monarch',
+        category: 'Gas Giant Monarch',
+        orbitalSpeedKmS: '13.1 km/s',
+        orbitalSpeedMph: '29,300 mph',
+        distanceAU: '5.20 AU',
+        distanceKm: '778.5M km',
+        distanceMiles: '483.8M mi',
+        orbitalPeriod: '11.86 Earth Years',
+        solarFact: 'Holds 2.5x the mass of all other planets combined, with 95 known moons.',
       },
       {
         name: 'Saturn',
@@ -95,7 +147,14 @@ export const AlmanacSolarSystem: React.FC<AlmanacSolarSystemProps> = ({
         color: '#fef08a',
         accentColor: '#ca8a04',
         hasRings: true,
-        description: '9.58 AU • Lord of Rings',
+        category: 'Gas Giant (Ringed)',
+        orbitalSpeedKmS: '9.7 km/s',
+        orbitalSpeedMph: '21,700 mph',
+        distanceAU: '9.58 AU',
+        distanceKm: '1.43 Billion km',
+        distanceMiles: '886M mi',
+        orbitalPeriod: '29.45 Earth Years',
+        solarFact: 'Encircled by 7 concentric ring groups composed of billions of water-ice shards.',
       },
       {
         name: 'Uranus',
@@ -105,7 +164,14 @@ export const AlmanacSolarSystem: React.FC<AlmanacSolarSystemProps> = ({
         size: 10.5,
         color: '#22d3ee',
         accentColor: '#0891b2',
-        description: '19.2 AU • Azure Ice',
+        category: 'Ice Giant',
+        orbitalSpeedKmS: '6.8 km/s',
+        orbitalSpeedMph: '15,200 mph',
+        distanceAU: '19.2 AU',
+        distanceKm: '2.87 Billion km',
+        distanceMiles: '1.78B mi',
+        orbitalPeriod: '84.0 Earth Years',
+        solarFact: 'Extreme 97.8° axial tilt makes it rotate virtually sideways around the Sun.',
       },
       {
         name: 'Neptune',
@@ -115,7 +181,14 @@ export const AlmanacSolarSystem: React.FC<AlmanacSolarSystemProps> = ({
         size: 10.5,
         color: '#818cf8',
         accentColor: '#4f46e5',
-        description: '30.1 AU • Deep Sapphire',
+        category: 'Ice Giant',
+        orbitalSpeedKmS: '5.4 km/s',
+        orbitalSpeedMph: '12,100 mph',
+        distanceAU: '30.1 AU',
+        distanceKm: '4.50 Billion km',
+        distanceMiles: '2.79B mi',
+        orbitalPeriod: '164.8 Earth Years',
+        solarFact: 'Deep blue methane atmosphere experiencing supersonic winds up to 2,100 km/h.',
       },
     ],
     []
@@ -147,8 +220,15 @@ export const AlmanacSolarSystem: React.FC<AlmanacSolarSystemProps> = ({
 
   return (
     <div
-      className={`absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-visible z-0 ${className}`}
-      aria-hidden="true"
+      className={`absolute inset-0 flex items-center justify-center select-none overflow-visible z-0 almanac-solar-container ${
+        isPaused ? 'almanac-solar-paused' : ''
+      } ${className}`}
+      onMouseEnter={() => setIsContainerHovered(true)}
+      onMouseLeave={() => {
+        setIsContainerHovered(false);
+        setHoveredPlanet(null);
+      }}
+      aria-label="Interactive Live Solar System"
     >
       {/* 1. Deep Celestial Nebula Ambient Glows */}
       <div
@@ -199,10 +279,16 @@ export const AlmanacSolarSystem: React.FC<AlmanacSolarSystemProps> = ({
         />
 
         {/* Rotating Radiant Solar Flare Rays */}
-        <div className="absolute w-60 h-60 pointer-events-none animate-spin-celestial [animation-duration:50s]">
+        <div
+          className="absolute w-60 h-60 pointer-events-none animate-spin-celestial"
+          style={{
+            animationDuration: '50s',
+            animationPlayState: isPaused ? 'paused' : 'running',
+          }}
+        >
           <svg viewBox="0 0 200 200" className="w-full h-full overflow-visible opacity-65">
             <defs>
-              <linearGradient id="solarRayGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <linearGradient id="solarRayGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stopColor="#ffffff" stopOpacity="0.9" />
                 <stop offset="35%" stopColor="#fef08a" stopOpacity="0.75" />
                 <stop offset="70%" stopColor="#f59e0b" stopOpacity="0.3" />
@@ -240,13 +326,15 @@ export const AlmanacSolarSystem: React.FC<AlmanacSolarSystemProps> = ({
         </div>
       </div>
 
-      {/* 4. PLANETARY ORBIT TRACKS AND REAL-TIME ORBITING PLANETS WITH MOVING NAME LABELS */}
+      {/* 4. PLANETARY ORBIT TRACKS AND REAL-TIME ORBITING PLANETS WITH INTERACTIVE HOVER TOOLTIPS */}
       {planets.map((planet) => {
         const diameter = planet.radius * 2;
+        const isThisPlanetHovered = hoveredPlanet === planet.name;
+
         return (
           <div
             key={planet.name}
-            className="absolute top-1/2 left-1/2 rounded-full pointer-events-none"
+            className="absolute top-1/2 left-1/2 rounded-full almanac-orbit-track pointer-events-none"
             style={{
               width: `${diameter}px`,
               height: `${diameter}px`,
@@ -254,49 +342,62 @@ export const AlmanacSolarSystem: React.FC<AlmanacSolarSystemProps> = ({
               marginTop: `-${planet.radius}px`,
               // Primary Orbital Rotation (Keplerian Track)
               animation: `almanac-orbit ${planet.duration}s linear infinite`,
+              animationPlayState: isPaused ? 'paused' : 'running',
               transformOrigin: 'center center',
             }}
           >
             {/* Visual Orbit Track Line (Delicate Semi-Transparent Celestial Guide) */}
             <div
-              className="absolute inset-0 rounded-full border border-dashed pointer-events-none transition-opacity duration-300"
+              className={`absolute inset-0 rounded-full border border-dashed transition-all duration-300 ${
+                isThisPlanetHovered
+                  ? 'border-white/60 shadow-[0_0_15px_rgba(255,255,255,0.4)] opacity-100'
+                  : 'opacity-40'
+              }`}
               style={{
-                borderColor: `${planet.color}25`,
-                borderWidth: '1px',
-                boxShadow: `0 0 10px ${planet.color}08`,
+                borderColor: isThisPlanetHovered ? planet.color : `${planet.color}35`,
+                borderWidth: isThisPlanetHovered ? '1.5px' : '1px',
+                boxShadow: isThisPlanetHovered
+                  ? `0 0 16px ${planet.color}80`
+                  : `0 0 8px ${planet.color}15`,
               }}
             />
 
             {/* Orbit Node Anchor (Positioned exactly on the perimeter at top 12 o'clock) */}
             <div
-              className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto"
+              className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto almanac-counter-node"
               style={{
                 // Counter-rotation so the planet body and its name label remain strictly upright and legible
                 animation: `almanac-counter-orbit ${planet.duration}s linear infinite`,
+                animationPlayState: isPaused ? 'paused' : 'running',
                 transformOrigin: 'center center',
               }}
             >
               {/* Planetary Entity & Dynamic Name Label Group */}
               <div
-                className="group relative flex items-center gap-1.5 cursor-pointer py-1 px-1"
-                title={`${planet.name}: ${planet.description || 'Active Celestial Transit'}`}
+                className="group relative flex items-center gap-1.5 cursor-pointer py-1.5 px-2"
+                onMouseEnter={() => setHoveredPlanet(planet.name)}
+                onMouseLeave={() => setHoveredPlanet(null)}
+                title={`${planet.name} • Speed: ${planet.orbitalSpeedKmS} • Distance: ${planet.distanceAU}`}
               >
                 {/* 1. Realistic Planet Sphere Body */}
                 <div className="relative flex items-center justify-center shrink-0">
                   {/* Atmospheric Glow Aura */}
                   <div
-                    className="absolute rounded-full blur-xs pointer-events-none transition-transform group-hover:scale-150 duration-300"
+                    className={`absolute rounded-full blur-xs pointer-events-none transition-transform duration-300 ${
+                      isThisPlanetHovered ? 'scale-175 opacity-90' : 'group-hover:scale-150 opacity-45'
+                    }`}
                     style={{
                       width: `${planet.size * 1.8}px`,
                       height: `${planet.size * 1.8}px`,
                       backgroundColor: planet.color,
-                      opacity: 0.45,
                     }}
                   />
 
                   {/* Planet Core Sphere */}
                   <div
-                    className="rounded-full relative overflow-visible shadow-md transition-transform group-hover:scale-125 duration-300"
+                    className={`rounded-full relative overflow-visible shadow-md transition-transform duration-300 ${
+                      isThisPlanetHovered ? 'scale-135 ring-2 ring-white/80' : 'group-hover:scale-125'
+                    }`}
                     style={{
                       width: `${planet.size}px`,
                       height: `${planet.size}px`,
@@ -335,6 +436,7 @@ export const AlmanacSolarSystem: React.FC<AlmanacSolarSystemProps> = ({
                         className="absolute top-1/2 left-1/2 w-6 h-6 -ml-3 -mt-3 rounded-full pointer-events-none"
                         style={{
                           animation: 'almanac-orbit 6s linear infinite',
+                          animationPlayState: isPaused ? 'paused' : 'running',
                         }}
                       >
                         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-slate-100 shadow-[0_0_4px_#ffffff]" />
@@ -362,9 +464,13 @@ export const AlmanacSolarSystem: React.FC<AlmanacSolarSystemProps> = ({
 
                 {/* 2. DYNAMIC PLANET NAME LABEL (Moving alongside the planet on its orbit path) */}
                 <div
-                  className="px-1.5 py-0.5 rounded-full bg-slate-950/85 backdrop-blur-md border border-white/20 shadow-[0_2px_10px_rgba(0,0,0,0.85)] flex items-center gap-1 transition-all duration-200 group-hover:scale-110 group-hover:bg-slate-900 group-hover:border-white/40"
+                  className={`px-1.5 py-0.5 rounded-full backdrop-blur-md border shadow-[0_2px_10px_rgba(0,0,0,0.85)] flex items-center gap-1 transition-all duration-200 ${
+                    isThisPlanetHovered
+                      ? 'scale-115 bg-slate-900 border-white/60 shadow-[0_0_15px_rgba(255,255,255,0.4)]'
+                      : 'bg-slate-950/85 border-white/20 group-hover:scale-110 group-hover:bg-slate-900 group-hover:border-white/40'
+                  }`}
                   style={{
-                    boxShadow: `0 0 12px ${planet.color}30, 0 2px 6px rgba(0,0,0,0.9)`,
+                    boxShadow: `0 0 12px ${planet.color}35, 0 2px 6px rgba(0,0,0,0.9)`,
                   }}
                 >
                   {/* Planet Color Indicator Pip */}
@@ -382,6 +488,97 @@ export const AlmanacSolarSystem: React.FC<AlmanacSolarSystemProps> = ({
                     {planet.name}
                   </span>
                 </div>
+
+                {/* 3. INTERACTIVE HOVER TOOLTIP (Displaying Orbital Speed, Distance Facts & Telemetry) */}
+                {(isThisPlanetHovered || hoveredPlanet === planet.name) && (
+                  <div
+                    className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 w-64 sm:w-72 p-3 rounded-2xl bg-slate-950/95 backdrop-blur-xl border border-white/25 shadow-[0_15px_40px_rgba(0,0,0,0.95),0_0_25px_rgba(0,0,0,0.8)] pointer-events-auto z-50 text-left transition-all duration-200 animate-in fade-in zoom-in-95"
+                    style={{
+                      boxShadow: `0 20px 45px rgba(0,0,0,0.9), 0 0 30px ${planet.color}30`,
+                    }}
+                  >
+                    {/* Downward pointer triangle */}
+                    <div
+                      className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 w-2.5 h-2.5 rotate-45 bg-slate-950 border-r border-b border-white/25"
+                    />
+
+                    {/* Tooltip Header */}
+                    <div className="flex items-center justify-between pb-2 mb-2 border-b border-white/10">
+                      <div className="flex items-center gap-1.5">
+                        <span
+                          className="w-2.5 h-2.5 rounded-full shrink-0 shadow-[0_0_8px_currentColor]"
+                          style={{ backgroundColor: planet.color, color: planet.color }}
+                        />
+                        <span className="text-xs font-black text-white tracking-wide uppercase">
+                          {planet.name}
+                        </span>
+                        <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-md bg-white/10 text-slate-300 font-semibold">
+                          {planet.category}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1 text-[8px] font-mono font-bold text-emerald-400 bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-500/40">
+                        <span className="w-1 h-1 rounded-full bg-emerald-400 animate-ping" />
+                        <span>PAUSED</span>
+                      </div>
+                    </div>
+
+                    {/* Telemetry Fact Grid */}
+                    <div className="grid grid-cols-2 gap-2 mb-2">
+                      {/* Orbital Speed Metric */}
+                      <div className="p-2 rounded-xl bg-slate-900/90 border border-amber-500/25">
+                        <div className="flex items-center gap-1 text-[9px] font-mono font-semibold text-amber-300 uppercase tracking-wider mb-0.5">
+                          <span>🚀</span>
+                          <span>Orbital Speed</span>
+                        </div>
+                        <div className="text-xs sm:text-sm font-mono font-black text-amber-100">
+                          {planet.orbitalSpeedKmS}
+                        </div>
+                        <div className="text-[8.5px] font-mono text-slate-400">
+                          {planet.orbitalSpeedMph}
+                        </div>
+                      </div>
+
+                      {/* Distance from Sun Metric */}
+                      <div className="p-2 rounded-xl bg-slate-900/90 border border-cyan-500/25">
+                        <div className="flex items-center gap-1 text-[9px] font-mono font-semibold text-cyan-300 uppercase tracking-wider mb-0.5">
+                          <span>☀️</span>
+                          <span>Sun Distance</span>
+                        </div>
+                        <div className="text-xs sm:text-sm font-mono font-black text-cyan-100">
+                          {planet.distanceAU}
+                        </div>
+                        <div className="text-[8.5px] font-mono text-slate-400">
+                          {planet.distanceKm}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Orbital Period Row */}
+                    <div className="flex items-center justify-between px-2 py-1 rounded-lg bg-white/5 border border-white/10 text-[9px] font-mono mb-2">
+                      <span className="text-slate-400 flex items-center gap-1">
+                        <span>⏱️</span>
+                        <span>Orbital Period:</span>
+                      </span>
+                      <span className="font-bold text-slate-200">
+                        {planet.orbitalPeriod}
+                      </span>
+                    </div>
+
+                    {/* Astronomical Fact */}
+                    <p className="text-[9px] text-slate-300/90 leading-relaxed italic px-1 pb-1">
+                      "{planet.solarFact}"
+                    </p>
+
+                    {/* Footer helper note */}
+                    <div className="pt-1.5 border-t border-white/10 flex items-center justify-between text-[8px] font-mono text-slate-400">
+                      <span className="flex items-center gap-1 text-slate-400">
+                        <span>🌌</span>
+                        <span>Orbit resumes on mouse leave</span>
+                      </span>
+                      <span className="text-indigo-300 font-semibold">Keplerian Model</span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -405,6 +602,12 @@ export const AlmanacSolarSystem: React.FC<AlmanacSolarSystemProps> = ({
           to {
             transform: rotate(-360deg);
           }
+        }
+        .almanac-solar-container:hover .almanac-orbit-track,
+        .almanac-solar-container:hover .almanac-counter-node,
+        .almanac-solar-paused .almanac-orbit-track,
+        .almanac-solar-paused .almanac-counter-node {
+          animation-play-state: paused !important;
         }
       `}</style>
     </div>

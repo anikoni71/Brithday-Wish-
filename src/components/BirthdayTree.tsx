@@ -39,6 +39,7 @@ import { formatProfileImageUrl } from '../utils/imageUtils';
 import { getMemberNameMeaningDetails, getMemberSpecialDayMatch } from '../data/fallbackData';
 import { MemberCardTooltip } from './CustomTooltip';
 import { CosmicSolarSystem } from './CosmicSolarSystem';
+import { HumanJourneyLifecycle } from './HumanJourneyLifecycle';
 
 interface BirthdayTreeProps {
   members: TeamMember[];
@@ -119,6 +120,11 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
   const [viewMode, setViewMode] = useState<'tree' | 'months'>('tree');
   const [cardDetailLevel, setCardDetailLevel] = useState<'compact' | 'detailed'>('compact');
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isForegroundHovered, setIsForegroundHovered] = useState(false);
+  const [isPlanetInspected, setIsPlanetInspected] = useState(false);
+
+  // Overall pause condition when interacting with foreground UI or inspecting planets
+  const isTreePaused = isForegroundHovered || isPlanetInspected;
 
   // Toggle fullscreen mode
   const toggleFullscreen = () => {
@@ -460,9 +466,10 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
 
       {/* 3. MAIN BIRTHDAY TREE CANVAS (REFERENCE PHOTO RECREATION) */}
       {viewMode === 'tree' ? (
-        <div className={`relative ${isFullscreen ? 'flex-1 min-h-[720px] sm:min-h-[820px] lg:min-h-[920px]' : 'min-h-[640px] sm:min-h-[720px] lg:min-h-[820px]'} p-4 sm:p-6 flex flex-col items-center justify-center overflow-hidden select-none bg-gradient-to-b from-zinc-950/40 via-zinc-900/20 to-zinc-950/60`}>
+        <div className={`relative ${isFullscreen ? 'flex-1 min-h-[720px] sm:min-h-[820px] lg:min-h-[920px]' : 'min-h-[640px] sm:min-h-[720px] lg:min-h-[820px]'} p-4 sm:p-6 flex flex-col items-center justify-center overflow-hidden select-none bg-gradient-to-b from-zinc-950/40 via-zinc-900/20 to-zinc-950/60 ${isTreePaused ? 'tree-canvas-paused' : ''}`}>
           {/* Live Cosmic Solar System Background with Orbiting Planets & Radiant Sun */}
-          <CosmicSolarSystem />
+          <CosmicSolarSystem isPaused={isTreePaused} onHoverPlanetChange={(planet) => setIsPlanetInspected(!!planet)} />
+
 
           {/* Stylized Physical Bulletin Wall Framing */}
           {/* Top Decorative Star Garland */}
@@ -530,11 +537,13 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
                   <stop offset="100%" stopColor="transparent" stopOpacity="0" />
                 </radialGradient>
 
-                {/* High-Tech Telemetry Beam Glow Filter */}
-                <filter id="telemetryBeamGlow" x="-40%" y="-40%" width="180%" height="180%">
-                  <feGaussianBlur stdDeviation="3" result="blur1" />
-                  <feGaussianBlur stdDeviation="7" result="blur2" />
+                {/* High-Tech Telemetry Beam Glow Filter with Ultra-Vibrant Multi-Tier Radiance */}
+                <filter id="telemetryBeamGlow" x="-60%" y="-60%" width="220%" height="220%">
+                  <feGaussianBlur stdDeviation="2.5" result="blur1" />
+                  <feGaussianBlur stdDeviation="6" result="blur2" />
+                  <feGaussianBlur stdDeviation="14" result="blur3" />
                   <feMerge>
+                    <feMergeNode in="blur3" />
                     <feMergeNode in="blur2" />
                     <feMergeNode in="blur1" />
                     <feMergeNode in="SourceGraphic" />
@@ -550,13 +559,24 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
                   </feMerge>
                 </filter>
 
-                {/* Telemetry ECG Wave Gradient */}
+                {/* Telemetry ECG Wave Gradient with Vibrant Bio-Luminescent Neon Core */}
                 <linearGradient id="ecgBeamGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#059669" stopOpacity="0.25" />
-                  <stop offset="35%" stopColor="#34d399" stopOpacity="0.95" />
+                  <stop offset="0%" stopColor="#059669" stopOpacity="0.4" />
+                  <stop offset="20%" stopColor="#10b981" stopOpacity="0.95" />
+                  <stop offset="42%" stopColor="#34d399" stopOpacity="1" />
                   <stop offset="50%" stopColor="#ffffff" stopOpacity="1" />
-                  <stop offset="65%" stopColor="#fcd34d" stopOpacity="0.95" />
-                  <stop offset="100%" stopColor="#10b981" stopOpacity="0.25" />
+                  <stop offset="58%" stopColor="#fef08a" stopOpacity="1" />
+                  <stop offset="80%" stopColor="#f59e0b" stopOpacity="0.95" />
+                  <stop offset="100%" stopColor="#10b981" stopOpacity="0.4" />
+                </linearGradient>
+
+                {/* Ascending Trunk Sap Conduits Gradient */}
+                <linearGradient id="sapConduitGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+                  <stop offset="0%" stopColor="#059669" stopOpacity="0.5" />
+                  <stop offset="30%" stopColor="#10b981" stopOpacity="0.95" />
+                  <stop offset="60%" stopColor="#34d399" stopOpacity="1" />
+                  <stop offset="85%" stopColor="#fde047" stopOpacity="1" />
+                  <stop offset="100%" stopColor="#ffffff" stopOpacity="0.95" />
                 </linearGradient>
               </defs>
 
@@ -617,7 +637,7 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
                 <path
                   d="M 460 420 C 420 370, 340 330, 220 290 C 160 270, 100 260, 80 270"
                   stroke="#34d399"
-                  strokeWidth="2.5"
+                  strokeWidth="3.2"
                   fill="none"
                   filter="url(#telemetryBeamGlow)"
                   className="tree-ecg-pulse-line"
@@ -651,7 +671,7 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
                 <path
                   d="M 540 460 C 600 420, 700 370, 810 330 C 870 310, 930 295, 950 295"
                   stroke="#34d399"
-                  strokeWidth="2.5"
+                  strokeWidth="3.2"
                   fill="none"
                   filter="url(#telemetryBeamGlow)"
                   className="tree-ecg-pulse-line-delayed"
@@ -664,7 +684,7 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
                 <path
                   d="M 495 400 C 495 320, 500 220, 500 120"
                   stroke="#fcd34d"
-                  strokeWidth="3"
+                  strokeWidth="3.8"
                   fill="none"
                   filter="url(#telemetryBeamGlow)"
                   className="tree-ecg-pulse-line"
@@ -672,9 +692,9 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
               </g>
 
               {/* HIGH-TECH BIO-LUMINESCENT SAP ENERGY CONDUITS THROUGH TRUNK */}
-              <path d="M 458 760 C 468 650, 488 520, 495 440" stroke="#fcd34d" strokeWidth="2.5" strokeDasharray="10 18" opacity="0.85" fill="none" filter="url(#telemetryBeamGlow)" className="tree-ecg-pulse-line" />
-              <path d="M 490 770 C 500 660, 510 530, 510 440" stroke="#34d399" strokeWidth="3" opacity="0.95" fill="none" filter="url(#telemetryBeamGlow)" className="tree-ecg-pulse-line-delayed" />
-              <path d="M 522 760 C 532 650, 532 520, 525 440" stroke="#a7f3d0" strokeWidth="2.5" strokeDasharray="10 18" opacity="0.85" fill="none" filter="url(#telemetryBeamGlow)" className="tree-ecg-pulse-line" />
+              <path d="M 458 760 C 468 650, 488 520, 495 440" stroke="#fcd34d" strokeWidth="3.2" strokeDasharray="14 18" opacity="0.95" fill="none" filter="url(#telemetryBeamGlow)" className="tree-ecg-pulse-line" />
+              <path d="M 490 770 C 500 660, 510 530, 510 440" stroke="url(#sapConduitGrad)" strokeWidth="4.2" opacity="1" fill="none" filter="url(#telemetryBeamGlow)" className="tree-ecg-pulse-line-delayed" />
+              <path d="M 522 760 C 532 650, 532 520, 525 440" stroke="#34d399" strokeWidth="3.2" strokeDasharray="14 18" opacity="0.95" fill="none" filter="url(#telemetryBeamGlow)" className="tree-ecg-pulse-line" />
 
               {/* AUTHENTIC HIGH-PRECISION ECG HEARTBEAT MONITOR WAVE ACROSS ROOT BASE */}
               <g>
@@ -683,20 +703,20 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
                   d="M 120 776 L 310 776 L 330 776 L 342 770 L 352 776 L 366 760 L 380 792 L 394 750 L 408 776 L 424 776 L 438 764 L 452 776 L 540 776 L 554 770 L 564 776 L 578 760 L 592 792 L 606 750 L 620 776 L 636 776 L 650 764 L 664 776 L 880 776"
                   fill="none"
                   stroke="#059669"
-                  strokeWidth="1.5"
+                  strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  opacity="0.3"
+                  opacity="0.45"
                 />
                 {/* Secondary ambient glow trace */}
                 <path
                   d="M 120 776 L 310 776 L 330 776 L 342 770 L 352 776 L 366 760 L 380 792 L 394 750 L 408 776 L 424 776 L 438 764 L 452 776 L 540 776 L 554 770 L 564 776 L 578 760 L 592 792 L 606 750 L 620 776 L 636 776 L 650 764 L 664 776 L 880 776"
                   fill="none"
                   stroke="#10b981"
-                  strokeWidth="3.5"
+                  strokeWidth="4.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  opacity="0.5"
+                  opacity="0.75"
                   filter="url(#telemetryBeamGlow)"
                   className="tree-ecg-oscilloscope-trace"
                 />
@@ -705,7 +725,7 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
                   d="M 120 776 L 310 776 L 330 776 L 342 770 L 352 776 L 366 760 L 380 792 L 394 750 L 408 776 L 424 776 L 438 764 L 452 776 L 540 776 L 554 770 L 564 776 L 578 760 L 592 792 L 606 750 L 620 776 L 636 776 L 650 764 L 664 776 L 880 776"
                   fill="none"
                   stroke="url(#ecgBeamGrad)"
-                  strokeWidth="2.5"
+                  strokeWidth="3.2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   filter="url(#telemetryBeamGlow)"
@@ -765,6 +785,9 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
                 <path d="M 600 240 Q 600 245 605 245 Q 600 245 600 250 Q 600 245 595 245 Q 600 245 600 240 Z" fill="#fef08a" filter="url(#starlightSparkleGlow)" className="tree-sparkle-2" />
               </g>
 
+              {/* THE HUMAN JOURNEY LIFECYCLE ANIMATION (Flanking lower left & right dark zones of trunk) */}
+              <HumanJourneyLifecycle />
+
               {/* Bottom Grass & Flower Trim */}
               <path
                 d="M 50 780 C 150 750, 250 770, 350 755 C 450 770, 550 770, 650 755 C 750 770, 850 750, 950 780 L 950 800 L 50 800 Z"
@@ -775,8 +798,13 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
           </div>
 
           {/* DYNAMIC CELEBRANT FLOWER / BALLOON ORNAMENTS HANGING ON BRANCHES */}
-          <div className="relative z-10 w-full max-w-5xl h-[560px] sm:h-[640px] lg:h-[720px] mx-auto">
+          <div
+            className="relative z-10 w-full max-w-5xl h-[560px] sm:h-[640px] lg:h-[720px] mx-auto"
+            onMouseEnter={() => setIsForegroundHovered(true)}
+            onMouseLeave={() => setIsForegroundHovered(false)}
+          >
             {filteredMembers.map((member, idx) => {
+
               // Assign coordinate position based on index or custom spread
               const pos = BRANCH_POSITIONS[idx % BRANCH_POSITIONS.length];
               const isSelected = activeMember?.id === member.id || activeMember?.sl === member.sl;
