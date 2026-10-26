@@ -124,6 +124,7 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
   const [isForegroundHovered, setIsForegroundHovered] = useState(false);
   const [isPlanetInspected, setIsPlanetInspected] = useState(false);
   const [isTreeIconModalOpen, setIsTreeIconModalOpen] = useState(false);
+  const [isTreeIconHovered, setIsTreeIconHovered] = useState(false);
 
   // Overall pause condition when interacting with foreground UI or inspecting planets
   const isTreePaused = isForegroundHovered || isPlanetInspected;
@@ -280,6 +281,8 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
             <button
               type="button"
               onClick={() => setIsTreeIconModalOpen(true)}
+              onMouseEnter={() => setIsTreeIconHovered(true)}
+              onMouseLeave={() => setIsTreeIconHovered(false)}
               className="w-[2.5cm] h-[2.5cm] min-w-[2.5cm] min-h-[2.5cm] flex-shrink-0 rounded-2xl bg-gradient-to-tr from-emerald-600 via-teal-600 to-amber-500 flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.35)] shadow-[inset_0_1px_2px_rgba(255,255,255,0.4)] border border-emerald-400/40 relative group overflow-hidden transition-all duration-300 hover:scale-[1.03] active:scale-95 hover:shadow-[0_0_30px_rgba(16,185,129,0.65)] cursor-pointer p-0"
               style={{ width: '2.5cm', height: '2.5cm' }}
               title="Click to expand animated birthday tree card"
@@ -481,7 +484,7 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
       {viewMode === 'tree' ? (
         <div className={`relative ${isFullscreen ? 'flex-1 min-h-[720px] sm:min-h-[820px] lg:min-h-[920px]' : 'min-h-[640px] sm:min-h-[720px] lg:min-h-[820px]'} p-4 sm:p-6 flex flex-col items-center justify-center overflow-hidden select-none bg-gradient-to-b from-zinc-950/40 via-zinc-900/20 to-zinc-950/60 ${isTreePaused ? 'tree-canvas-paused' : ''}`}>
           {/* Live Cosmic Solar System Background with Orbiting Planets & Radiant Sun */}
-          <CosmicSolarSystem isPaused={isTreePaused} onHoverPlanetChange={(planet) => setIsPlanetInspected(!!planet)} />
+          <CosmicSolarSystem isPaused={isTreePaused} isTreeIconHovered={isTreeIconHovered} onHoverPlanetChange={(planet) => setIsPlanetInspected(!!planet)} />
 
 
           {/* Stylized Physical Bulletin Wall Framing */}

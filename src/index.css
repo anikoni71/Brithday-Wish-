@@ -4183,14 +4183,211 @@ html.dark table thead tr {
 }
 
 /* ==========================================================================
-   13. Interactive Birthday Tree Cosmic Parallax Drift Hardware Acceleration
+   13. Interactive Birthday Tree Cosmic Parallax Drift & Living Nebula Effects
    ========================================================================== */
-.cosmic-stars-layer,
-.cosmic-nebulae-container {
+.cosmic-stars-layer {
   transform-origin: 50% 50%;
   will-change: transform;
   backface-visibility: hidden;
 }
+
+/* Subtle color-shifting animation for cosmic nebula clouds using filter: hue-rotate() */
+.cosmic-nebulae-container {
+  transform-origin: 50% 50%;
+  will-change: transform, filter;
+  backface-visibility: hidden;
+  animation: cosmic-nebula-color-shift 32s ease-in-out infinite;
+}
+
+@keyframes cosmic-nebula-color-shift {
+  0% {
+    filter: hue-rotate(0deg);
+  }
+  33% {
+    filter: hue-rotate(24deg);
+  }
+  66% {
+    filter: hue-rotate(-18deg);
+  }
+  100% {
+    filter: hue-rotate(0deg);
+  }
+}
+
+/* Sporadic Flickering Stars triggered by mouse parallax movement */
+.cosmic-flicker-star {
+  opacity: 0.12;
+  transition: opacity 0.5s ease-out;
+  transform-origin: center center;
+  transform-box: fill-box;
+  will-change: transform, opacity, filter;
+  pointer-events: none;
+}
+
+.cosmic-flicker-star.flicker-fast {
+  animation: cosmic-sporadic-flicker-fast 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.cosmic-flicker-star.flicker-medium {
+  animation: cosmic-sporadic-flicker-medium 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.cosmic-flicker-star.flicker-bright {
+  animation: cosmic-sporadic-flicker-bright 1.15s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes cosmic-sporadic-flicker-fast {
+  0% {
+    opacity: 0.12;
+    transform: scale(0.6) rotate(0deg);
+  }
+  28% {
+    opacity: 1;
+    transform: scale(2.2) rotate(45deg);
+    filter: drop-shadow(0 0 5px #ffffff) drop-shadow(0 0 10px #67e8f9);
+  }
+  100% {
+    opacity: 0.12;
+    transform: scale(1) rotate(90deg);
+    filter: none;
+  }
+}
+
+@keyframes cosmic-sporadic-flicker-medium {
+  0% {
+    opacity: 0.12;
+    transform: scale(0.7) rotate(0deg);
+  }
+  24% {
+    opacity: 1;
+    transform: scale(2.5) rotate(-35deg);
+    filter: drop-shadow(0 0 6px #ffffff) drop-shadow(0 0 12px #fef08a);
+  }
+  60% {
+    opacity: 0.8;
+    transform: scale(1.6) rotate(-15deg);
+    filter: drop-shadow(0 0 3px #ffffff);
+  }
+  100% {
+    opacity: 0.12;
+    transform: scale(1) rotate(0deg);
+    filter: none;
+  }
+}
+
+@keyframes cosmic-sporadic-flicker-bright {
+  0% {
+    opacity: 0.12;
+    transform: scale(0.5) rotate(0deg);
+  }
+  22% {
+    opacity: 1;
+    transform: scale(2.8) rotate(30deg);
+    filter: drop-shadow(0 0 7px #ffffff) drop-shadow(0 0 14px #c084fc) drop-shadow(0 0 22px #60a5fa);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.8) rotate(60deg);
+  }
+  100% {
+    opacity: 0.12;
+    transform: scale(1) rotate(90deg);
+    filter: none;
+  }
+}
+
+/* ==========================================================================
+   14. Periodic Animated Shooting Star Trails (Hardware Accelerated)
+   ========================================================================== */
+.cosmic-shooting-stars-layer {
+  pointer-events: none;
+}
+
+.cosmic-shooting-trail-1 {
+  will-change: transform, opacity;
+  animation: cosmic-shooting-streak-1 11s cubic-bezier(0.16, 0.75, 0.35, 1) infinite;
+  animation-delay: 2.2s;
+}
+
+.cosmic-shooting-trail-2 {
+  will-change: transform, opacity;
+  animation: cosmic-shooting-streak-2 15.5s cubic-bezier(0.16, 0.75, 0.35, 1) infinite;
+  animation-delay: 6.8s;
+}
+
+.cosmic-shooting-trail-3 {
+  will-change: transform, opacity;
+  animation: cosmic-shooting-streak-3 19.5s cubic-bezier(0.16, 0.75, 0.35, 1) infinite;
+  animation-delay: 12.2s;
+}
+
+@keyframes cosmic-shooting-streak-1 {
+  0% {
+    opacity: 0;
+    transform: translate3d(-140px, -60px, 0);
+  }
+  2% {
+    opacity: 0.95;
+  }
+  12% {
+    opacity: 1;
+    transform: translate3d(520px, 220px, 0);
+  }
+  16% {
+    opacity: 0;
+    transform: translate3d(680px, 290px, 0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(680px, 290px, 0);
+  }
+}
+
+@keyframes cosmic-shooting-streak-2 {
+  0% {
+    opacity: 0;
+    transform: translate3d(140px, -60px, 0);
+  }
+  2% {
+    opacity: 0.95;
+  }
+  11% {
+    opacity: 1;
+    transform: translate3d(-480px, 240px, 0);
+  }
+  15% {
+    opacity: 0;
+    transform: translate3d(-620px, 310px, 0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(-620px, 310px, 0);
+  }
+}
+
+@keyframes cosmic-shooting-streak-3 {
+  0% {
+    opacity: 0;
+    transform: translate3d(-100px, -45px, 0);
+  }
+  2% {
+    opacity: 0.9;
+  }
+  9% {
+    opacity: 1;
+    transform: translate3d(390px, 175px, 0);
+  }
+  13% {
+    opacity: 0;
+    transform: translate3d(510px, 230px, 0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(510px, 230px, 0);
+  }
+}
+
+
 
 
 

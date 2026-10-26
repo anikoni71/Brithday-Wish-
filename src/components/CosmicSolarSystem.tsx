@@ -2,6 +2,7 @@ import React, { useMemo, useRef, useEffect } from 'react';
 
 interface CosmicSolarSystemProps {
   isPaused?: boolean;
+  isTreeIconHovered?: boolean;
   onHoverPlanetChange?: (planet: string | null) => void;
 }
 
@@ -19,15 +20,19 @@ interface CosmicSolarSystemProps {
  * - Deep space nebulae, galaxy spiral, twinkling starfield, and passing comets.
  * - Pure SVG & hardware-accelerated declarative animations with zero DOM layout shifts.
  * - Transform-based hardware-accelerated subtle mouse-following parallax drift for cosmic stars & nebula clouds.
+ * - Interactive attract/repel depth response when hovering over the Birthday Tree icon.
  */
 export const CosmicSolarSystem: React.FC<CosmicSolarSystemProps> = ({
   isPaused = false,
+  isTreeIconHovered = false,
   onHoverPlanetChange,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const starsLayerRef = useRef<SVGGElement>(null);
   const nebulaeLayerRef = useRef<SVGGElement>(null);
   const nebulaeGradRef = useRef<HTMLDivElement>(null);
+  const isIconHoveredRef = useRef(isTreeIconHovered);
+  isIconHoveredRef.current = isTreeIconHovered;
 
   // Subtle mouse-following parallax drift effect for cosmic stars & nebula clouds
   useEffect(() => {
@@ -36,6 +41,7 @@ export const CosmicSolarSystem: React.FC<CosmicSolarSystemProps> = ({
     let targetY = 0;
     let currentX = 0;
     let currentY = 0;
+    let currentHover = 0;
 
     const onMouseMove = (e: MouseEvent) => {
       const container = containerRef.current;
@@ -64,7 +70,9 @@ export const CosmicSolarSystem: React.FC<CosmicSolarSystemProps> = ({
       targetY = 0;
     };
 
-    const updateParallax = () => {
+    let lastFlickerTime = 0;
+
+    const updateParallax = (time: number) => {
       // Fluid linear interpolation (lerp) for smooth gliding reaction
       const dx = targetX - currentX;
       const dy = targetY - currentY;
@@ -72,26 +80,56 @@ export const CosmicSolarSystem: React.FC<CosmicSolarSystemProps> = ({
       currentX += dx * 0.055;
       currentY += dy * 0.055;
 
+      // Smooth lerp for subtle attract (stars) / repel (clouds) effect when mouse hovers Birthday Tree icon
+      const targetHover = isIconHoveredRef.current ? 1 : 0;
+      currentHover += (targetHover - currentHover) * 0.075;
+
       // Transform-based hardware acceleration via translate3d
-      // 1. Cosmic Stars Layer: subtle distant celestial drift
+      // 1. Cosmic Stars Layer: subtle distant celestial drift + attract focus toward Birthday Tree icon
       if (starsLayerRef.current) {
-        const sx = (currentX * 14).toFixed(2);
-        const sy = (currentY * 10).toFixed(2);
-        starsLayerRef.current.style.transform = `translate3d(${sx}px, ${sy}px, 0)`;
+        const starAttractX = (-currentHover * 18).toFixed(2);
+        const starAttractY = (-currentHover * 14).toFixed(2);
+        const sx = (Number(currentX * 14) + Number(starAttractX)).toFixed(2);
+        const sy = (Number(currentY * 10) + Number(starAttractY)).toFixed(2);
+        const starScale = (1 + currentHover * 0.038).toFixed(3);
+        starsLayerRef.current.style.transform = `translate3d(${sx}px, ${sy}px, 0) scale(${starScale})`;
       }
 
-      // 2. Cosmic Nebula Clouds Layer: fluid interstellar gas drift with distinct depth
+      // 2. Cosmic Nebula Clouds Layer: fluid interstellar gas drift + repel outward dispersion from Birthday Tree icon
       if (nebulaeLayerRef.current) {
-        const nx = (currentX * 22).toFixed(2);
-        const ny = (currentY * 15).toFixed(2);
-        nebulaeLayerRef.current.style.transform = `translate3d(${nx}px, ${ny}px, 0)`;
+        const nebulaRepelX = (currentHover * 24).toFixed(2);
+        const nebulaRepelY = (currentHover * 18).toFixed(2);
+        const nx = (Number(currentX * 22) + Number(nebulaRepelX)).toFixed(2);
+        const ny = (Number(currentY * 15) + Number(nebulaRepelY)).toFixed(2);
+        const nebulaScale = (1 - currentHover * 0.045).toFixed(3);
+        nebulaeLayerRef.current.style.transform = `translate3d(${nx}px, ${ny}px, 0) scale(${nebulaScale})`;
       }
 
       // 3. Deep Galactic Nebula Gradients Layer
       if (nebulaeGradRef.current) {
-        const gx = (currentX * 8).toFixed(2);
-        const gy = (currentY * 6).toFixed(2);
-        nebulaeGradRef.current.style.transform = `translate3d(${gx}px, ${gy}px, 0)`;
+        const gradRepelX = (currentHover * 10).toFixed(2);
+        const gradRepelY = (currentHover * 8).toFixed(2);
+        const gx = (Number(currentX * 8) + Number(gradRepelX)).toFixed(2);
+        const gy = (Number(currentY * 6) + Number(gradRepelY)).toFixed(2);
+        const gradScale = (1 + currentHover * 0.02).toFixed(3);
+        nebulaeGradRef.current.style.transform = `translate3d(${gx}px, ${gy}px, 0) scale(${gradScale})`;
+      }
+
+      // Sporadically trigger small flickering star animations in cosmic-stars-layer based on mouse parallax movement
+      const motionVelocity = Math.hypot(dx, dy);
+      if (motionVelocity > 0.0022 && time - lastFlickerTime > 110) {
+        if (Math.random() < 0.6) {
+          lastFlickerTime = time;
+          const randomIndex = Math.floor(Math.random() * 32);
+          const starEl = document.getElementById(`cosmic-flicker-star-${randomIndex}`);
+          if (starEl) {
+            const variant = starEl.getAttribute('data-variant') || 'flicker-fast';
+            starEl.classList.remove('flicker-fast', 'flicker-medium', 'flicker-bright');
+            // Trigger reflow to restart CSS animation
+            void starEl.clientWidth;
+            starEl.classList.add(variant);
+          }
+        }
       }
 
       animId = requestAnimationFrame(updateParallax);
@@ -138,6 +176,33 @@ export const CosmicSolarSystem: React.FC<CosmicSolarSystemProps> = ({
       starList.push({ id: `cosmic-star-${i}`, x, y, r, opacity, animType, color });
     }
     return starList;
+  }, []);
+
+  // Generate designated flickering stars that trigger sporadically on mouse parallax movement
+  const flickerStars = useMemo(() => {
+    const list = [];
+    const count = 32;
+    for (let i = 0; i < count; i++) {
+      const seed1 = (i * 179.3) % 1;
+      const seed2 = (i * 311.9) % 1;
+      const seed3 = (i * 547.1) % 1;
+
+      const x = Math.floor(seed1 * 960) + 20;
+      const y = Math.floor(seed2 * 720) + 15;
+      const r = seed3 > 0.7 ? 2.2 : seed3 > 0.35 ? 1.6 : 1.1;
+      const color =
+        i % 4 === 0
+          ? '#ffffff'
+          : i % 4 === 1
+          ? '#93c5fd'
+          : i % 4 === 2
+          ? '#fef08a'
+          : '#67e8f9';
+      const animVariant = i % 3 === 0 ? 'flicker-bright' : i % 3 === 1 ? 'flicker-medium' : 'flicker-fast';
+
+      list.push({ id: i, x, y, r, color, animVariant });
+    }
+    return list;
   }, []);
 
   return (
@@ -371,6 +436,28 @@ export const CosmicSolarSystem: React.FC<CosmicSolarSystemProps> = ({
             <stop offset="100%" stopColor="transparent" stopOpacity="0" />
           </linearGradient>
 
+          {/* Periodic Animated Shooting Star Trail Gradients */}
+          <linearGradient id="shootingStarTrailGrad1" x1="100%" y1="100%" x2="0%" y2="0%">
+            <stop offset="0%" stopColor="#ffffff" stopOpacity="1" />
+            <stop offset="20%" stopColor="#67e8f9" stopOpacity="0.9" />
+            <stop offset="55%" stopColor="#38bdf8" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="transparent" stopOpacity="0" />
+          </linearGradient>
+
+          <linearGradient id="shootingStarTrailGrad2" x1="0%" y1="100%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#ffffff" stopOpacity="1" />
+            <stop offset="25%" stopColor="#fef08a" stopOpacity="0.9" />
+            <stop offset="60%" stopColor="#f59e0b" stopOpacity="0.45" />
+            <stop offset="100%" stopColor="transparent" stopOpacity="0" />
+          </linearGradient>
+
+          <linearGradient id="shootingStarTrailGrad3" x1="100%" y1="100%" x2="0%" y2="0%">
+            <stop offset="0%" stopColor="#ffffff" stopOpacity="1" />
+            <stop offset="25%" stopColor="#c084fc" stopOpacity="0.85" />
+            <stop offset="65%" stopColor="#818cf8" stopOpacity="0.35" />
+            <stop offset="100%" stopColor="transparent" stopOpacity="0" />
+          </linearGradient>
+
           {/* High-Tech Starship Explorer Gradients */}
           <linearGradient id="starshipHullGrad" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor="#334155" />
@@ -426,7 +513,7 @@ export const CosmicSolarSystem: React.FC<CosmicSolarSystemProps> = ({
           </filter>
         </defs>
 
-        {/* 1. DISTANT COSMIC STARFIELD with Mouse-Following Parallax Drift */}
+        {/* 1. DISTANT COSMIC STARFIELD with Mouse-Following Parallax Drift & Sporadic Movement-Triggered Flickers */}
         <g ref={starsLayerRef} className="cosmic-stars-layer will-change-transform">
           {stars.map((star) => (
             <circle
@@ -438,6 +525,26 @@ export const CosmicSolarSystem: React.FC<CosmicSolarSystemProps> = ({
               opacity={star.opacity}
               className={`cosmic-twinkle-${star.animType}`}
             />
+          ))}
+
+          {/* Small Sporadic Flickering Stars triggered by mouse parallax movement */}
+          {flickerStars.map((star) => (
+            <g
+              key={`flicker-star-item-${star.id}`}
+              id={`cosmic-flicker-star-${star.id}`}
+              data-variant={star.animVariant}
+              className="cosmic-flicker-star"
+              transform={`translate(${star.x}, ${star.y})`}
+            >
+              <circle cx="0" cy="0" r={star.r} fill={star.color} />
+              {/* Delicate 4-point Diamond Diffraction Spikes */}
+              <path
+                d={`M 0 -${(star.r * 2.8).toFixed(1)} Q 0 0 ${(star.r * 2.8).toFixed(1)} 0 Q 0 0 0 ${(star.r * 2.8).toFixed(1)} Q 0 0 -${(star.r * 2.8).toFixed(1)} 0 Z`}
+                fill={star.color}
+                opacity="0.9"
+              />
+              <circle cx="0" cy="0" r={(star.r * 0.45).toFixed(1)} fill="#ffffff" />
+            </g>
           ))}
         </g>
 
@@ -455,15 +562,29 @@ export const CosmicSolarSystem: React.FC<CosmicSolarSystemProps> = ({
           <circle cx="0" cy="0" r="3.5" fill="#ffffff" filter="url(#solarCoreGlow)" />
         </g>
 
-        {/* 3. SHOOTING STARS / COMETS IN TRANSIT */}
-        <g className="cosmic-shooting-comet-1">
-          <line x1="110" y1="50" x2="185" y2="115" stroke="url(#cometTailGrad)" strokeWidth="2.2" strokeLinecap="round" />
-          <circle cx="185" cy="115" r="2.5" fill="#ffffff" filter="url(#solarCoreGlow)" />
-        </g>
+        {/* 3. PERIODIC ANIMATED SHOOTING STAR TRAILS with Transform Hardware Acceleration */}
+        <g className="cosmic-shooting-stars-layer pointer-events-none">
+          {/* Shooting Star Trail 1: Cyan-White Meteor Streak across upper celestial field */}
+          <g className="cosmic-shooting-trail-1">
+            <line x1="130" y1="55" x2="-20" y2="-10" stroke="url(#shootingStarTrailGrad1)" strokeWidth="2.6" strokeLinecap="round" />
+            <line x1="130" y1="55" x2="40" y2="16" stroke="#ffffff" strokeWidth="1.2" strokeLinecap="round" opacity="0.9" />
+            <circle cx="130" cy="55" r="2.8" fill="#ffffff" filter="url(#solarCoreGlow)" />
+            <circle cx="130" cy="55" r="1.4" fill="#ffffff" />
+          </g>
 
-        <g className="cosmic-shooting-comet-2">
-          <line x1="740" y1="35" x2="835" y2="105" stroke="url(#cometTailGrad)" strokeWidth="2.8" strokeLinecap="round" />
-          <circle cx="835" cy="105" r="3" fill="#ffffff" filter="url(#solarCoreGlow)" />
+          {/* Shooting Star Trail 2: Golden Amber Meteor Streak across right quadrant */}
+          <g className="cosmic-shooting-trail-2">
+            <line x1="770" y1="40" x2="920" y2="-20" stroke="url(#shootingStarTrailGrad2)" strokeWidth="3.2" strokeLinecap="round" />
+            <line x1="770" y1="40" x2="850" y2="8" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" opacity="0.9" />
+            <circle cx="770" cy="40" r="3.2" fill="#ffffff" filter="url(#solarCoreGlow)" />
+            <circle cx="770" cy="40" r="1.6" fill="#fef08a" />
+          </g>
+
+          {/* Shooting Star Trail 3: Violet-Blue Swift Micro Streak across left flank */}
+          <g className="cosmic-shooting-trail-3">
+            <line x1="80" y1="170" x2="-50" y2="115" stroke="url(#shootingStarTrailGrad3)" strokeWidth="2.2" strokeLinecap="round" />
+            <circle cx="80" cy="170" r="2.4" fill="#ffffff" filter="url(#solarCoreGlow)" />
+          </g>
         </g>
 
         {/* 3.5 HIGH-TECH STARSHIP WARP EXPEDITION (Occasional warp transit through deep background behind planets) */}
