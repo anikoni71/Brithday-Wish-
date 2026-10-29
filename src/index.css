@@ -4387,6 +4387,42 @@ html.dark table thead tr {
   }
 }
 
+/* -------------------------------------------------------------
+ * 16. DASHBOARD TOP-RIGHT SYNC STATUS INDICATOR ANIMATIONS
+ * ------------------------------------------------------------- */
+@keyframes sync-border-ring-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes sync-icon-pulse-glow {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 2px rgba(52, 211, 153, 0.6));
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.18);
+    filter: drop-shadow(0 0 8px rgba(52, 211, 153, 1));
+    opacity: 1;
+  }
+}
+
+.sync-rotating-ring {
+  animation: sync-border-ring-spin 0.9s linear infinite;
+  will-change: transform;
+}
+
+.sync-pulsating-icon {
+  animation: sync-icon-pulse-glow 1.2s ease-in-out infinite;
+  will-change: transform, filter;
+}
+
+
 
 
 

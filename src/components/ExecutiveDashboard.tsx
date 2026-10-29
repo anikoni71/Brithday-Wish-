@@ -829,15 +829,75 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
             </div>
           </div>
 
-          {/* Quick Action Station */}
+          {/* Quick Action Station & Visual Sync Status Indicator */}
           <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
+            {/* Visual Sync Status Indicator in Top Right of Dashboard */}
+            <div
+              id="dashboard-sync-status-indicator"
+              data-testid="dashboard-sync-status-indicator"
+              className={`relative inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-mono transition-all duration-300 overflow-hidden ${
+                isSyncing
+                  ? 'bg-emerald-950/90 text-emerald-300 border border-emerald-500/60 shadow-[0_0_20px_rgba(16,185,129,0.35)]'
+                  : 'bg-zinc-900/80 text-zinc-400 border border-zinc-800/80 shadow-md shadow-black/40'
+              }`}
+              title={isSyncing ? 'Google Sheet live refresh actively in progress...' : 'Google Sheet telemetry synchronized and standby'}
+            >
+              {/* Rotating Border Ring when isSyncing is true */}
+              {isSyncing && (
+                <div
+                  className="absolute inset-0 rounded-xl pointer-events-none border-2 border-transparent border-t-emerald-400 border-r-emerald-300/90 sync-rotating-ring"
+                />
+              )}
+
+              {/* Icon Container with Rotating Border Ring & Pulsating Icon */}
+              <div className="relative flex items-center justify-center w-5 h-5 shrink-0">
+                {isSyncing ? (
+                  <>
+                    {/* Inner Rotating Border Ring */}
+                    <span className="absolute inset-0 rounded-full border-2 border-emerald-500/25 border-t-emerald-400 border-r-emerald-300 sync-rotating-ring" />
+                    {/* Ambient Ping Glow */}
+                    <span className="absolute -inset-1 rounded-full bg-emerald-400/20 animate-ping opacity-75 [animation-duration:1.5s]" />
+                    {/* Pulsating Icon */}
+                    <RefreshCw className="w-3 h-3 text-emerald-400 sync-pulsating-icon drop-shadow-[0_0_6px_rgba(52,211,153,0.9)]" />
+                  </>
+                ) : (
+                  <>
+                    <span className="w-2 h-2 rounded-full bg-emerald-500/80 shadow-xs shadow-emerald-500/50" />
+                    <RefreshCw className="w-3 h-3 text-zinc-500 opacity-60" />
+                  </>
+                )}
+              </div>
+
+              <div className="flex items-center gap-1.5 leading-none select-none">
+                {isSyncing ? (
+                  <span className="font-bold tracking-wider text-emerald-400 flex items-center gap-1.5 text-[11px]">
+                    <span className="animate-pulse">SYNCING</span>
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                  </span>
+                ) : (
+                  <span className="text-[11px] font-medium text-zinc-400">
+                    SYNC READY
+                  </span>
+                )}
+              </div>
+            </div>
+
             <button
               onClick={onSync}
               disabled={isSyncing}
-              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-zinc-900/90 hover:bg-zinc-800 text-zinc-200 border border-zinc-700/70 hover:border-emerald-500/40 shadow-lg shadow-black/60 transition-all duration-200 cursor-pointer disabled:opacity-50"
+              className={`relative inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-zinc-900/90 hover:bg-zinc-800 text-zinc-200 border transition-all duration-200 cursor-pointer disabled:opacity-75 overflow-hidden ${
+                isSyncing
+                  ? 'border-emerald-500/60 shadow-[0_0_15px_rgba(16,185,129,0.25)]'
+                  : 'border-zinc-700/70 hover:border-emerald-500/40 shadow-lg shadow-black/60'
+              }`}
               title="Synchronize Google Sheet records"
             >
-              <Car className={`w-3.5 h-3.5 cinematic-icon-car ${isSyncing ? 'f1-speed-motion text-emerald-400' : 'text-zinc-400'}`} />
+              {isSyncing && (
+                <span
+                  className="absolute inset-0 rounded-xl pointer-events-none border-2 border-transparent border-t-emerald-400 border-r-emerald-300/90 sync-rotating-ring"
+                />
+              )}
+              <Car className={`w-3.5 h-3.5 cinematic-icon-car ${isSyncing ? 'f1-speed-motion text-emerald-400 sync-pulsating-icon' : 'text-zinc-400'}`} />
               <span>{isSyncing ? 'Syncing...' : 'Sync Master'}</span>
             </button>
 
