@@ -531,25 +531,35 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
               preserveAspectRatio="xMidYMid meet"
             >
               <defs>
-                {/* Wood Grain Gradient for Trunk */}
+                {/* Wood Grain Gradient for Trunk with 3D Bark Shading */}
                 <linearGradient id="treeBarkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#451a03" />
+                  <stop offset="0%" stopColor="#291202" />
+                  <stop offset="18%" stopColor="#451a03" />
                   <stop offset="35%" stopColor="#78350f" />
                   <stop offset="50%" stopColor="#92400e" />
-                  <stop offset="70%" stopColor="#78350f" />
-                  <stop offset="100%" stopColor="#271103" />
+                  <stop offset="68%" stopColor="#78350f" />
+                  <stop offset="85%" stopColor="#451a03" />
+                  <stop offset="100%" stopColor="#1c0b02" />
+                </linearGradient>
+
+                {/* Tree Bark Woodgrain Highlight Streak */}
+                <linearGradient id="treeBarkHighlight" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#d97706" stopOpacity="0.6" />
+                  <stop offset="50%" stopColor="#f59e0b" stopOpacity="0.4" />
+                  <stop offset="100%" stopColor="#78350f" stopOpacity="0.1" />
                 </linearGradient>
 
                 {/* Branch Accent Line */}
                 <linearGradient id="branchGlow" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.4" />
-                  <stop offset="100%" stopColor="#78350f" stopOpacity="0.1" />
+                  <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.5" />
+                  <stop offset="100%" stopColor="#78350f" stopOpacity="0.15" />
                 </linearGradient>
 
-                {/* Foliage Glow Canopy */}
+                {/* Living Foliage Glow Canopy */}
                 <radialGradient id="foliageGlow" cx="50%" cy="40%" r="50%">
-                  <stop offset="0%" stopColor="#10b981" stopOpacity="0.14" />
-                  <stop offset="50%" stopColor="#059669" stopOpacity="0.06" />
+                  <stop offset="0%" stopColor="#10b981" stopOpacity="0.18" />
+                  <stop offset="45%" stopColor="#059669" stopOpacity="0.08" />
+                  <stop offset="80%" stopColor="#047857" stopOpacity="0.02" />
                   <stop offset="100%" stopColor="transparent" stopOpacity="0" />
                 </radialGradient>
 
@@ -578,28 +588,28 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
                 {/* Telemetry ECG Wave Gradient with Vibrant Bio-Luminescent Neon Core */}
                 <linearGradient id="ecgBeamGrad" x1="0%" y1="0%" x2="100%" y2="0%">
                   <stop offset="0%" stopColor="#059669" stopOpacity="0.4" />
-                  <stop offset="20%" stopColor="#10b981" stopOpacity="0.95" />
-                  <stop offset="42%" stopColor="#34d399" stopOpacity="1" />
+                  <stop offset="15%" stopColor="#10b981" stopOpacity="0.95" />
+                  <stop offset="40%" stopColor="#34d399" stopOpacity="1" />
                   <stop offset="50%" stopColor="#ffffff" stopOpacity="1" />
-                  <stop offset="58%" stopColor="#fef08a" stopOpacity="1" />
-                  <stop offset="80%" stopColor="#f59e0b" stopOpacity="0.95" />
+                  <stop offset="60%" stopColor="#fef08a" stopOpacity="1" />
+                  <stop offset="85%" stopColor="#f59e0b" stopOpacity="0.95" />
                   <stop offset="100%" stopColor="#10b981" stopOpacity="0.4" />
                 </linearGradient>
 
                 {/* Ascending Trunk Sap Conduits Gradient */}
                 <linearGradient id="sapConduitGrad" x1="0%" y1="100%" x2="0%" y2="0%">
                   <stop offset="0%" stopColor="#059669" stopOpacity="0.5" />
-                  <stop offset="30%" stopColor="#10b981" stopOpacity="0.95" />
-                  <stop offset="60%" stopColor="#34d399" stopOpacity="1" />
-                  <stop offset="85%" stopColor="#fde047" stopOpacity="1" />
-                  <stop offset="100%" stopColor="#ffffff" stopOpacity="0.95" />
+                  <stop offset="25%" stopColor="#10b981" stopOpacity="0.95" />
+                  <stop offset="55%" stopColor="#34d399" stopOpacity="1" />
+                  <stop offset="80%" stopColor="#fde047" stopOpacity="1" />
+                  <stop offset="100%" stopColor="#ffffff" stopOpacity="0.98" />
                 </linearGradient>
               </defs>
 
-              {/* Ambient Foliage Glow Cloud */}
+              {/* Ambient Living Foliage Glow Cloud */}
               <ellipse cx="500" cy="350" rx="440" ry="290" fill="url(#foliageGlow)" className="tree-foliage-animated" />
 
-              {/* Central Trunk Base Roots & Main Trunk (Multi-Layered Organic Living Motion) */}
+              {/* Central Trunk Base Roots & Main Trunk (Multi-Layered Organic Living Motion & Woodgrain Fissures) */}
               <g className="tree-trunk-animated">
                 {/* Central Trunk Base Roots */}
                 <path
@@ -611,7 +621,7 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
                      C 450 580, 420 680, 380 780 Z"
                   fill="url(#treeBarkGrad)"
                   stroke="#92400e"
-                  strokeWidth="1.5"
+                  strokeWidth="1.6"
                 />
 
                 {/* Main Center Trunk and Crown Fork */}
@@ -632,8 +642,20 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
                      C 550 540, 580 680, 590 780 Z"
                   fill="url(#treeBarkGrad)"
                   stroke="#92400e"
-                  strokeWidth="1.5"
+                  strokeWidth="1.6"
                 />
+
+                {/* Photorealistic Longitudinal Bark Fissures & Woodgrain Relief Ridges */}
+                <path d="M 465 770 C 472 670, 492 560, 498 440" stroke="#291202" strokeWidth="2.4" fill="none" opacity="0.75" />
+                <path d="M 466 770 C 473 670, 493 560, 499 440" stroke="url(#treeBarkHighlight)" strokeWidth="1" fill="none" opacity="0.6" />
+                <path d="M 510 775 C 516 675, 522 550, 516 430" stroke="#1c0b02" strokeWidth="2.2" fill="none" opacity="0.75" />
+                <path d="M 545 770 C 540 680, 532 580, 535 450" stroke="#291202" strokeWidth="2" fill="none" opacity="0.7" />
+                <path d="M 546 770 C 541 680, 533 580, 536 450" stroke="url(#treeBarkHighlight)" strokeWidth="0.8" fill="none" opacity="0.55" />
+
+                {/* Left Root Flare Woodgrain Crevices */}
+                <path d="M 405 775 C 418 710, 442 630, 452 540" stroke="#1c0b02" strokeWidth="1.8" fill="none" opacity="0.65" />
+                {/* Right Root Flare Woodgrain Crevices */}
+                <path d="M 575 775 C 565 710, 548 630, 540 540" stroke="#1c0b02" strokeWidth="1.8" fill="none" opacity="0.65" />
               </g>
 
               {/* Left Major Boughs (Organic Wind Sway with Flexible Sub-Branch Articulation) */}
@@ -643,17 +665,23 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
                   <path
                     d="M 330 230 C 270 230, 200 210, 130 180 C 170 200, 240 225, 310 240 Z"
                     fill="url(#treeBarkGrad)"
+                    stroke="#92400e"
+                    strokeWidth="1.2"
                   />
                   <path
                     d="M 450 310 C 370 280, 300 250, 220 210 C 270 235, 350 270, 420 295 Z"
                     fill="url(#treeBarkGrad)"
+                    stroke="#92400e"
+                    strokeWidth="1.2"
                   />
+                  {/* Fine branch bark grain line */}
+                  <path d="M 320 232 C 260 225, 195 205, 140 182" stroke="#d97706" strokeWidth="0.8" fill="none" opacity="0.5" />
                 </g>
                 {/* Left Branch High-Tech Sap Energy Conduit */}
                 <path
                   d="M 460 420 C 420 370, 340 330, 220 290 C 160 270, 100 260, 80 270"
                   stroke="#34d399"
-                  strokeWidth="3.2"
+                  strokeWidth="3.4"
                   fill="none"
                   filter="url(#telemetryBeamGlow)"
                   className="tree-ecg-pulse-line"
@@ -670,24 +698,30 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
                      C 660 420, 580 470, 550 520 Z"
                   fill="url(#treeBarkGrad)"
                   stroke="#92400e"
-                  strokeWidth="1.5"
+                  strokeWidth="1.6"
                 />
                 {/* Secondary flexible sub-branches */}
                 <g className="tree-subbranch-right">
                   <path
                     d="M 690 230 C 750 230, 820 210, 890 180 C 850 200, 780 225, 710 240 Z"
                     fill="url(#treeBarkGrad)"
+                    stroke="#92400e"
+                    strokeWidth="1.2"
                   />
                   <path
                     d="M 570 310 C 650 280, 720 250, 800 210 C 750 235, 670 270, 600 295 Z"
                     fill="url(#treeBarkGrad)"
+                    stroke="#92400e"
+                    strokeWidth="1.2"
                   />
+                  {/* Fine branch bark grain line */}
+                  <path d="M 680 232 C 740 225, 810 205, 875 182" stroke="#d97706" strokeWidth="0.8" fill="none" opacity="0.5" />
                 </g>
                 {/* Right Branch High-Tech Sap Energy Conduit */}
                 <path
                   d="M 540 460 C 600 420, 700 370, 810 330 C 870 310, 930 295, 950 295"
                   stroke="#34d399"
-                  strokeWidth="3.2"
+                  strokeWidth="3.4"
                   fill="none"
                   filter="url(#telemetryBeamGlow)"
                   className="tree-ecg-pulse-line-delayed"
@@ -700,7 +734,7 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
                 <path
                   d="M 495 400 C 495 320, 500 220, 500 120"
                   stroke="#fcd34d"
-                  strokeWidth="3.8"
+                  strokeWidth="4"
                   fill="none"
                   filter="url(#telemetryBeamGlow)"
                   className="tree-ecg-pulse-line"
@@ -708,28 +742,44 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
               </g>
 
               {/* HIGH-TECH BIO-LUMINESCENT SAP ENERGY CONDUITS THROUGH TRUNK */}
-              <path d="M 458 760 C 468 650, 488 520, 495 440" stroke="#fcd34d" strokeWidth="3.2" strokeDasharray="14 18" opacity="0.95" fill="none" filter="url(#telemetryBeamGlow)" className="tree-ecg-pulse-line" />
-              <path d="M 490 770 C 500 660, 510 530, 510 440" stroke="url(#sapConduitGrad)" strokeWidth="4.2" opacity="1" fill="none" filter="url(#telemetryBeamGlow)" className="tree-ecg-pulse-line-delayed" />
-              <path d="M 522 760 C 532 650, 532 520, 525 440" stroke="#34d399" strokeWidth="3.2" strokeDasharray="14 18" opacity="0.95" fill="none" filter="url(#telemetryBeamGlow)" className="tree-ecg-pulse-line" />
+              <path d="M 458 760 C 468 650, 488 520, 495 440" stroke="#fcd34d" strokeWidth="3.4" strokeDasharray="14 18" opacity="0.95" fill="none" filter="url(#telemetryBeamGlow)" className="tree-ecg-pulse-line" />
+              <path d="M 490 770 C 500 660, 510 530, 510 440" stroke="url(#sapConduitGrad)" strokeWidth="4.4" opacity="1" fill="none" filter="url(#telemetryBeamGlow)" className="tree-ecg-pulse-line-delayed" />
+              <path d="M 522 760 C 532 650, 532 520, 525 440" stroke="#34d399" strokeWidth="3.4" strokeDasharray="14 18" opacity="0.95" fill="none" filter="url(#telemetryBeamGlow)" className="tree-ecg-pulse-line" />
 
-              {/* AUTHENTIC HIGH-PRECISION ECG HEARTBEAT MONITOR WAVE ACROSS ROOT BASE */}
-              <g>
-                {/* Underlying guide line and subtle telemetry background grid */}
+              {/* AUTHENTIC HIGH-PRECISION CLINICAL ECG HEARTBEAT MONITOR WAVE ACROSS ROOT BASE */}
+              <g className="tree-root-vitality">
+                {/* Clinical Telemetry Grid Lines (Oscilloscope Reference Ticks) */}
+                <g opacity="0.22" stroke="#10b981" strokeWidth="0.6">
+                  <line x1="120" y1="760" x2="880" y2="760" strokeDasharray="2 6" />
+                  <line x1="120" y1="776" x2="880" y2="776" />
+                  <line x1="120" y1="792" x2="880" y2="792" strokeDasharray="2 6" />
+                  {/* Vertical Millimeter Time Grid Marks */}
+                  {[160, 220, 280, 340, 400, 460, 520, 580, 640, 700, 760, 820].map((gx) => (
+                    <line key={`ecg-grid-${gx}`} x1={gx} y1="755" x2={gx} y2="795" strokeDasharray="1 5" />
+                  ))}
+                </g>
+
+                {/* Telemetry Channel Label */}
+                <text x="130" y="756" fill="#10b981" opacity="0.75" fontSize="6.5" fontWeight="bold" fontFamily="ui-monospace, monospace" letterSpacing="0.6">
+                  ECG LEAD II • 60 BPM • VITALITY INDEX 100%
+                </text>
+
+                {/* Underlying guide line */}
                 <path
-                  d="M 120 776 L 310 776 L 330 776 L 342 770 L 352 776 L 366 760 L 380 792 L 394 750 L 408 776 L 424 776 L 438 764 L 452 776 L 540 776 L 554 770 L 564 776 L 578 760 L 592 792 L 606 750 L 620 776 L 636 776 L 650 764 L 664 776 L 880 776"
+                  d="M 120 776 L 310 776 L 330 776 L 342 770 L 352 776 L 366 760 L 380 792 L 394 748 L 408 776 L 424 776 L 438 764 L 452 776 L 540 776 L 554 770 L 564 776 L 578 760 L 592 792 L 606 748 L 620 776 L 636 776 L 650 764 L 664 776 L 880 776"
                   fill="none"
                   stroke="#059669"
-                  strokeWidth="2"
+                  strokeWidth="2.2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   opacity="0.45"
                 />
                 {/* Secondary ambient glow trace */}
                 <path
-                  d="M 120 776 L 310 776 L 330 776 L 342 770 L 352 776 L 366 760 L 380 792 L 394 750 L 408 776 L 424 776 L 438 764 L 452 776 L 540 776 L 554 770 L 564 776 L 578 760 L 592 792 L 606 750 L 620 776 L 636 776 L 650 764 L 664 776 L 880 776"
+                  d="M 120 776 L 310 776 L 330 776 L 342 770 L 352 776 L 366 760 L 380 792 L 394 748 L 408 776 L 424 776 L 438 764 L 452 776 L 540 776 L 554 770 L 564 776 L 578 760 L 592 792 L 606 748 L 620 776 L 636 776 L 650 764 L 664 776 L 880 776"
                   fill="none"
                   stroke="#10b981"
-                  strokeWidth="4.5"
+                  strokeWidth="4.8"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   opacity="0.75"
@@ -738,10 +788,10 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
                 />
                 {/* Live sweeping high-intensity laser ECG pulse wave */}
                 <path
-                  d="M 120 776 L 310 776 L 330 776 L 342 770 L 352 776 L 366 760 L 380 792 L 394 750 L 408 776 L 424 776 L 438 764 L 452 776 L 540 776 L 554 770 L 564 776 L 578 760 L 592 792 L 606 750 L 620 776 L 636 776 L 650 764 L 664 776 L 880 776"
+                  d="M 120 776 L 310 776 L 330 776 L 342 770 L 352 776 L 366 760 L 380 792 L 394 748 L 408 776 L 424 776 L 438 764 L 452 776 L 540 776 L 554 770 L 564 776 L 578 760 L 592 792 L 606 748 L 620 776 L 636 776 L 650 764 L 664 776 L 880 776"
                   fill="none"
                   stroke="url(#ecgBeamGrad)"
-                  strokeWidth="3.2"
+                  strokeWidth="3.4"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   filter="url(#telemetryBeamGlow)"
@@ -752,24 +802,28 @@ export const BirthdayTree: React.FC<BirthdayTreeProps> = ({
               {/* CARDIAC BIO-NODES & EXPANDING SONAR RIPPLE RINGS AT BRANCH JUNCTIONS */}
               <g>
                 {/* Central Primary Heart Node */}
-                <circle cx="495" cy="440" r="14" fill="none" stroke="#34d399" strokeWidth="1" opacity="0.6" className="tree-cardiac-ring" />
-                <circle cx="495" cy="440" r="5" fill="#34d399" filter="url(#telemetryBeamGlow)" className="tree-cardiac-pulse" />
+                <circle cx="495" cy="440" r="16" fill="none" stroke="#34d399" strokeWidth="1.2" opacity="0.65" className="tree-cardiac-ring" />
+                <circle cx="495" cy="440" r="5.5" fill="#34d399" filter="url(#telemetryBeamGlow)" className="tree-cardiac-pulse" />
+                <circle cx="495" cy="440" r="2" fill="#ffffff" />
 
                 {/* Left Branch Node */}
-                <circle cx="470" cy="420" r="11" fill="none" stroke="#fcd34d" strokeWidth="1" opacity="0.6" className="tree-cardiac-ring-delayed" />
-                <circle cx="470" cy="420" r="4" fill="#fcd34d" filter="url(#telemetryBeamGlow)" className="tree-cardiac-pulse-delayed" />
+                <circle cx="470" cy="420" r="12" fill="none" stroke="#fcd34d" strokeWidth="1.1" opacity="0.65" className="tree-cardiac-ring-delayed" />
+                <circle cx="470" cy="420" r="4.5" fill="#fcd34d" filter="url(#telemetryBeamGlow)" className="tree-cardiac-pulse-delayed" />
+                <circle cx="470" cy="420" r="1.6" fill="#ffffff" />
 
                 {/* Right Branch Node */}
-                <circle cx="540" cy="460" r="11" fill="none" stroke="#34d399" strokeWidth="1" opacity="0.6" className="tree-cardiac-ring" />
-                <circle cx="540" cy="460" r="4" fill="#34d399" filter="url(#telemetryBeamGlow)" className="tree-cardiac-pulse" />
+                <circle cx="540" cy="460" r="12" fill="none" stroke="#34d399" strokeWidth="1.1" opacity="0.65" className="tree-cardiac-ring" />
+                <circle cx="540" cy="460" r="4.5" fill="#34d399" filter="url(#telemetryBeamGlow)" className="tree-cardiac-pulse" />
+                <circle cx="540" cy="460" r="1.6" fill="#ffffff" />
 
                 {/* Crown Mid Node */}
-                <circle cx="500" cy="280" r="10" fill="none" stroke="#fcd34d" strokeWidth="1" opacity="0.6" className="tree-cardiac-ring-delayed" />
-                <circle cx="500" cy="280" r="3.5" fill="#fcd34d" filter="url(#telemetryBeamGlow)" className="tree-cardiac-pulse-delayed" />
+                <circle cx="500" cy="280" r="11" fill="none" stroke="#fcd34d" strokeWidth="1" opacity="0.6" className="tree-cardiac-ring-delayed" />
+                <circle cx="500" cy="280" r="4" fill="#fcd34d" filter="url(#telemetryBeamGlow)" className="tree-cardiac-pulse-delayed" />
+                <circle cx="500" cy="280" r="1.5" fill="#ffffff" />
 
                 {/* Outer Canopy Nodes */}
-                <circle cx="340" cy="210" r="3" fill="#34d399" filter="url(#telemetryBeamGlow)" className="tree-cardiac-pulse" />
-                <circle cx="680" cy="210" r="3" fill="#34d399" filter="url(#telemetryBeamGlow)" className="tree-cardiac-pulse-delayed" />
+                <circle cx="340" cy="210" r="3.5" fill="#34d399" filter="url(#telemetryBeamGlow)" className="tree-cardiac-pulse" />
+                <circle cx="680" cy="210" r="3.5" fill="#34d399" filter="url(#telemetryBeamGlow)" className="tree-cardiac-pulse-delayed" />
               </g>
 
               {/* MAGICAL FLOATING PARTICLES & STARLIGHT FIREFLIES SHIMMERING UPWARD THROUGH CANOPY */}
